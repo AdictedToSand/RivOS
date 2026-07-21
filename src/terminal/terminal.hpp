@@ -1,9 +1,12 @@
 #pragma once
+#include <gen/serial.hpp>
+
 #include <string.hpp>
 
 #include <stddef.h>
 #include <stdint.h>
 
+// Credits: https://wiki.osdev.org/Bare_Bones
 struct Terminal {
     enum class VgaColor {
         Black = 0,
@@ -54,8 +57,8 @@ struct Terminal {
 	    }
     }
 
-    static void setColor(const uint8_t color) {
-        terminalColor = color;
+    static void setColor(const VgaColor color) {
+        terminalColor = (uint8_t) color;
     }
 
     static void putEntryAt(char c, uint8_t color, size_t x, size_t y) {
@@ -64,6 +67,7 @@ struct Terminal {
     }
     static void putChar(char c)  {
         if (c == '\n') {
+            Serial::write(c);
             if (++terminalRow >= VGA_HEIGHT) {
                 clear();
                 return; //TODO: replace with proper scrolling
@@ -71,6 +75,7 @@ struct Terminal {
             terminalColumn = 0;
         }
         else {
+            Serial::write(c);
             putEntryAt(c, terminalColor, terminalColumn, terminalRow);
             if (++terminalColumn == VGA_WIDTH) {
                 terminalColumn = 0;
@@ -89,6 +94,29 @@ struct Terminal {
     }
     static auto clear() -> void {
         init(); // Does the exact behaviour we need rn
+    }
+
+    // Credits: https://www.geeksforgeeks.org/c/print-long-int-number-c-using-putchar/
+    static auto printi(int n) -> void {
+        if (n < 0) {
+            putChar('-');
+            n = -n;
+        }
+
+        if (n / 10) {
+            printi(n / 10);
+        }
+
+        putChar(n % 10 + '0');
+    }
+    static auto printHex(unsigned int n) -> void {
+        const char hexChars[] = "0123456789ABCDEF";
+      
+        write("0x", 2);
+
+        for (int i = 0; i < sizeof(unsigned int) * 8; i += sizeof(unsigned int)) {
+            putChar(hexChars[(n >> i) & 0x0F]);
+        }
     }
 };
 
