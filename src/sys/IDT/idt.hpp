@@ -55,14 +55,6 @@ struct Idt {
             vectors[vector] = true;
         }
 
-        Terminal::printHex(idtr.limit);
-        Terminal::printHex(idtr.base);
-        Terminal::printHex(sizeof(idtr));
-
-        Terminal::printHex(idt[0].isr_low);
-Terminal::printHex(idt[0].isr_high);
-Terminal::printHex(idt[0].kernel_cs);
-Terminal::printHex(idt[0].attributes);
         __asm__ volatile ("lidt %0" : : "m"(idtr)); // load the new IDT
         //__asm__ volatile ("sti"); // set the interrupt flag
     }

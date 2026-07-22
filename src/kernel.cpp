@@ -2,9 +2,13 @@
 
 #include <gen/err.hpp>
 #include <gen/serial.hpp>
+#include <gen/vec.hpp>
 
 #include <sys/IDT/idt.hpp>
 #include <sys/GDT/gdt.hpp>
+
+#include <mem/alloc.hpp>
+
 
 extern "C" { // Disable name mangling
 
@@ -17,7 +21,14 @@ void kernelMain() {
 
     Gdt::init();
     Idt::init();
-    asm volatile ("int $0x00");
+
+    KernelAllocator::init();
+
+    Vector<int> vec;
+    vec.pushBack(5);
+    Terminal::printi(vec[0]);
+    vec[0].val() = 0;
+    Terminal::printi(vec[0]);
 
     for (;;);
 }
