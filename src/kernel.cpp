@@ -11,7 +11,10 @@
 
 #include <drivers/storage/driver.hpp>
 #include <drivers/storage/storage.hpp>
+#include <drivers/fs/ext2/ext2.hpp>
+#include <drivers/fs/fs.hpp>
 
+//TODO: some files still use <returnType> fn(...) instd of auto fn(...) -> <returnType>
 extern "C" { // Disable name mangling
 
 void kernelMain() {
@@ -28,7 +31,7 @@ void kernelMain() {
 
     Storage::init();
 
-    
+    FileSystem::init();
 
     for (;;);
 }

@@ -5,6 +5,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdarg.h>
 
 // Credits: https://wiki.osdev.org/Bare_Bones
 struct Terminal {
@@ -35,14 +36,14 @@ struct Terminal {
     inline static uint8_t terminalColor = 0;
     inline static uint16_t* terminalBuffer = nullptr;
 
-    static inline uint8_t vgaEntryColor(VgaColor fg, VgaColor bg)  {
+    static inline auto vgaEntryColor(VgaColor fg, VgaColor bg) -> uint8_t {
 	    return (int) fg | (int) bg << 4;
     }
-    static inline uint16_t vgaEntry(unsigned char uc, uint8_t color) {
+    static inline auto vgaEntry(unsigned char uc, uint8_t color) -> uint16_t {
 	    return (uint16_t) uc | (uint16_t) color << 8;
     }
 
-    static void init() {
+    static auto init() -> void {
         terminalBuffer = VGA_MEMORY;
 
 	    terminalRow = 0;
@@ -57,15 +58,15 @@ struct Terminal {
 	    }
     }
 
-    static void setColor(const VgaColor color) {
+    static auto setColor(const VgaColor color) -> void {
         terminalColor = (uint8_t) color;
     }
 
-    static void putEntryAt(char c, uint8_t color, size_t x, size_t y) {
+    static auto putEntryAt(char c, uint8_t color, size_t x, size_t y) -> void {
         const size_t index = y * VGA_WIDTH + x;
         terminalBuffer[index] = vgaEntry(c, color);
     }
-    static void putChar(char c)  {
+    static auto putChar(char c) -> void {
         if (c == '\n') {
             Serial::write(c);
             if (++terminalRow >= VGA_HEIGHT) {
@@ -117,6 +118,34 @@ struct Terminal {
         for (int i = (sizeof(unsigned int) * 8) - 4; i >= 0; i -= sizeof(unsigned int)) {
             putChar(hexChars[(n >> i) & 0x0F]);
         }
+    }
+
+    static auto printf(const char* fmt, ...) {
+        va_list args;
+        va_start(args, fmt);
+
+        for (size_t i = 0; fmt[i]; i++) {
+            switch (fmt[i]) {
+                case '%': {
+                    const char fmtSpecifier = fmt[++i];
+
+                    switch (fmtSpecifier) {
+                        case '%': putChar('%'); break;
+                        case 's': writeStr(va_arg(args, const char*)); break;
+                        case 'x': printHex(va_arg(args, unsigned int)); break;
+                        case 'c': putChar(va_arg(args, int));
+                        default: break;
+                    }
+
+                    break;
+                }
+                default: {
+                    putChar(fmt[i]);
+                }
+            }
+        }
+
+        va_end(args);
     }
 };
 

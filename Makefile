@@ -17,6 +17,13 @@ run:
 		-serial stdio \
 		-drive file=build/rootfs.img,format=raw,if=ide
 
+debug: build_dbg
+	qemu-system-i386 \
+		-cdrom build/RivOS.iso \
+		-serial stdio \
+		-drive file=build/rootfs.img,format=raw,if=ide \
+		-s -S
+
 mr: build_dbg run
 
 clean:

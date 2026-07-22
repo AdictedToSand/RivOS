@@ -58,6 +58,10 @@ struct AtaPioStorageDriver : StorageDriver {
         }
         return StorageDriver::SuccessCodes::Sucess;
     }
+
+    const char* getDriverName() override {
+        return "RivOS_ATAPIO";
+    }
 };
 
 static inline AtaPioStorageDriver atapio;

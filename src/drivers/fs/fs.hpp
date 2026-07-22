@@ -1,23 +1,33 @@
 #pragma once
+#include <drivers/fs/ext2/ext2.hpp>
+#include <drivers/fs/driver.hpp>
 
-
-// Inherit from this class, make a global instance and call "addCandidate(&instance)" to add the driver as a candidate
-struct FileSystemDriver {
-    virtual auto init() -> void {
-        // Do nothing
-    }
-
-    virtual auto getPriority() -> int {
-        return -1;
-    }
-
-
-};
+#include <gen/vec.hpp>
 
 struct FileSystem {
-    FileSystemDriver activeDriver;
+private:
+    static inline FileSystemDriver* activeDriver;
+    static inline Vector<FileSystemDriver*> driverCandidates;
+    
+    static inline auto registerDriver(FileSystemDriver* drv) -> void {
+        driverCandidates.pushBack(drv);
+    }
 
-    auto init() -> void {
+public:
+    static auto init() -> void {
+        driverCandidates = Vector<FileSystemDriver*>();
+
+        activeDriver = &defaultFsDriver;
         
+        registerDriver(&ext2fs);
+
+        for (auto& drv : driverCandidates) {
+            if (drv->getPriority() > activeDriver->getPriority()) {
+                activeDriver = drv;
+            }
+        }
+        activeDriver->init();
+
+        Terminal::printf("Filesystem driver: %s\n", activeDriver->getDriverName());
     }
 };

@@ -38,6 +38,7 @@ public:
     auto pushBack(T elem) -> void {
         if (len >= capacity) {
             T* newArr = (T*) KernelAllocator::alloc((capacity * 2) * sizeof(T));
+            if (!newArr) kpanic("");
             capacity *= 2;
            
             for (size_t i = 0; i < len; i++) {

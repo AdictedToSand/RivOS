@@ -22,4 +22,7 @@ struct StorageDriver {
     virtual SuccessCodes init() {
         return SuccessCodes::Error;
     }
+    virtual const char* getDriverName() {
+        return "DefaultTemplate";
+    }
 };

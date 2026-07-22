@@ -111,6 +111,7 @@ def build(debug: bool = True):
 
     if debug:
         link_cmd.insert(-1, "-O0")
+        link_cmd.insert(-1, "-g")
     else:
         link_cmd.insert(-1, "-O2")
 

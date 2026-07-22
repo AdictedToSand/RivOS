@@ -31,6 +31,8 @@ public:
                 winner = driver;
             }
         }
+
+        Terminal::printf("Storage driver: %s\n", winner->getDriverName());
     }
 
     static auto readSector(uint16_t* buf, size_t len, size_t sector) -> StorageDriver::SuccessCodes {
