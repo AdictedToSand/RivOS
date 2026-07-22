@@ -27,7 +27,7 @@ void kernelMain() {
     Vector<int> vec;
     vec.pushBack(5);
     Terminal::printi(vec[0]);
-    vec[0].val() = 0;
+    vec[0] = 0;
     Terminal::printi(vec[0]);
 
     for (;;);

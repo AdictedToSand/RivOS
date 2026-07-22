@@ -58,5 +58,9 @@ public:
     inline operator T&() {
         return val();    
     }
+    inline auto operator=(const T& newVal) -> Expected& {
+        val() = newVal;
+        return *this;
+    }
 };
 
