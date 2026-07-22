@@ -114,7 +114,7 @@ struct Terminal {
       
         write("0x", 2);
 
-        for (int i = 0; i < sizeof(unsigned int) * 8; i += sizeof(unsigned int)) {
+        for (int i = (sizeof(unsigned int) * 8) - 4; i >= 0; i -= sizeof(unsigned int)) {
             putChar(hexChars[(n >> i) & 0x0F]);
         }
     }

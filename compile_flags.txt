@@ -1,3 +1,4 @@
 -Isrc
 -Isrc/lib
 -DDEBUG
+-m32
