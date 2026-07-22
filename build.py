@@ -10,6 +10,7 @@ CPPFLAGS = [
     "-fno-rtti",
     "-Isrc",
     "-Isrc/lib",
+    "-fno-use-cxa-atexit",
 ]
 
 BUILD_DIR = Path("build")

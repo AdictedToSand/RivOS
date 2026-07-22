@@ -17,6 +17,9 @@ static void kassrt(bool eval, const char* msg) {
         kpanic(msg);
 }
 
+// Wraps a value of type T. Use makeErr() to make it an err value, otherwise use = operator.
+// Use .val() to get a reference to the value 
+// If isErr a kpanic is triggered
 template<typename T>
 class Expected {
     bool isCorrect;

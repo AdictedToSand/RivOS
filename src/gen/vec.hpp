@@ -72,5 +72,11 @@ public:
         KernelAllocator::free(arr);
     }
 
+    auto begin() -> T* { return arr; }
+    auto end() -> T* { return arr + len; }
+
+    auto begin() const -> const T* { return arr; }
+    auto end() const -> const T* { return arr + len; }
+
     Vector(const Vector&) = delete;
 };

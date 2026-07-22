@@ -9,7 +9,17 @@ static inline auto outb(uint16_t port, uint8_t val) -> void {
 
 static inline auto inb(uint16_t port) -> uint8_t {
     uint8_t ret;
-    __asm__ volatile ( "inb %w1, %b0"
+    asm volatile ( "inb %w1, %b0"
+                   : "=a"(ret)
+                   : "Nd"(port)
+                   : "memory");
+    return ret;
+}
+
+
+static inline auto inw(uint16_t port) -> uint16_t {
+    uint16_t ret;
+    asm volatile ( "inw %w1, %w0"
                    : "=a"(ret)
                    : "Nd"(port)
                    : "memory");

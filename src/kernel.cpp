@@ -9,6 +9,8 @@
 
 #include <mem/alloc.hpp>
 
+#include <drivers/storage/driver.hpp>
+#include <drivers/storage/storage.hpp>
 
 extern "C" { // Disable name mangling
 
@@ -17,18 +19,16 @@ void kernelMain() {
 
     kassrt(Serial::init() == 0, "Unable to initalize serial");
 
-    Terminal::writeStr("Hello, kernel world!\nHi");
+    Terminal::writeStr("Hello, kernel world!\n");
 
     Gdt::init();
     Idt::init();
 
     KernelAllocator::init();
 
-    Vector<int> vec;
-    vec.pushBack(5);
-    Terminal::printi(vec[0]);
-    vec[0] = 0;
-    Terminal::printi(vec[0]);
+    Storage::init();
+
+    
 
     for (;;);
 }
