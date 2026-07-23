@@ -1,13 +1,14 @@
-CPPFLAGS := -ffreestanding -Wall -Wextra -fno-exceptions -fno-rtti -Isrc -Isrc/lib
-
 all: build_dbg
 
-build_dbg:
-	genext2fs -d rootFs -b 65536 build/rootfs.img
+prepare_disk:
+	dd if=/dev/zero of=build/rootfs.img bs=1024 count=65536
+	mkfs.fat -F 32 build/rootfs.img
+	mcopy -i build/rootfs.img -s rootFs/* ::
+
+build_dbg: prepare_disk
 	python3 build.py
 
-build_release:
-	genext2fs -d rootFs -b 65536 build/rootfs.img 
+build_release: prepare_disk
 	python3 build.py release
 
 run:
@@ -15,14 +16,16 @@ run:
 	qemu-system-i386 \
 		-cdrom build/RivOS.iso \
 		-serial stdio \
-		-drive file=build/rootfs.img,format=raw,if=ide
+		-drive file=build/rootfs.img,format=raw,if=ide \
+		-boot d
 
 debug: build_dbg
 	qemu-system-i386 \
 		-cdrom build/RivOS.iso \
 		-serial stdio \
 		-drive file=build/rootfs.img,format=raw,if=ide \
-		-s -S
+		-s -S \
+		-boot d
 
 mr: build_dbg run
 

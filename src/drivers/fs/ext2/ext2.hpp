@@ -121,11 +121,6 @@ struct Ext2 : FileSystemDriver {
                 bgdtStartSector + (offset / Storage::SECTOR_SIZE)
             );
         }
-        Ext2File* extf = (Ext2File*) KernelAllocator::alloc(sizeof(Ext2File));
-       
-        extf->seekPos = 0;
-
-        ret.fsData = (void*) extf;
 
         KernelAllocator::free(bgdtBuffer);
         return ret;

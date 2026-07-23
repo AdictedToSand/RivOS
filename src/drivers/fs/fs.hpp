@@ -1,5 +1,6 @@
 #pragma once
 #include <drivers/fs/ext2/ext2.hpp>
+#include <drivers/fs/FAT32/fat.hpp>
 #include <drivers/fs/driver.hpp>
 
 #include <gen/vec.hpp>
@@ -20,6 +21,7 @@ public:
         activeDriver = &defaultFsDriver;
         
         registerDriver(&ext2fs);
+        registerDriver(&fat32Fs);
 
         for (auto& drv : driverCandidates) {
             if (drv->getPriority() > activeDriver->getPriority()) {
