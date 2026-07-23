@@ -47,6 +47,9 @@ struct FileSystemDriver {
     virtual auto getDriverName() -> const char* {
         return ";";
     }
+    virtual auto free() -> void {
+
+    }
 };
 
 static inline FileSystemDriver defaultFsDriver;

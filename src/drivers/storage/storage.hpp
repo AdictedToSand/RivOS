@@ -19,6 +19,8 @@ private:
     }
 
 public:
+    static constexpr size_t SECTOR_SIZE = 512;
+
     static auto init() -> void {
         candidates = Vector<StorageDriver*>();
 

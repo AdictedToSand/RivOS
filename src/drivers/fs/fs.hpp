@@ -25,6 +25,9 @@ public:
             if (drv->getPriority() > activeDriver->getPriority()) {
                 activeDriver = drv;
             }
+            else {
+                drv->free();
+            }
         }
         activeDriver->init();
 

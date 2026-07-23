@@ -2,13 +2,11 @@
 #include <drivers/fs/driver.hpp>
 #include <drivers/storage/storage.hpp>
 
+#include <mem/alloc.hpp>
+
 #include <stdint.h>
 
 struct Ext2 : FileSystemDriver {
-    struct Ext2File {
-
-    };
-
     struct [[gnu::packed]] Ext2SuperBlockLow {
         uint32_t totalInnodes;
         uint32_t totalBlocks;
@@ -25,7 +23,17 @@ struct Ext2 : FileSystemDriver {
         uint32_t posixTime_lastWrittenTime;
         uint16_t mountsBeforeConsistencyCheck; // Don't bother also
         uint16_t maxMountsBeforeConsistencyCheck;
-        uint16_t signature;
+        uint16_t magic;
+
+        uint16_t fsState;
+        uint16_t errHandleMethod;
+        uint16_t minorPortionVersion;
+        uint32_t posixTime_lastConsistencyCheck;
+        uint32_t intervalForcedConsistencyChecks;
+        uint32_t osId;
+        uint32_t majorPortionVersion;
+        uint16_t userIdReservedBlocks;
+        uint16_t groupIdReservedBlocks;
     };
     struct [[gnu::packed]] Ext2SuperBlockHigh {
         
@@ -36,6 +44,19 @@ struct Ext2 : FileSystemDriver {
         Ext2SuperBlockHigh high;
     };
 
+    struct [[gnu::packed]] BgdtEntry {
+        uint32_t blockAddrBlockUsageBitmap;
+        uint32_t blockAddrInodeUsageBitmap;
+        uint32_t startingBlockAddrOfInodeTable;
+        uint16_t unallocatedBlocks;
+        uint16_t unallocatedInodes;
+        uint16_t directories;
+        uint16_t padding;
+        char _unused[14];
+    };
+
+    static inline Ext2SuperBlock* suprBlock;
+
     static constexpr uint16_t EXT2_MAGIC = 0xEF53;
     int getPriority() override {
         uint16_t lowSuperBlock[256];
@@ -43,11 +64,16 @@ struct Ext2 : FileSystemDriver {
         if (Storage::readSector((uint16_t*) lowSuperBlock, 256, 2) == StorageDriver::SuccessCodes::Error) {
             kpanic("Unable to read sector");
         }
-        
-        Ext2SuperBlock suprBlock;
-        suprBlock.low = *((Ext2SuperBlockLow*) lowSuperBlock);
+        suprBlock = (Ext2SuperBlock*) KernelAllocator::alloc(sizeof(Ext2SuperBlock));
 
-        return suprBlock.low.signature == EXT2_MAGIC;
+        if (!suprBlock) {
+            kpanic("Allocated wrong");
+        }
+
+        suprBlock->low = *((Ext2SuperBlockLow*) lowSuperBlock);
+        //TODO: Make better check (specifically in init)
+
+        return suprBlock->low.magic == EXT2_MAGIC;
     }
 
     auto getDriverName() -> const char* override {
@@ -55,16 +81,62 @@ struct Ext2 : FileSystemDriver {
     }
     
     auto init() -> void override {
+
+    }
+
+    auto blockToSector(const size_t block) -> size_t {
+        const size_t blockSize = 1024 << suprBlock->low.blockSize;
+
+        if (blockSize % Storage::SECTOR_SIZE != 0) {
+            kpanic("BlockSize did not match sector_size");
+        }
+
+        const size_t sectorsPerBlock = blockSize / Storage::SECTOR_SIZE;
+
+        return block * sectorsPerBlock;
     }
 
     auto open(const char* fp) -> File override {
+        static constexpr size_t BGDT_ENTRY_SIZE = 32;
         File ret;
 
+        size_t bgdtStartSector;
+        const size_t blockSize = 1024 << suprBlock->low.blockSize;
+        if (blockSize == 1024) {
+            bgdtStartSector = blockToSector(2);
+        }
+        else {
+            bgdtStartSector = blockToSector(1);
+        }
+        
+        const size_t amountOfBgdEntries = (suprBlock->low.totalBlocks + suprBlock->low.blocksInBlockGroup - 1) /
+            suprBlock->low.blocksInBlockGroup;
+
+        char* const bgdtBuffer = (char*) KernelAllocator::alloc(amountOfBgdEntries * BGDT_ENTRY_SIZE);
+
+        for (size_t offset = 0; offset < amountOfBgdEntries * BGDT_ENTRY_SIZE; offset += Storage::SECTOR_SIZE) {
+            Storage::readSector(
+                (uint16_t*) (bgdtBuffer + offset),
+                256,
+                bgdtStartSector + (offset / Storage::SECTOR_SIZE)
+            );
+        }
+        Ext2File* extf = (Ext2File*) KernelAllocator::alloc(sizeof(Ext2File));
+       
+        extf->seekPos = 0;
+
+        ret.fsData = (void*) extf;
+
+        KernelAllocator::free(bgdtBuffer);
         return ret;
     }
 
-    auto close(File fd) -> void override {
-         
+    auto close(File f) -> void override {
+        KernelAllocator::free(f.fsData);
+    }
+
+    auto free() -> void override {
+        KernelAllocator::free(suprBlock);
     }
 };
 
