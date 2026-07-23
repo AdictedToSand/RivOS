@@ -7,6 +7,11 @@ ORG 0x7C00
 global _start
 
 _start:
+    XOR ax, ax
+    MOV es, ax
+
+    MOV [bootdrive], dl
+
     MOV ah, 0x02
     MOV al, 1
     MOV ch, 0
@@ -16,6 +21,8 @@ _start:
     MOV bx, 0x8000
 
     INT 0x13
+    MOV dl, [bootdrive]
+
     JMP 0x0000:0x8000
 
 ; Disk failed to load
@@ -26,6 +33,8 @@ diskError:
 .hlt:
     HLT
     JMP .hlt
+
+bootdrive: db 0
 
 times 510-($-$$) db 0
 dw 0xAA55
