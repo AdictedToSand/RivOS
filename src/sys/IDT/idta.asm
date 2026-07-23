@@ -5,19 +5,19 @@ extern exceptionHandler
 
 %macro isr_err_stub 1
 isr_stub_%+%1:
-    pusha
-    call exceptionHandler
-    popa
-    add esp, 4
-    iret 
+    PUSHA
+    CALL exceptionHandler
+    POPA
+    ADD esp, 4
+    IRET
 %endmacro
 
 %macro isr_no_err_stub 1
 isr_stub_%+%1:
-    pusha
-    call exceptionHandler
-    popa
-    iret
+    PUSHA
+    CALL exceptionHandler
+    POPA
+    IRET
 %endmacro
 
 isr_no_err_stub 0

@@ -19,13 +19,13 @@ gdtr:
 
 section .text
 gdtFlush:
-    lgdt [gdtr]
-    mov ax, 0x10        ; data selector (2nd entry * 8)
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-    mov ss, ax
-    jmp 0x08:.flush      ; far jump to reload CS with code selector
+    LGDT [gdtr]
+    MOV ax, 0x10        ; data selector (2nd entry * 8)
+    MOV ds, ax
+    MOV es, ax
+    MOV fs, ax
+    MOV gs, ax
+    MOV ss, ax
+    JMP 0x08:.flush      ; far jump to reload CS with code selector
 .flush:
-    ret
+    RET

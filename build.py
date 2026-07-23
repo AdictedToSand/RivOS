@@ -24,7 +24,6 @@ def run(cmd):
 
 def compile_cpp(file: Path, debug: bool) -> Path:
     out = OBJ_DIR / Path(str(file.relative_to("src")) + ".o")
-
     out.parent.mkdir(parents=True, exist_ok=True)
 
     flags = CPPFLAGS.copy()
@@ -48,7 +47,6 @@ def compile_cpp(file: Path, debug: bool) -> Path:
 
 def compile_gas(file: Path) -> Path:
     out = OBJ_DIR / Path(str(file.relative_to("src")) + ".o")
-
     out.parent.mkdir(parents=True, exist_ok=True)
 
     run([
@@ -63,13 +61,27 @@ def compile_gas(file: Path) -> Path:
 
 def compile_nasm(file: Path) -> Path:
     out = OBJ_DIR / Path(str(file.relative_to("src")) + ".o")
-
     out.parent.mkdir(parents=True, exist_ok=True)
 
     run([
         "nasm",
         "-f",
         "elf32",
+        str(file),
+        "-o",
+        str(out),
+    ])
+
+    return out
+
+
+def compile_bootloader(file: Path) -> Path:
+    out = BUILD_DIR / file.stem
+
+    run([
+        "nasm",
+        "-f",
+        "bin",
         str(file),
         "-o",
         str(out),
@@ -86,14 +98,25 @@ def build(debug: bool = True):
 
     src = Path("src")
 
+    # Build bootloader
+    boot_dir = src / "boot"
+
+    if boot_dir.exists():
+        for file in boot_dir.glob("*.asm"):
+            compile_bootloader(file)
+
+    # Build kernel
     for file in src.rglob("*.cpp"):
-        objects.append(compile_cpp(file, debug))
+        if "boot" not in file.parts:
+            objects.append(compile_cpp(file, debug))
 
     for file in src.rglob("*.s"):
-        objects.append(compile_gas(file))
+        if "boot" not in file.parts:
+            objects.append(compile_gas(file))
 
     for file in src.rglob("*.asm"):
-        objects.append(compile_nasm(file))
+        if "boot" not in file.parts:
+            objects.append(compile_nasm(file))
 
     kernel = BUILD_DIR / "RivOS"
 
@@ -117,19 +140,10 @@ def build(debug: bool = True):
 
     run(link_cmd)
 
+    # Copy kernel files
     iso_dir = Path("isodir")
-    (iso_dir / "boot" / "grub").mkdir(parents=True, exist_ok=True)
 
     run(["cp", str(kernel), "isodir/boot/RivOS"])
-    run(["cp", "grub.cfg", "isodir/boot/grub/grub.cfg"])
-
-    run([
-        "grub-mkrescue",
-        "-o",
-        str(BUILD_DIR / "RivOS.iso"),
-        "isodir",
-    ])
-
 
 if __name__ == "__main__":
     build(debug=(len(sys.argv) < 2 or sys.argv[1] != "release"))
