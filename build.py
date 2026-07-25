@@ -44,6 +44,34 @@ def compile_cpp(file: Path, debug: bool) -> Path:
 
     return out
 
+def compile_c(file: Path, debug: bool) -> Path:
+    out = OBJ_DIR / Path(str(file.relative_to("src")) + ".o")
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    flags = [
+        "-m32",
+        "-ffreestanding",
+        "-Wall",
+        "-Wextra",
+        "-Isrc",
+        "-Isrc/lib",
+    ]
+
+    if debug:
+        flags.extend(["-O0", "-g", "-DDEBUG"])
+    else:
+        flags.extend(["-O2"])
+
+    run([
+        "i686-elf-gcc",
+        "-c",
+        str(file),
+        "-o",
+        str(out),
+        *flags,
+    ])
+
+    return out
 
 def compile_gas(file: Path) -> Path:
     out = OBJ_DIR / Path(str(file.relative_to("src")) + ".o")
@@ -97,15 +125,59 @@ def build(debug: bool = True):
     objects = []
 
     src = Path("src")
-
-    # Build bootloader
     boot_dir = src / "boot"
 
-    if boot_dir.exists():
-        for file in boot_dir.glob("*.asm"):
-            compile_bootloader(file)
+    #
+    # Stage 1 bootloader
+    #
 
-    # Build kernel
+    loader = boot_dir / "loader.asm"
+
+    if loader.exists():
+        compile_bootloader(loader)
+
+    #
+    # Stage 2
+    #
+
+    stage2_objects = []
+
+    stage2_asm = boot_dir / "stage2.asm"
+    stage2_c = boot_dir / "boot.c"
+
+    if stage2_asm.exists():
+        stage2_objects.append(compile_nasm(stage2_asm))
+
+    if stage2_c.exists():
+        stage2_objects.append(compile_c(stage2_c, debug))
+
+    if stage2_objects:
+        stage2_elf = BUILD_DIR / "stage2.elf"
+
+        run([
+            "i686-elf-gcc",
+            "-T",
+            "src/boot/linker.ld",
+            "-nostdlib",
+            "-ffreestanding",
+            "-o",
+            str(stage2_elf),
+            *map(str, stage2_objects),
+            "-lgcc",
+        ])
+
+        run([
+            "i686-elf-objcopy",
+            "-O",
+            "binary",
+            str(stage2_elf),
+            str(BUILD_DIR / "stage2"),
+        ])
+
+    #
+    # Kernel
+    #
+
     for file in src.rglob("*.cpp"):
         if "boot" not in file.parts:
             objects.append(compile_cpp(file, debug))
@@ -140,10 +212,12 @@ def build(debug: bool = True):
 
     run(link_cmd)
 
-    # Copy kernel files
-    iso_dir = Path("isodir")
+    run([
+        "cp",
+        str(kernel),
+        "isodir/boot/RivOS",
+    ])
 
-    run(["cp", str(kernel), "isodir/boot/RivOS"])
 
 if __name__ == "__main__":
     build(debug=(len(sys.argv) < 2 or sys.argv[1] != "release"))

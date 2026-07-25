@@ -4,10 +4,14 @@ prepare_disk:
 	dd if=/dev/zero of=build/disk.img bs=1M count=64
 	dd if=build/loader of=build/disk.img conv=notrunc
 	dd if=build/stage2 of=build/disk.img bs=512 seek=1 conv=notrunc
-	dd if=build/kernel.bin of=build/disk.img bs=512 seek=2 conv=notrunc
+	$(eval STAGE2_SIZE := $(shell stat -c%s build/stage2))
+	$(eval STAGE2_SECTORS := $(shell echo $$(( ($(STAGE2_SIZE) + 511) / 512 )) ))
+	$(eval KERNEL_SEEK := $(shell echo $$((1 + $(STAGE2_SECTORS))) ))
+	dd if=build/kernel.bin of=build/disk.img bs=512 seek=$(KERNEL_SEEK) conv=notrunc
 	dd if=/dev/zero of=build/rootfs.img bs=1M count=64
 	mkfs.fat -F 32 build/rootfs.img
 	mcopy -i build/rootfs.img -s rootFs/* ::
+
 
 build_dbg:
 	python3 build.py

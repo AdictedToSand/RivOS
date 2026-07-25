@@ -1,5 +1,4 @@
 BITS 16
-ORG 0x8000
 
 ; Otherwise whatever function starting first would just execute
 ; This makes sure _start is always the entry point
@@ -152,15 +151,15 @@ findKernel:
     INC cl
 
 .kernelFound:
-    ; TODO: Reduce comments
-    MOV [kernelInfo + KernelInfo.drive], 0x80
-    MOV [kernelInfo + KernelInfo.sector], cx
+    ; TODO: More comments
+    MOV byte [kernelInfo + KernelInfo.drive], 0x80
+    MOV word [kernelInfo + KernelInfo.sector], cx
     
     MOV dx, 0x9000 + bootableStringLen
-    MOV [kernelInfo + KernelInfo.entryPointAddr], dx
+    MOV word [kernelInfo + KernelInfo.entryPointAddr], dx
 
     MOV dx, 0x9000 + bootableStringLen + 4 ; sizeof(long)
-    MOV [kernelInfo + KernelInfo.sizeAddr], dx
+    MOV word [kernelInfo + KernelInfo.sizeAddr], dx
 
     RET
 
@@ -244,6 +243,8 @@ readErrorMsg: db "Disk read failed", 0
 bootloaderEnd equ $
 
 BITS 32
+extern stackTop
+extern startBoot
 
 ; Right now we have no BIOS interrupts so previous functions are useless
 ; Luckily the HDD sector contents are still loaded at the addresses told
@@ -255,8 +256,10 @@ initProtectedMode:
     MOV gs, ax
     MOV ss, ax
 
-    MOV byte [0xB8000], 'A'
-    MOV byte [0xb8001], 0x0F
+    MOV esp, stackTop
+    PUSH kernelInfo ; Genuinely tf?
+    CALL startBoot
+    ADD esp, 4
 
     CLI
 .hlt:
@@ -266,3 +269,5 @@ initProtectedMode:
 %if bootloaderEnd - $$ > 512
     %error "Bootloader is too large!"
 %endif
+
+

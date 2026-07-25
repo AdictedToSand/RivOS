@@ -11,9 +11,10 @@ _start:
     MOV es, ax
 
     MOV [bootdrive], dl
+    MOV sp, 0x7C00
 
     MOV ah, 0x02
-    MOV al, 1
+    MOV al, 4
     MOV ch, 0
     MOV cl, 2
     MOV dh, 0
@@ -21,6 +22,7 @@ _start:
     MOV bx, 0x8000
 
     INT 0x13
+    JC diskError
     MOV dl, [bootdrive]
 
     JMP 0x0000:0x8000
