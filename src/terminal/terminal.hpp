@@ -134,6 +134,7 @@ struct Terminal {
                         case 's': writeStr(va_arg(args, const char*)); break;
                         case 'x': printHex(va_arg(args, unsigned int)); break;
                         case 'c': putChar(va_arg(args, int));
+                        case 'i': printi(va_arg(args, int));
                         default: break;
                     }
 

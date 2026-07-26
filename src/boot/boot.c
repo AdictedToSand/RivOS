@@ -60,15 +60,9 @@ void putc(char c) {
     else 
         term.vga[term.cursor++] = c | term.currentTermColor << 8;
 
-    if (term.cursor > VGA_HEIGHT * VGA_WIDTH) {
+    if (term.cursor >= VGA_HEIGHT * VGA_WIDTH) {
         term.cursor = 0;
     }
-}
-
-// This can't be inlined for some reason?
-// And its a FUCKING linker error?
-void setColor(VgaColor color) {
-    term.currentTermColor = color;
 }
 
 void puts(const char* s) {
@@ -193,20 +187,18 @@ static inline uint8_t vgaEntryColor(VgaColor fg, VgaColor bg) {
 }
 
 void displayMenu(FoundKernel* fkrnl) {
-    int activeOption = 1;
+    int activeOption = 0;
     while (true) {
         terminit(); // Clear the screen
 
-        puts("Welcome to RivBoot\n");
-        puts("An OS was found: ");
+        puts("Welcome to RivBoot\nAn OS was found: ");
         puts(fkrnl->osName);
-        putc('\n');
-        puts("Please select one of the following options: \n");
-        setColor(activeOption == 1 ? vgaEntryColor(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY) : VGA_COLOR_WHITE);
+        puts("\nPlease select one of the following options: \n");
+        term.currentTermColor = (activeOption == 0 ? vgaEntryColor(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY) : VGA_COLOR_WHITE);
         puts("1) boot into "); puts(fkrnl->osName); putc(10);
-        setColor(activeOption == 2 ? vgaEntryColor(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY) : VGA_COLOR_WHITE);
+        term.currentTermColor = (activeOption == 1 ? vgaEntryColor(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY) : VGA_COLOR_WHITE);
         puts("2) reboot\n");
-        setColor(VGA_COLOR_WHITE);
+        term.currentTermColor = VGA_COLOR_WHITE;
 
         char c = getc();
 
@@ -214,24 +206,17 @@ void displayMenu(FoundKernel* fkrnl) {
             break;
         }
 
-        if (c == CHAR_ARRUP) {
-            if (activeOption == 1) activeOption = 2;
-            else activeOption = 1;
-        }
-        if (c == CHAR_ARRDOWN) {
-            if (activeOption == 1) activeOption = 2;
-            else activeOption = 1;
+        if (c == CHAR_ARRUP || c == CHAR_ARRDOWN) {
+            activeOption = !activeOption;
         }
     }
-
+    if (activeOption == 3) {}
     if (activeOption == 2) asm volatile ("UD2");
 }
 
 [[gnu::noreturn]]
 void startBoot(FoundKernel_initial* fkrnel_init) {
     terminit();
-
-    setColor(VGA_COLOR_BLUE);
 
     FoundKernel fkern;
     fkern.entryPoint = *(uint32_t*)(uintptr_t) fkrnel_init->entryPointAddr;

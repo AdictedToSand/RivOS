@@ -64,13 +64,6 @@ puts:
 
     RET
 
-clearscreen:
-    MOV ax, 0x00
-    MOV al, 0x03
-    INT 0x10
-
-    RET
-
 ; Checks if two strings are equal
 ;   Parameters:
 ;       - Si contains a pointer to the first string
@@ -234,7 +227,6 @@ _start:
     XOR ax, ax
     MOV ds, ax
 
-    CALL clearscreen
     CALL findKernel
 
     JMP enterProtectedMode

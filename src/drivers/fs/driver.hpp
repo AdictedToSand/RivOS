@@ -4,6 +4,7 @@
 struct File {
     void* fsData;
     size_t size;
+    bool exists;
 };
 
 // Inherit from this class, make a global instance and call "addCandidate(&instance)" to add the driver as a candidate

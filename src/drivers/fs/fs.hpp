@@ -35,4 +35,10 @@ public:
 
         Terminal::printf("Filesystem driver: %s\n", activeDriver->getDriverName());
     }
+    static auto open(const char* fp) -> File {
+        return activeDriver->open(fp);
+    }
+    static auto read(File f, char* obuf, size_t len) -> FileSystemDriver::SuccessCodes {
+        return activeDriver->read(f, obuf, len);
+    }
 };

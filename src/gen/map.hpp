@@ -1,0 +1,64 @@
+#pragma once
+#include <stddef.h>
+
+#include <gen/err.hpp>
+#include <gen/vec.hpp>
+
+template<typename T1, typename T2>
+struct MapEntry {
+private:
+    T1 t1;
+    T2 t2;
+public:
+    inline auto getv() -> T2& {
+        return t2;
+    }
+
+    inline auto matchesk(T1 in) -> bool {
+        return in == t1;
+    }
+    inline auto setk(T1 n) -> void {
+        t1 = n;
+    }
+    MapEntry(T1 k, T2 v) {
+        t1 = k; t2 = v;
+    }
+};
+
+template<typename KT, typename VT> 
+struct Map {
+private:
+    Vector<MapEntry<KT, VT>> entries;
+
+public:
+    ~Map() = default;
+    Map() = default;
+
+    inline auto size() -> size_t {
+        return entries.size();
+    }
+    
+    auto operator[](KT k) -> VT& {
+        int foundIndex = -1;
+        for (size_t i = 0; i < entries.size(); i++) {
+            MapEntry<KT, VT>& pair = entries[i];
+            if (pair.matchesk(k)) {
+                foundIndex = i;
+                break;
+            }
+        }
+
+        if (foundIndex == -1) {
+            size_t indOfNewItem = entries.size();
+
+            entries.pushBack(MapEntry(k, VT{}));
+            return entries[indOfNewItem].val().getv();
+        }
+
+        return entries[foundIndex].val().getv();
+    }
+};
+
+
+
+
