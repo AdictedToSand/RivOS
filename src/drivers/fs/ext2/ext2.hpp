@@ -96,7 +96,7 @@ struct Ext2 : FileSystemDriver {
         return block * sectorsPerBlock;
     }
 
-    auto open(const char* fp) -> File override {
+    auto open(const char* _fp, bool* _fileExistsObuf) -> File override {
         static constexpr size_t BGDT_ENTRY_SIZE = 32;
         File ret;
 
@@ -121,6 +121,7 @@ struct Ext2 : FileSystemDriver {
                 bgdtStartSector + (offset / Storage::SECTOR_SIZE)
             );
         }
+        (void) _fileExistsObuf; (void) _fp;
 
         KernelAllocator::free(bgdtBuffer);
         return ret;

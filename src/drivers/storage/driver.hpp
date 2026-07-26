@@ -12,10 +12,12 @@ struct StorageDriver {
         return -1;
     }
 
-    virtual SuccessCodes readSector(uint16_t* buf, size_t buflen, size_t sector) {
+    virtual SuccessCodes readSector(uint16_t* _buf, size_t _buflen, size_t _sector) {
+        (void) _buf; (void) _buflen; (void) _sector; // Make compiler happi
         return SuccessCodes::Error;
     }
-    virtual SuccessCodes writeSector(uint16_t* conts, size_t len, size_t sector) {
+    virtual SuccessCodes writeSector(uint16_t* _conts, size_t _len, size_t _sector) {
+        (void) _conts; (void) _len; (void) _sector;
         return SuccessCodes::Error;
     }
 

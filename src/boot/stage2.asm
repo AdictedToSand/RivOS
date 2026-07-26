@@ -1,4 +1,5 @@
 BITS 16
+global _start
 
 ; Otherwise whatever function starting first would just execute
 ; This makes sure _start is always the entry point

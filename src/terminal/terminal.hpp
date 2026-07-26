@@ -133,8 +133,8 @@ struct Terminal {
                         case '%': putChar('%'); break;
                         case 's': writeStr(va_arg(args, const char*)); break;
                         case 'x': printHex(va_arg(args, unsigned int)); break;
-                        case 'c': putChar(va_arg(args, int));
-                        case 'i': printi(va_arg(args, int));
+                        case 'c': putChar(va_arg(args, int)); break;
+                        case 'i': printi(va_arg(args, int)); break; 
                         default: break;
                     }
 

@@ -36,21 +36,12 @@ void kernelMain() {
 
     FileSystem::init();
 
-    File f = FileSystem::open("/bin/hi.txt");
-
-    if (!f.exists) {
-        kpanic("File did not exist");
-    }
+    fd_t fd = FileSystem::open("/bin/hi.txt");
 
     char* buf = (char*) KernelAllocator::alloc(256);
     memset(buf, 0, 256);
-    FileSystem::read(f, buf, 256);
-    Terminal::printf("Conts: %s", buf);
-
-    Map<int, int> map;
-    map[4] = 3;
-
-    Terminal::printf("Sum: %i\n", map[4]);
+    FileSystem::read(fd, buf, 256);
+    Terminal::printf("Conts: '%s'", buf);
 
     for (;;);
 }

@@ -12,7 +12,7 @@ static void kpanic(const char* msg) {
     for (;;);
 }
 
-static void kassrt(bool eval, const char* msg) {
+static inline void kassrt(bool eval, const char* msg) {
     if (!eval) 
         kpanic(msg);
 }
@@ -55,6 +55,7 @@ public:
     };
 
     Expected(ErrorTypes _err) {
+        (void) _err;
         isCorrect = false;
     }
 

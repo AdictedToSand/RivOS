@@ -71,7 +71,7 @@ private:
     }
 
     auto clusterOf(const DirEntry& e) -> uint32_t {
-        return ((uint32_t)e.firstClusterHigh << 16) | e.firstClusterLow;
+        return ((uint32_t) e.firstClusterHigh << 16) | e.firstClusterLow;
     }
     auto isRootPath(const char* fp) -> bool {
         if (fp == nullptr || *fp == '\0') return true;
@@ -87,7 +87,7 @@ private:
         uint16_t buf[256];
         Storage::readSector(buf, 256, fatSector);
 
-        uint32_t entry = *(uint32_t*)((uint8_t*)buf + entryOffsetInSector);
+        uint32_t entry = *(uint32_t*)((uint8_t*) buf + entryOffsetInSector);
         return entry & 0x0FFFFFFF;
     }
 
@@ -138,7 +138,7 @@ private:
         while (true) {
             readCluster(currentCluster, clusterBuf);
 
-            DirEntry* entries = (DirEntry*)clusterBuf;
+            DirEntry* entries = (DirEntry*) clusterBuf;
             uint32_t entriesPerCluster = bytesPerCluster / sizeof(DirEntry);
 
             for (uint32_t i = 0; i < entriesPerCluster; i++) {
@@ -215,10 +215,12 @@ private:
 
 public:
     virtual auto getPriority() -> int override {
-        bootSector = (BootSector*)KernelAllocator::alloc(sizeof(BootSector));
-        if (bootSector == nullptr) return 0;
+        uint16_t* bootSecBuf = (uint16_t*) KernelAllocator::alloc(sizeof(BootSector));
+        if (bootSecBuf == nullptr) return 0;
 
-        Storage::readSector((uint16_t*)bootSector, 256, 0);
+        Storage::readSector(bootSecBuf, 256, 0);
+        bootSector = (BootSector*) bootSecBuf;
+
         return bootSector->signature == 0x28 || bootSector->signature == 0x29;
     }
 
@@ -226,18 +228,19 @@ public:
         dataRegionStart = bootSector->reservedSectors + (bootSector->fatsOnMedia * bootSector->sectorsPerFat32);
     }
 
-    auto open(const char* fp) -> File override {
+    auto open(const char* fp, bool* fileExistsObuf) -> File override {
         File ret{};
         ret.fsData = KernelAllocator::alloc(sizeof(FileData));
         if (ret.fsData == nullptr) return ret;
 
-        FileData* fd = (FileData*)ret.fsData;
+        FileData* fd = (FileData*) ret.fsData;
 
         if (isRootPath(fp)) {
             fd->cluster = bootSector->rootDirClusterNum;
             fd->isDirectory = true;
             ret.exists = true;
             ret.size = 0;
+            *fileExistsObuf = true;
             return ret;
         }
 
@@ -249,6 +252,7 @@ public:
             ret.exists = true;
         }
 
+        *fileExistsObuf = ret.exists;
         return ret;
     }
 
@@ -261,7 +265,7 @@ public:
         if (fd == nullptr || fd->isDirectory) return SuccessCodes::Error;
 
         uint32_t bytesPerCluster = bootSector->bytesPerSector * bootSector->sectorsPerCluster;
-        uint16_t* clusterBuf = (uint16_t*)KernelAllocator::alloc(bytesPerCluster);
+        uint16_t* clusterBuf = (uint16_t*) KernelAllocator::alloc(bytesPerCluster);
         if (clusterBuf == nullptr) return SuccessCodes::Error;
 
         size_t bytesRemaining = len < f.size ? len : f.size;

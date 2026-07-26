@@ -57,6 +57,22 @@ public:
 
         return entries[foundIndex].val().getv();
     }
+
+    auto rmkey(KT k) -> void {
+        int foundIndex = -1;
+
+        for (size_t i = 0; i < entries.size(); i++) {
+            MapEntry<KT, VT> pair = entries[i];
+            if (pair.matchesk(k)) {
+                foundIndex = i;
+                break;
+            }
+        }
+
+        if (foundIndex >= 0) {
+            entries.eraseAt(foundIndex);
+        }
+    }
 };
 
 
