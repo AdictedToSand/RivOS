@@ -210,8 +210,9 @@ void displayMenu(FoundKernel* fkrnl) {
             activeOption = !activeOption;
         }
     }
-    if (activeOption == 3) {}
-    if (activeOption == 2) asm volatile ("UD2");
+    if (activeOption == 1) asm volatile ("UD2");
+    // The UD2 instruction is an (by design) unknown opcode and will trigger a fault.
+    // Since we have NOT set up a proper IDT yet, the CPU will triple fault and thus reboot
 }
 
 [[gnu::noreturn]]
