@@ -4,17 +4,44 @@
 
 #include "bootutils.h"
 
+typedef enum VgaColor {
+    VGA_COLOR_BLACK = 0,
+    VGA_COLOR_BLUE = 1,
+    VGA_COLOR_GREEN = 2,
+    VGA_COLOR_CYAN = 3,
+    VGA_COLOR_RED = 4,
+    VGA_COLOR_MAGENTA = 5,
+    VGA_COLOR_BROWN = 6,
+    VGA_COLOR_LIGHT_GREY = 7,
+    VGA_COLOR_DARK_GREY = 8,
+    VGA_COLOR_LIGHT_BLUE = 9,
+    VGA_COLOR_LIGHT_GREEN = 10,
+    VGA_COLOR_LIGHT_CYAN = 11,
+    VGA_COLOR_LIGHT_RED = 12,
+    VGA_COLOR_LIGHT_MAGENTA = 13,
+    VGA_COLOR_YELLOW = 14,
+    VGA_COLOR_WHITE = 15,
+} VgaColor;
+
 typedef struct Terminal {
     size_t cursor;
     volatile uint16_t* vga;
+    VgaColor currentTermColor;
 } Terminal;
 #define VGA_HEIGHT 25
 #define VGA_WIDTH 80
 
 Terminal term;
 
+void disableCursor(void) {
+    outb(0x3D4, 0x0A);
+    outb(0x3D5, 0x20);
+}
+
 void terminit(void) {
+    disableCursor();
     term.cursor = 0;
+    term.currentTermColor = VGA_COLOR_WHITE;
     term.vga = (volatile uint16_t*) 0xB8000;
 
     for (int x = 0; x < VGA_WIDTH; x++) {
@@ -24,16 +51,24 @@ void terminit(void) {
     }
 }
 
+
+
 void putc(char c) {
     if (c == '\n') {
         term.cursor = (term.cursor / VGA_WIDTH + 1) * VGA_WIDTH;
     }
     else 
-        term.vga[term.cursor++] = c | 0x0F << 8;
+        term.vga[term.cursor++] = c | term.currentTermColor << 8;
 
     if (term.cursor > VGA_HEIGHT * VGA_WIDTH) {
         term.cursor = 0;
     }
+}
+
+// This can't be inlined for some reason?
+// And its a FUCKING linker error?
+void setColor(VgaColor color) {
+    term.currentTermColor = color;
 }
 
 void puts(const char* s) {
@@ -63,6 +98,7 @@ typedef struct [[gnu::packed]] FoundKernel_initial {
     uint16_t sizeAddr;
     uint16_t entryPointAddr;
     uint16_t kernelStartAddr;
+    uint16_t osnameAddr;
 } FoundKernel_initial;
 
 // This is the actual data of a FoundKernel
@@ -72,6 +108,7 @@ typedef struct [[gnu::packed]] FoundKernel {
     uint32_t size;
     uint32_t entryPoint;
     uint32_t kernelStart; // Where the kernel wants to be loaded at
+    char* osName;
 } FoundKernel;
 
 #define SECTOR_SIZE 512
@@ -93,7 +130,6 @@ typedef struct [[gnu::packed]] FoundKernel {
 
 #define ATA_STATUSBSY 0x80
 #define ATA_STATUSDRQ 0x08
-
 
 bool ataReadSector(uint16_t* buf, size_t buflen, size_t sector) {
     outb(ATA_DRIVESELECTPORT, ATA_DRIVESELMASTER | ((sector >> 24) & 0x0F));
@@ -125,9 +161,77 @@ bool ataReadSector(uint16_t* buf, size_t buflen, size_t sector) {
     return true;
 }
 
+#define PS2_DATAPORT 0x60
+#define PS2_STATUSPORT 0x64
+
+#define PS2_NEWLINESC 0x1C
+
+#define PS2_ARROWUP 0x48
+#define PS2_ARROWDOWN  0x50
+
+#define CHAR_ARRDOWN '<'
+#define CHAR_ARRUP '>'
+
+char scancodeToAscii(char sc) {
+    if (sc == PS2_NEWLINESC) return '\n';
+
+    if (sc == PS2_ARROWUP) return CHAR_ARRUP;
+    if (sc == PS2_ARROWDOWN) return CHAR_ARRDOWN;
+
+    return '\0';
+}
+
+char getc(void) {
+    // Wait until output buffer is full (bit 0 set)
+    while (!(inb(PS2_STATUSPORT) & 0x01)) ;
+    uint8_t scancode = inb(PS2_DATAPORT);
+    return scancodeToAscii(scancode); // you'd need a scancode->ascii table
+}
+
+static inline uint8_t vgaEntryColor(VgaColor fg, VgaColor bg) {
+    return fg | (bg << 4);
+}
+
+void displayMenu(FoundKernel* fkrnl) {
+    int activeOption = 1;
+    while (true) {
+        terminit(); // Clear the screen
+
+        puts("Welcome to RivBoot\n");
+        puts("An OS was found: ");
+        puts(fkrnl->osName);
+        putc('\n');
+        puts("Please select one of the following options: \n");
+        setColor(activeOption == 1 ? vgaEntryColor(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY) : VGA_COLOR_WHITE);
+        puts("1) boot into "); puts(fkrnl->osName); putc(10);
+        setColor(activeOption == 2 ? vgaEntryColor(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY) : VGA_COLOR_WHITE);
+        puts("2) reboot\n");
+        setColor(VGA_COLOR_WHITE);
+
+        char c = getc();
+
+        if (c == '\n') {
+            break;
+        }
+
+        if (c == CHAR_ARRUP) {
+            if (activeOption == 1) activeOption = 2;
+            else activeOption = 1;
+        }
+        if (c == CHAR_ARRDOWN) {
+            if (activeOption == 1) activeOption = 2;
+            else activeOption = 1;
+        }
+    }
+
+    if (activeOption == 2) asm volatile ("UD2");
+}
+
 [[gnu::noreturn]]
 void startBoot(FoundKernel_initial* fkrnel_init) {
     terminit();
+
+    setColor(VGA_COLOR_BLUE);
 
     FoundKernel fkern;
     fkern.entryPoint = *(uint32_t*)(uintptr_t) fkrnel_init->entryPointAddr;
@@ -135,6 +239,7 @@ void startBoot(FoundKernel_initial* fkrnel_init) {
     fkern.drive = fkrnel_init->drive;
     fkern.sector = fkrnel_init->sector - 1; // Translates well to ATA_PIO
     fkern.kernelStart = *(uint32_t*)(uintptr_t)  fkrnel_init->kernelStartAddr;
+    fkern.osName = *(char**)(uintptr_t) fkrnel_init->osnameAddr;
 
     const uint32_t kernelSectorCount = ((uint32_t) fkern.size + SECTOR_SIZE - 1) / SECTOR_SIZE;
 
@@ -146,20 +251,10 @@ void startBoot(FoundKernel_initial* fkrnel_init) {
         sectorbuf += 256; // sizeof(sector)
     }
 
+    displayMenu(&fkern);
+
     void (*kernelEntry)(void) = (void (*)(void)) fkern.entryPoint;
     kernelEntry();
 
     __builtin_unreachable();    
 }
-
-
-
-
-
-
-
-
-
-
-
-

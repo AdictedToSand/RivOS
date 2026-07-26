@@ -115,6 +115,7 @@ struc KernelInfo
     .sizeAddr: resw 1 ;
     .entryPointAddr: resw 1 ; Where to look for these variables
     .kernelStartAddr: resw 1
+    .osnameAddr: resw 1
 endstruc
 
 kernelInfo:
@@ -124,6 +125,7 @@ kernelInfo:
         at KernelInfo.sizeAddr, dw 0
         at KernelInfo.entryPointAddr, dw 0
         at KernelInfo.kernelStartAddr, dw 0
+        at KernelInfo.osnameAddr, dw 0 
     iend
 
 findKernel:
@@ -169,6 +171,9 @@ findKernel:
 
     MOV dx, 0x9000 + bootableStringLen + (4 * 2) ; sizeof(long * 2)
     MOV word [kernelInfo + KernelInfo.kernelStartAddr], dx
+
+    ADD dx, 4
+    MOV word [kernelInfo + KernelInfo.osnameAddr], dx
 
     RET
 
@@ -232,10 +237,6 @@ _start:
     CALL clearscreen
     CALL findKernel
 
-    MOV si, kernelFoundMsg
-    MOV bl, 0x04
-    CALL puts
-
     JMP enterProtectedMode
 
 .hlt:
@@ -278,5 +279,3 @@ initProtectedMode:
 %if bootloaderEnd - $$ > 512
     %error "Bootloader is too large!"
 %endif
-
-

@@ -7,7 +7,11 @@ initialMagic:
     .long _start // Tells RivBoot where to jump to
     .long kernelSize // Tells RivBoot how big the kernel is
     .long kernelStart // Tells RivBoot where to start loading the kernel
+    .long osName
     // This value should be > 0x10000
+
+osName: .ascii "RivOS\0"
+
 /*
 The multiboot standard does not define the value of the stack pointer register
 (esp) and it is up to the kernel to provide a stack. This allocates room for a
@@ -20,6 +24,7 @@ System V ABI standard and de-facto extensions. The compiler will assume the
 stack is properly aligned and failure to align the stack will result in
 undefined behavior.
 */
+
 .section .bss
 .align 16
 stack_bottom:
