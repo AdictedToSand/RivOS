@@ -31,6 +31,7 @@ run:
 		-serial stdio
 
 debug: build_dbg
+	clear
 	qemu-system-i386 \
 		-drive file=build/disk.img,format=raw \
 		-drive file=build/rootfs.img,format=raw,if=ide \
