@@ -2,7 +2,6 @@
 .extern kernelStart
 
 .section .header, "a"
-.align 4
 initialMagic: 
     .ascii "BOOTABLE\0" // Magic required for RivBoot to see the kernel
     .long _start // Tells RivBoot where to jump to
