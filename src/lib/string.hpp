@@ -30,3 +30,35 @@ static inline bool streqi(const char* a, const char* b) {
     }
     return *a == *b; // both must hit '\0' at the same time
 }
+
+static inline char* strcpy(char* dest, const char* src) {
+    char* ret = dest;
+
+    while (*src != '\0') {
+        *dest = *src;
+        dest++;
+        src++;
+    }
+
+    *dest = '\0';
+
+    return ret;
+}
+
+static inline char* stradd(char* dest, const char* src) {
+    char* ret = dest;
+
+    while (*dest != '\0') {
+        dest++;
+    }
+
+    while (*src != '\0') {
+        *dest = *src;
+        dest++;
+        src++;
+    }
+
+    *dest = '\0';
+
+    return ret;
+}

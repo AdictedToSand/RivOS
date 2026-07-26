@@ -17,6 +17,8 @@
 #include <drivers/fs/FAT32/fat.hpp>
 #include <drivers/fs/fs.hpp>
 
+#include <str.hpp>
+
 //TODO: some files still use <returnType> fn(...) instd of auto fn(...) -> <returnType>
 extern "C" { // Disable name mangling
 
@@ -42,8 +44,14 @@ void kernelMain() {
     memset(buf, 0, 256);
     FileSystem::read(fd, buf, 256);
     Terminal::printf("Conts: '%s'", buf);
+    
+    Str s = "Hello, world!";
+    s += "AAA";
+    s += 'A';
+    s += "\nhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh\n";
+    Terminal::printf("S=%s", s.toCStr());
 
-    for (;;);
+    for (;;) ;
 }
 
 } // extern "C"
