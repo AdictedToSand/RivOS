@@ -32,7 +32,7 @@ struct AtaPioStorageDriver : StorageDriver {
     }
 
     StorageDriver::SuccessCodes readSector(uint16_t* buf, size_t buflen, size_t sector) override {
-        outb(DRIVE_SELECT_PORT, DRIVE_SELECT_MASTERDRIVE | ((sector >> 24) & 0x0F));
+        outb(DRIVE_SELECT_PORT, DRIVE_SELECT_MASTERDRIVE | ((sector >> 24) & 0xFF));
 
         // ~400ns delay
         // This is recommended.

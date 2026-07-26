@@ -1,4 +1,5 @@
 .extern kernelSize
+.extern kernelStart
 
 .section .header, "a"
 .align 4
@@ -6,6 +7,8 @@ initialMagic:
     .ascii "BOOTABLE\0" // Magic required for RivBoot to see the kernel
     .long _start // Tells RivBoot where to jump to
     .long kernelSize // Tells RivBoot how big the kernel is
+    .long kernelStart // Tells RivBoot where to start loading the kernel
+    // This value should be > 0x10000
 /*
 The multiboot standard does not define the value of the stack pointer register
 (esp) and it is up to the kernel to provide a stack. This allocates room for a
@@ -51,7 +54,7 @@ _start:
 	stack (as it grows downwards on x86 systems). This is necessarily done
 	in assembly as languages such as C cannot function without a stack.
 	*/
-	mov $stack_top, %esp
+	MOV $stack_top, %esp
 
 	/*
 	This is a good place to initialize crucial processor state before the
@@ -72,7 +75,7 @@ _start:
 	stack since (pushed 0 bytes so far), so the alignment has thus been
 	preserved and the call is well defined.
 	*/
-	call kernelMain
+	CALL kernelMain
 
 	/*
 	If the system has nothing more to do, put the computer into an
@@ -86,9 +89,9 @@ _start:
 	3) Jump to the hlt instruction if it ever wakes up due to a
 	   non-maskable interrupt occurring or due to system management mode.
 	*/
-	cli
-1:	hlt
-	jmp 1b
+	CLI
+1:	HLT
+	JMP 1b
 
 /*
 Set the size of the _start symbol to the current location '.' minus its start.

@@ -113,7 +113,8 @@ struc KernelInfo
     .drive: resb 1
     .sector: resw 1
     .sizeAddr: resw 1 ;
-    .entryPointAddr: resw 1 ; Where to look for these variabless
+    .entryPointAddr: resw 1 ; Where to look for these variables
+    .kernelStartAddr: resw 1
 endstruc
 
 kernelInfo:
@@ -122,6 +123,7 @@ kernelInfo:
         at KernelInfo.sector, dw 0
         at KernelInfo.sizeAddr, dw 0
         at KernelInfo.entryPointAddr, dw 0
+        at KernelInfo.kernelStartAddr, dw 0
     iend
 
 findKernel:
@@ -150,6 +152,8 @@ findKernel:
 
     INC cl
 
+    JMP .loop
+
 .kernelFound:
     ; TODO: More comments
     MOV byte [kernelInfo + KernelInfo.drive], 0x80
@@ -160,6 +164,11 @@ findKernel:
 
     MOV dx, 0x9000 + bootableStringLen + 4 ; sizeof(long)
     MOV word [kernelInfo + KernelInfo.sizeAddr], dx
+
+    ; TODO: Remove magic numbers
+
+    MOV dx, 0x9000 + bootableStringLen + (4 * 2) ; sizeof(long * 2)
+    MOV word [kernelInfo + KernelInfo.kernelStartAddr], dx
 
     RET
 

@@ -20,9 +20,9 @@ extern "C" { // Disable name mangling
 void kernelMain() {
     Terminal::init();
 
-    kassrt(Serial::init() == 0, "Unable to initalize serial");
+    Terminal::writeStr("RivBoot worked yay\n");
 
-    Terminal::writeStr("Hello, kernel world!\n");
+    kassrt(Serial::init() == 0, "Unable to initalize serial");
 
     Gdt::init();
     Idt::init();
