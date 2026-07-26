@@ -7,6 +7,9 @@
 
 #include <gen/err.hpp>
 #include <gen/io.hpp>
+#include <string.hpp>
+
+#include <mem/alloc.hpp>
 
 struct AtaPioStorageDriver : StorageDriver {
     static constexpr uint16_t DATA_PORT = 0x1F0;
@@ -27,12 +30,32 @@ struct AtaPioStorageDriver : StorageDriver {
     static constexpr uint8_t  STATUS_BSY = 0x80;
     static constexpr uint8_t  STATUS_DRQ = 0x08;
 
+    uint8_t driveSelect = DRIVE_SELECT_MASTERDRIVE;
+
     int getPriority() override {
         return 1; // Todo: change...
     }
 
+    auto init() -> StorageDriver::SuccessCodes override {
+        uint16_t* buf = (uint16_t*) KernelAllocator::alloc(512);
+
+        readSector(buf, 256, 0);
+        
+        buf += 1; // The first instruction is JMP _start which will be 2 bytes, since we're using a uint16_t 1 increment is needed
+        // Afterwards, if it is the boot code, a "RivBoot" signature will be there
+
+        if (streq((char*) buf, "RivBoot")) {
+            // The drive contains the RivBoot bootcode
+            // It should not contain the filesystem, so we ignore it
+            driveSelect = DRIVE_SELECT_SLAVEDRIVE;
+        }
+
+        KernelAllocator::free(buf);
+        return StorageDriver::SuccessCodes::Sucess;
+    }
+
     StorageDriver::SuccessCodes readSector(uint16_t* buf, size_t buflen, size_t sector) override {
-        outb(DRIVE_SELECT_PORT, DRIVE_SELECT_MASTERDRIVE | ((sector >> 24) & 0xFF));
+        outb(DRIVE_SELECT_PORT, driveSelect | ((sector >> 24) & 0x0F));
 
         // ~400ns delay
         // This is recommended.

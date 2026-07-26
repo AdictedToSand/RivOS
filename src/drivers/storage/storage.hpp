@@ -34,6 +34,8 @@ public:
             }
         }
 
+        winner->init();
+
         Terminal::printf("Storage driver: %s\n", winner->getDriverName());
     }
 

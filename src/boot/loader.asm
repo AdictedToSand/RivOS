@@ -6,6 +6,9 @@ ORG 0x7C00
 
 global _start
 
+JMP _start
+bootsig: db "RivBoot", 0
+
 _start:
     XOR ax, ax
     MOV es, ax
