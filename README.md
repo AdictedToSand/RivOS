@@ -20,7 +20,7 @@ Start the sector with
 "BOOTABLE\0" where \0 is the nullbyte.
 
 After that, a few values should be defined. In order:
-* A long describing the entry point, in memory
+* A long (Here, a long is defined as a little endian 32bit unsigned integer) describing the entry point, in memory
 * A long describing the size of the kernel
 * A long describing the start of the kernel. Not to confuse with the entry point. The start of the kernel is simply the first part of the kernel that should be loaded, and thus not neccesarily the entry point
 * A long containing a pointer to the name of the OS/kernel. In C it would be represented as:
@@ -32,6 +32,26 @@ char** osnamePtr;
 printf("1) boot into %s", *osnamePtr);
 
 ~~~
+
+An example entry could be: 
+
+~~~nasm
+section .header
+
+initialMagic:
+    db "BOOTABLE", 0 ; Magic required for RivBoot to see the kernel
+    dd _start        ; Tells RivBoot where to jump to
+    dd kernelSize    ; Tells RivBoot how big the kernel is
+    dd kernelStart   ; Tells RivBoot where to start loading the kernel
+    ; This value should be > 0x10000
+    ; (Because thats where the bootloader lives)
+    dd osName
+
+osName:
+    db "RivOS", 0
+~~~
+
+This example can be found in this [file](src/boot.asm)
 
 ## Kernel
 
@@ -57,7 +77,7 @@ The dependecies required for RivOS:
 
 * Linux is generally needed for this to work. A lot of tools (like for example dd) are mostly on linux. If you're on windows, try looking into the [Windows subsystem for linux](https://learn.microsoft.com/en-us/windows/wsl/)
 * Make. This can be circumvented by running the commands directly or using a shell script, but that is not recommended.
-* i686-elf-g++ and i686-elf-gcc. It is recommended to use a build helper like yay. To install, run:
+* [i686-elf-g++ and i686-elf-gcc](https://gcc.gnu.org/). It is recommended to use a build helper like yay. To install, run:
 
 ~~~Bash
 yay -S i686-elf-gcc-bin
@@ -65,17 +85,23 @@ yay -S i686-elf-gcc-bin
 
 This will install the specific g++ and gcc cross compilers required on an arch based system. If you use other any other distro, it is worth looking at this [page](https://wiki.osdev.org/GCC_Cross-Compiler)
 
-* Python3. This is required to run the build script [build.py](build.py). To install python3, use:
+* [Python3](https://www.python.org/). This is required to run the build script [build.py](build.py). To install python3, use:
 
 ~~~Bash
 sudo pacman -S python
 ~~~
 (Or whatever the package manager for your distro is)
 
-* Qemu. This is the software used as a virtual machine. It is possible to use other VMs, but  that means having to modify the "run" target in the Makefile or lose a lot of convenience. To install it:
+* [Qemu](https://www.qemu.org/). This is the software used as a virtual machine. It is possible to use other VMs, but  that means having to modify the "run" target in the Makefile or lose a lot of convenience. To install it:
 
 ~~~Bash
 sudo pacman -S qemu
+~~~
+
+* [NASM](https://www.nasm.us/). NASM stands for Netwide ASeMbler, and is used for all .asm files. Install with:
+
+~~~Bash
+sudo pacman -S nasm
 ~~~
 
 Again, you should use the package manager of your distro.
@@ -148,5 +174,5 @@ b startBoot
 c
 ~~~
 
-The initial [bootcode](src/boot/loader.asm) is a raw binary glob in assembly so nothing you can see there.
+The initial [bootcode](src/boot/loader.asm) will be a binary glob in assembly so nothing you can see there.
 

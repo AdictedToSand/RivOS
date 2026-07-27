@@ -10,6 +10,7 @@ initialMagic:
     dd kernelSize    ; Tells RivBoot how big the kernel is
     dd kernelStart   ; Tells RivBoot where to start loading the kernel
     ; This value should be > 0x10000
+    ; (Because thats where the bootloader lives)
     dd osName
 
 osName:
