@@ -65,7 +65,7 @@ void kernelMain() {
     char* buf = (char*) KernelAllocator::alloc(256);
     memset(buf, 0, 256);
     
-    strcpy(buf, "This is a write to stdout");
+    strcpy(buf, "This is a write to stdout\n");
     if (FileSystem::write(stdout, buf, strlen(buf)) == FileSystemDriver::SuccessCodes::Error) {
         kpanic("");
     }

@@ -44,4 +44,7 @@ clean:
 	rm -rf build
 	rm -rf isodir
 
+gdb:
+	gdb build/RivOS -ex "target remote :1234" -ex "add-symbol-file build/stage2.elf 0x8000" -ex "b startBoot" -ex "c" -ex "tui enable"
+
 .PHONY: all build_dbg build_release run debug clean mr

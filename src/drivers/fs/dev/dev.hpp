@@ -85,7 +85,6 @@ public:
         return mappings[((FsData*) f.fsData)->fp]->read(obuf, len);
     }
     auto write(File f, char* obuf, size_t len) -> FileSystemDriver::SuccessCodes override {
-        // We do not get to use Map.exists() as that checks == and not streq
         const char* const fp = (((FsData*) f.fsData)->fp);
         if (!mappings.exists(fp)) return FileSystemDriver::SuccessCodes::Error;
 
@@ -104,13 +103,16 @@ public:
 
         return ret;
     }
-    virtual auto mkdir(const char* fp) -> SuccessCodes override {
+    virtual auto mkdir(const char* _dp) -> SuccessCodes override {
+        (void) _dp;
         return FileSystemDriver::SuccessCodes::Error;
     }
-    auto dirExists(const char* dp) -> bool override {
+    auto dirExists(const char* _dp) -> bool override {
+        (void) _dp;
         return false; // TODO
     }
-    auto fileExists(const char* fp) -> bool override {
+    auto fileExists(const char* _fp) -> bool override {
+        (void) _fp;
         return false; // TODO
     }
     auto getDriverName() -> const char* override {
