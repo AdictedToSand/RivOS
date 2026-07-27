@@ -76,7 +76,7 @@ private:
     }
     static inline auto mountPointMatches(const char* mp, const char* fp) -> bool {
         for (size_t i = 0; i < strlen(mp); i++) {
-            if (strlen(fp) >= strlen(fp) && mp[i] != fp[i]) return false;
+            if (mp[i] != fp[i]) return false;
         }
 
         return true;
@@ -121,16 +121,7 @@ public:
         
         if (fp[0] != '/') return 0;
 
-        size_t i;
-        for (i = 0; i < mountpoints.size(); i++) {
-            auto mp = mountpoints[i];
-            if (mountPointMatches(mp.val()->k, fp)) break;
-
-            if (i == mountpoints.size() - 1) i = -1;
-        }
-        if (i == (size_t) -1) return 0;
-
-        for (i = 0; i < mountpoints.size(); i++) {
+        for (size_t i = 0; i < mountpoints.size(); i++) {
             auto mp = mountpoints[i];
             if (getFolderNestage(mp.val()->k) > lastFolderNestage && mountPointMatches(mp.val()->k, fp)) {
                 lastFolderNestage = getFolderNestage(mp.val()->k);
@@ -146,20 +137,17 @@ public:
         return added.f.exists ? currentFd : 0;
     }
     static auto close(fd_t fd) -> void {
-        if (!fd) return;
         auto f = fdMapping[fd];
 
         f.mp->fsDriver->close(f.f);
         fdMapping.rmkey(fd);
     }
     static auto read(fd_t fd, char* obuf, size_t len) -> FileSystemDriver::SuccessCodes {
-        if (!fd) return FileSystemDriver::SuccessCodes::Error; 
         const auto gf = fdMapping[fd];
 
         return gf.mp->fsDriver->read(gf.f, obuf, len);
     }
     static auto write(fd_t fd, char* conts, size_t len) -> FileSystemDriver::SuccessCodes {
-        if (!fd) return FileSystemDriver::SuccessCodes::Error;
         const auto gf = fdMapping[fd];
 
         return gf.mp->fsDriver->write(gf.f, conts, len);
