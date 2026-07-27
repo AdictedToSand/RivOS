@@ -1,7 +1,7 @@
 #pragma once
 #include <gen/serial.hpp>
 
-#include <string.hpp>
+#include <cstring.hpp>
 
 #include <stddef.h>
 #include <stdint.h>

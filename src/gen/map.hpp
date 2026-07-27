@@ -13,6 +13,9 @@ public:
     inline auto getv() -> T2& {
         return t2;
     }
+    inline auto getk() -> T1& {
+        return t1;
+    }
 
     inline auto matchesk(T1 in) -> bool {
         return in == t1;
@@ -73,8 +76,11 @@ public:
             entries.eraseAt(foundIndex);
         }
     }
+
+    auto begin() -> MapEntry<KT, VT>* { return entries.begin(); }
+    auto end() -> MapEntry<KT, VT>* { return entries.end(); }
+
+    auto begin() const -> const MapEntry<KT, VT>* { return entries.begin(); }
+    auto end() const -> const MapEntry<KT, VT>* { return entries.end(); }
+
 };
-
-
-
-

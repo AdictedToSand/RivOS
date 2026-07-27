@@ -1,5 +1,6 @@
 #pragma once
 #include <drivers/fs/driver.hpp>
+#include <drivers/fs/mountpoint.hpp>
 #include <drivers/storage/storage.hpp>
 
 #include <mem/alloc.hpp>
@@ -137,3 +138,14 @@ struct Ext2 : FileSystemDriver {
 };
 
 static inline Ext2 ext2fs;
+
+struct Ext2MountPointRoot : MountPoint {
+    auto shouldActivate() -> bool override {
+        return fsDriver->getPriority();
+    }
+    Ext2MountPointRoot() {
+        fsDriver = &ext2fs;
+    }
+};
+
+static inline Ext2MountPointRoot Ext2RootMp;

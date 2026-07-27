@@ -1,13 +1,9 @@
 #pragma once
+#include <drivers/fs/file.hpp>
+
 #include <stddef.h>
 
-struct File {
-    void* fsData;
-    size_t size;
-    bool exists;
-};
-
-// Inherit from this class, make a global instance and call "addCandidate(&instance)" to add the driver as a candidate
+// Inherit from this class if you want to make a driver 
 struct FileSystemDriver {
     enum class SuccessCodes {
         Sucess,
@@ -52,11 +48,9 @@ struct FileSystemDriver {
     }
 
     virtual auto getDriverName() -> const char* {
-        return ";";
+        return "RivOS base driver";
     }
     virtual auto free() -> void {
 
     }
 };
-
-static inline FileSystemDriver defaultFsDriver;

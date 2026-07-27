@@ -1,4 +1,5 @@
 #pragma once
+#include <drivers/fs/mountpoint.hpp>
 #include <drivers/fs/driver.hpp>
 #include <drivers/storage/storage.hpp>
 
@@ -298,3 +299,14 @@ public:
 };
 
 static inline Fat32 fat32Fs;
+
+struct Fat32RootMountPoint : MountPoint {
+    Fat32RootMountPoint() {
+        fsDriver = &fat32Fs;
+    }
+    auto shouldActivate() -> bool override {
+        return fsDriver->getPriority();
+    }
+};
+
+static inline Fat32RootMountPoint fat32Root;

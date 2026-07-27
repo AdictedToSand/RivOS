@@ -7,7 +7,7 @@
 
 #include <gen/err.hpp>
 #include <gen/io.hpp>
-#include <string.hpp>
+#include <cstring.hpp>
 
 #include <mem/alloc.hpp>
 

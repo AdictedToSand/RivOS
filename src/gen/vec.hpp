@@ -55,10 +55,10 @@ public:
         if (len != 0)
             len--;
     }
-    auto eraseAt(int ind) -> void {
+    auto eraseAt(size_t ind) -> void {
         if (ind >= len) return;
 
-        for (int i = ind; i < len; i++) {
+        for (size_t i = ind; i < len; i++) {
             arr[i] = arr[i + 1];
         }
 

@@ -1,9 +1,10 @@
 #pragma once
 #include <stddef.h>
 
+#include <mem/utils.hpp>
 #include <mem/alloc.hpp>
 
-#include <string.hpp>
+#include <cstring.hpp>
 
 struct Str {
 private:
@@ -12,6 +13,14 @@ private:
     size_t capacity;
     static constexpr size_t MINIMUM_STR_SIZE = 5;
 public:
+    Str() {
+        cStr = (char*) KernelAllocator::alloc(MINIMUM_STR_SIZE);
+
+        len = 0;
+        capacity = MINIMUM_STR_SIZE;
+
+        memset(cStr, 0, 5);
+    }
     Str(const char* s) {
         const size_t allocSize = (strlen(s) > MINIMUM_STR_SIZE ? strlen(s) + MINIMUM_STR_SIZE : MINIMUM_STR_SIZE);
         cStr = (char*) KernelAllocator::alloc(allocSize);
@@ -64,6 +73,4 @@ public:
     inline auto pushBack(const char c) -> void {
         *this += c; // Use the operator+= alr defined
     }
-
-    //TODO: popBack and eraseAt
 };
