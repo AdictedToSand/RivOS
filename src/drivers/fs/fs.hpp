@@ -1,4 +1,5 @@
 #pragma once
+#include "drivers/fs/file.hpp"
 #include <drivers/fs/ext2/ext2.hpp>
 #include <drivers/fs/FAT32/fat.hpp>
 #include <drivers/fs/dev/dev.hpp>
@@ -139,8 +140,13 @@ public:
         fdMapping.rmkey(fd);
     }
     static auto read(fd_t fd, char* obuf, size_t len) -> FileSystemDriver::SuccessCodes {
-        const auto f = fdMapping[fd];
+        const auto gf = fdMapping[fd];
 
-        return f.mp->fsDriver->read(f.f, obuf, len);
+        return gf.mp->fsDriver->read(gf.f, obuf, len);
+    }
+    static auto write(fd_t fd, char* conts, size_t len) -> FileSystemDriver::SuccessCodes {
+        const auto gf = fdMapping[fd];
+
+        return gf.mp->fsDriver->write(gf.f, conts, len);
     }
 };

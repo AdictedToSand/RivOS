@@ -4,75 +4,103 @@
 
 #include <terminal/terminal.hpp>
 
-/*struct FileSystemDriver {
-    enum class SuccessCodes {
-        Sucess,
-        Error,
-    };
+#include <gen/map.hpp>
 
-    virtual auto init() -> void {
-        // Do nothing
-    }
+#include <mem/alloc.hpp>
+#include <mem/utils.hpp>
 
-    virtual auto getPriority() -> int {
-        return 0;
-    }
+#include <cstring.hpp>
 
-    virtual auto open(const char* _fp, bool* _obufFileExists) -> File {
-        (void) _fp; (void) _obufFileExists;
-        return {};
-    }
+struct DevSubDriver {
+    virtual auto read(char* obuf, size_t len) -> FileSystemDriver::SuccessCodes = 0;
+    virtual auto write(const char* conts, size_t len) -> FileSystemDriver::SuccessCodes = 0;
+    virtual auto init() -> void = 0;
+};
 
-    virtual auto write(File _f, char* _conts, size_t _len) -> SuccessCodes {
-        (void) _f; (void) _conts; (void) _len;
-        return SuccessCodes::Error;
-    }
-    virtual auto read(File _f, char* _out, size_t _len) -> SuccessCodes {
-        (void) _f; (void) _out; (void) _len;
-        return SuccessCodes::Error;
-    }
-    virtual auto close(File _f) -> void {
-        (void) _f; // Reduce warnings
-    }
-    virtual auto mkdir(const char* _fp) -> SuccessCodes {
-        (void) _fp;
-        return SuccessCodes::Error;
-    }
-    virtual auto dirExists(const char* _fp) -> bool {
-        (void) _fp;
-        return false;
-    }
-    virtual auto fileExists(const char* _fp) -> bool {
-        (void) _fp;
-        return false;
-    }
+struct StdoutDevSubDriver : DevSubDriver {
+    char stdout[4096];
 
-    virtual auto getDriverName() -> const char* {
-        return "RivOS base driver";
+    auto init() -> void override {
+        Terminal::printf("I was called yay\n");
+        memset(stdout, 0, 4096);
     }
-    virtual auto free() -> void {
+    auto read(char* const obuf, const size_t len) -> FileSystemDriver::SuccessCodes override {
+        for (size_t i = 0; i < len; i++) obuf[i] = stdout[i];
 
+        return FileSystemDriver::SuccessCodes::Sucess;
     }
-*/
+    auto write(const char* conts, size_t len) -> FileSystemDriver::SuccessCodes override {
+        for (size_t i = 0; i < len; i++) stdout[i] = conts[i];
+        
+        Terminal::write(conts, len);
+
+        return FileSystemDriver::SuccessCodes::Sucess;
+    }
+};
+
+struct StrOperatorEquals {
+    const char* conts;
+    auto operator==(const char* lhs) const {
+        return streq(conts, lhs);
+    }
+    inline operator const char*() const  {
+        return conts;
+    }
+    StrOperatorEquals(const char* s) { conts = s; }
+    StrOperatorEquals() { conts = nullptr; }
+}; // Do not ask
+
+static inline StdoutDevSubDriver stdoutDriver;
 
 struct DevMpDriver : FileSystemDriver {
-    virtual auto init() -> void override {
+private:
+    static inline Map<StrOperatorEquals, DevSubDriver*> mappings;
+    static inline bool generalBool;
 
+    struct FsData {
+        char* fp;
+    };
+public:
+
+    virtual auto init() -> void override {
+        mappings["stdout"] = &stdoutDriver;
+
+        for (auto& kv : mappings) {
+            kv.getv()->init();
+        }
     }
     virtual auto getPriority() -> int override {
         return 1;
     }
 
     auto close(File f) -> void override {
-        
+        KernelAllocator::free(((FsData*) f.fsData)->fp);
+        KernelAllocator::free(f.fsData);
+    }
+    auto read(File f, char* obuf, size_t len) -> FileSystemDriver::SuccessCodes override {
+        if (!mappings.exists(((FsData*) f.fsData)->fp)) {
+            return FileSystemDriver::SuccessCodes::Error;
+        }
+
+        return mappings[((FsData*) f.fsData)->fp]->read(obuf, len);
+    }
+    auto write(File f, char* obuf, size_t len) -> FileSystemDriver::SuccessCodes override {
+        // We do not get to use Map.exists() as that checks == and not streq
+        const char* const fp = (((FsData*) f.fsData)->fp);
+        if (!mappings.exists(fp)) return FileSystemDriver::SuccessCodes::Error;
+
+        return mappings[fp]->write(obuf, len);
     }
     auto open(const char* fp, bool* obufFileExists) -> File override {
         *obufFileExists = true; // TODO
 
-        Terminal::printf("Gotcha bitches\n");
+        fp += strlen("/dev/");
 
         File ret;
         ret.size = 0;
+        ret.fsData = KernelAllocator::alloc(sizeof(FsData));
+        ((FsData*) ret.fsData)->fp = (char*) KernelAllocator::alloc(strlen(fp) + 1);
+        strcpy(((FsData*) ret.fsData)->fp, fp);
 
         return ret;
     }
@@ -86,7 +114,7 @@ struct DevMpDriver : FileSystemDriver {
         return false; // TODO
     }
     auto getDriverName() -> const char* override {
-        return "RivOSFS_DeviceDriver";
+        return "RivOSFs_DeviceDriver";
     }
 };
 

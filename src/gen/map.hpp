@@ -65,7 +65,7 @@ public:
         int foundIndex = -1;
 
         for (size_t i = 0; i < entries.size(); i++) {
-            MapEntry<KT, VT> pair = entries[i];
+            MapEntry<KT, VT>& pair = entries[i];
             if (pair.matchesk(k)) {
                 foundIndex = i;
                 break;
@@ -75,6 +75,15 @@ public:
         if (foundIndex >= 0) {
             entries.eraseAt(foundIndex);
         }
+    }
+    auto exists(KT k) -> bool {
+        for (MapEntry<KT, VT>& p : entries) {
+            if (p.getk() == k) return true;
+        }
+        return false;
+    }
+    auto indraw(size_t ind) -> MapEntry<KT, VT>& {
+        return entries[ind];
     }
 
     auto begin() -> MapEntry<KT, VT>* { return entries.begin(); }

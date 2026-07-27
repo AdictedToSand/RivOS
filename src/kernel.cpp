@@ -1,3 +1,4 @@
+#include "drivers/fs/driver.hpp"
 #include <terminal/terminal.hpp>
 
 #include <gen/err.hpp>
@@ -59,11 +60,18 @@ void kernelMain() {
 
     FileSystem::init();
 
-    fd_t fd = FileSystem::open("/bin/hi.txt");
+    fd_t stdout = FileSystem::open("/dev/stdout");
 
     char* buf = (char*) KernelAllocator::alloc(256);
     memset(buf, 0, 256);
-    FileSystem::read(fd, buf, 256);
+    
+    strcpy(buf, "This is a write to stdout");
+    if (FileSystem::write(stdout, buf, strlen(buf)) == FileSystemDriver::SuccessCodes::Error) {
+        kpanic("");
+    }
+
+    memset(buf, 0, 256);
+    FileSystem::read(stdout, buf, 256);
     Terminal::printf("Conts: '%s'", buf);
     
     for (;;) ;
