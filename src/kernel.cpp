@@ -66,12 +66,6 @@ void kernelMain() {
     FileSystem::read(fd, buf, 256);
     Terminal::printf("Conts: '%s'", buf);
     
-    Str s = "Hello, world!";
-    s += "AAA";
-    s += 'B';
-    s += s;
-    Terminal::printf("S=%s", s.toCStr());
-
     for (;;) ;
 }
 

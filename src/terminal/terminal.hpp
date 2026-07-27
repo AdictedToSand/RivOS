@@ -115,8 +115,17 @@ struct Terminal {
       
         write("0x", 2);
 
-        for (int i = (sizeof(unsigned int) * 8) - 4; i >= 0; i -= sizeof(unsigned int)) {
+        for (int i = (sizeof(unsigned int) * 8) - 4; i >= 0; i -= 4) {
             putChar(hexChars[(n >> i) & 0x0F]);
+        }
+    }
+    static auto printPtr(void* ptr) {
+        const char hexChars[] = "0123456789ABCDEF";
+
+        write("0x", 2);
+
+        for (int i = (sizeof(void*) * 8) - 4; i >= 0; i -= 4) {
+            putChar(hexChars[((uintptr_t) ptr >> i) & 0x0F]);
         }
     }
 
@@ -135,6 +144,7 @@ struct Terminal {
                         case 'x': printHex(va_arg(args, unsigned int)); break;
                         case 'c': putChar(va_arg(args, int)); break;
                         case 'i': printi(va_arg(args, int)); break; 
+                        case 'p': printPtr(va_arg(args, void*)); break;
                         default: break;
                     }
 

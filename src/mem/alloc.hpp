@@ -4,7 +4,7 @@
 extern "C" char heapStart[];
 extern "C" char heapEnd[];
 
-struct [[gnu::packed ]] /* Maximise heap size */ HeapBlock {
+struct [[gnu::packed]] /* Maximise heap size */ HeapBlock {
     size_t size;
     bool inUse;
 
@@ -27,6 +27,7 @@ struct KernelAllocator {
 
         while (true) {
             if (!currentBlock->inUse && currentBlock->size >= bytes) {
+                currentBlock->inUse = true;
                 return currentBlock + 1;
             }
             if (currentBlock->next == nullptr) {

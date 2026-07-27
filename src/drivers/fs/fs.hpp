@@ -1,6 +1,7 @@
 #pragma once
 #include <drivers/fs/ext2/ext2.hpp>
 #include <drivers/fs/FAT32/fat.hpp>
+#include <drivers/fs/dev/dev.hpp>
 #include <drivers/fs/driver.hpp>
 #include <drivers/fs/mountpoint.hpp>
 
@@ -10,10 +11,12 @@
 #include <cstring.hpp>
 #include <str.hpp>
 
+#include <mem/alloc.hpp>
+
 typedef int fd_t;
 
 struct MountPointCandidate {
-    const char* mp;
+    const char* mp = "";
     MountPoint* conts;
 
     inline auto shouldActivate() -> bool {
@@ -25,12 +28,13 @@ struct MountPointCandidate {
 };
 
 static inline MountPointCandidate ext2Candidate = {
-    .mp = "/",
     .conts = &Ext2RootMp,
 };
 static inline MountPointCandidate fat32Candidate = {
-    .mp = "/",
     .conts = &fat32Root,
+};
+static inline MountPointCandidate devCandidate = {
+    .conts = &devMp,
 };
 
 struct GlobalFile {
@@ -48,7 +52,14 @@ private:
     static inline Vector<MountPointCandidate*> mpCandidates;
     static inline Vector<MountPointEntry*> mountpoints;
 
+    // An mp command should be permanent and never leave scope
+    // (
+    //      Good: registerMountpoint("/", drv);
+    //      Bad: char mp[] = "/"; registerMountpoint(mp, drv); 
+    // )
+    // Because mp is a stack variable and will leave scope and become garbage!
     static inline auto registerMountpoint(const char* mp, MountPointCandidate* drv) -> void {
+        drv->mp = mp;
         mpCandidates.pushBack(drv);
     }
 
@@ -72,23 +83,21 @@ private:
 
 public:
     static auto init() -> void {
-        fdMapping = Map<fd_t, GlobalFile>();
-        mpCandidates = Vector<MountPointCandidate*>();
-        
         registerMountpoint("/", &ext2Candidate);
+        registerMountpoint("/dev/", &devCandidate);
         registerMountpoint("/", &fat32Candidate);
 
+        size_t i = 0;
         for (auto mp : mpCandidates) {
             if (mp->shouldActivate()) {
-                Terminal::printf("Driver won: %s for mp: %s\n", mp->conts->fsDriver->getDriverName(), mp->mp);
                 MountPointEntry* entry = (MountPointEntry*) KernelAllocator::alloc(sizeof(MountPointEntry));
-                entry->k = (char*) KernelAllocator::alloc(strlen(mp->mp));
+                entry->k = (char*) KernelAllocator::alloc(strlen(mp->mp) + 1);
                 memset(entry->k, 0, strlen(mp->mp));
                 strcpy(entry->k, mp->mp);
                 entry->v = mp->getmp();
                 mountpoints.pushBack(entry);
-                mp->getmp()->init();
             }
+            i++;
         }
 
         for (auto& kv : mountpoints) {
