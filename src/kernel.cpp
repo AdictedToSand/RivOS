@@ -1,4 +1,3 @@
-#include "drivers/fs/driver.hpp"
 #include <terminal/terminal.hpp>
 
 #include <gen/err.hpp>
@@ -8,6 +7,7 @@
 
 #include <sys/IDT/idt.hpp>
 #include <sys/GDT/gdt.hpp>
+#include <sys/APIC/apic.hpp>
 
 #include <mem/alloc.hpp>
 #include <mem/utils.hpp>
@@ -59,20 +59,13 @@ void kernelMain() {
     Storage::init();
 
     FileSystem::init();
-
-    fd_t stdout = FileSystem::open("/dev/stdout");
-
-    char* buf = (char*) KernelAllocator::alloc(256);
-    memset(buf, 0, 256);
     
-    strcpy(buf, "This is a write to stdout\n");
-    if (FileSystem::write(stdout, buf, strlen(buf)) == FileSystemDriver::SuccessCodes::Error) {
+    if (!Apic::checkApic()) {
+        kpanic("A required module was missing: APIC");
     }
-
-    memset(buf, 0, 256);
-    FileSystem::read(stdout, buf, 256);
-    Terminal::printf("Conts: '%s'", buf);
-    
+    Apic::init();
+   
+    Terminal::printf("End of kernel");
     for (;;) ;
 }
 
