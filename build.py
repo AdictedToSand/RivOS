@@ -4,6 +4,7 @@ import sys
 
 CPPFLAGS = [
     "-ffreestanding",
+    "-Wno-pedantic",
     "-Wall",
     "-Wextra",
     "-fno-exceptions",

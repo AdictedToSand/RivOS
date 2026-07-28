@@ -3,10 +3,25 @@ BITS 32
 
 extern exceptionHandler
 
+section .text
+
+struc InterruptFrame
+    .vector: resd 1
+endstruc
+
+ifrm:
+    istruc InterruptFrame
+        at InterruptFrame.vector, dd 0
+    iend
+
 %macro isr_err_stub 1
 isr_stub_%+%1:
+    MOV dword [ifrm + InterruptFrame.vector], %1
+
     PUSHA
+    PUSH ifrm ; fuckass ABI
     CALL exceptionHandler
+    POP edi
     POPA
     ADD esp, 4
     IRET
@@ -14,8 +29,12 @@ isr_stub_%+%1:
 
 %macro isr_no_err_stub 1
 isr_stub_%+%1:
+    mov dword [ifrm + InterruptFrame.vector], %1
+
     PUSHA
+    PUSH ifrm
     CALL exceptionHandler
+    POP edi
     POPA
     IRET
 %endmacro
@@ -52,6 +71,8 @@ isr_no_err_stub 28
 isr_no_err_stub 29
 isr_err_stub    30
 isr_no_err_stub 31
+
+isr_no_err_stub 0x80
 
 global isr_stub_table
 isr_stub_table:

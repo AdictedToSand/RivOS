@@ -4,6 +4,7 @@
 #include <gen/serial.hpp>
 #include <gen/vec.hpp>
 #include <gen/map.hpp>
+#include <gen//reboot.hpp>
 
 #include <sys/IDT/idt.hpp>
 #include <sys/GDT/gdt.hpp>
@@ -42,8 +43,10 @@ void callGlobalConstructors() {
 //TODO: some files still use <returnType> fn(...) instd of auto fn(...) -> <returnType>
 extern "C" { // Disable name mangling
 
-void kernelMain() {
+auto kernelMain() -> void {
     Terminal::init();
+
+    ioInit();
 
     Terminal::writeStr("RivBoot worked yay\n");
 
@@ -59,7 +62,7 @@ void kernelMain() {
     Storage::init();
 
     FileSystem::init();
-    
+
     if (!Apic::checkApic()) {
         kpanic("A required module was missing: APIC");
     }

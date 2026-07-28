@@ -8,10 +8,19 @@
 #include <stdint.h>
 
 // Credits: https://wiki.osdev.org/Interrupts_Tutorial
-//
+
+/*
+struc InterruptFrame
+    .vector: resd 1
+endstruc*/
+
+struct [[gnu::packed]] InterruptFrame {
+    uint32_t vector;
+};
+
 extern "C" {
     // Disable name mangling
-    void exceptionHandler(void); // Must be defined in a .cpp due to static linking shit
+    void exceptionHandler(InterruptFrame* ifrm); // Must be defined in a .cpp due to static linking shit
 }
 
 struct [[gnu::packed]] IdtEntry {
@@ -54,6 +63,7 @@ struct Idt {
             setDescriptor(vector, isr_stub_table[vector], 0x8E);
             vectors[vector] = true;
         }
+        setDescriptor(0x80, isr_stub_table[0x80], 0x8E);
 
         __asm__ volatile ("lidt %0" : : "m"(idtr)); // load the new IDT
         //__asm__ volatile ("sti"); // set the interrupt flag
