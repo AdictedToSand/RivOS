@@ -91,7 +91,7 @@ public:
         return mappings[fp]->write(obuf, len);
     }
     auto open(const char* fp, bool* obufFileExists) -> File override {
-        *obufFileExists = true; // TODO
+        *obufFileExists = mappings.exists(fp);
 
         fp += strlen("/dev/");
 
@@ -103,17 +103,15 @@ public:
 
         return ret;
     }
-    virtual auto mkdir(const char* _dp) -> SuccessCodes override {
-        (void) _dp;
+    virtual auto mkdir(const char* fp) -> SuccessCodes override {
+        (void) fp;
         return FileSystemDriver::SuccessCodes::Error;
     }
-    auto dirExists(const char* _dp) -> bool override {
-        (void) _dp;
-        return false; // TODO
+    auto dirExists(const char* fp) -> bool override {
+        return mappings.exists(fp);
     }
-    auto fileExists(const char* _fp) -> bool override {
-        (void) _fp;
-        return false; // TODO
+    auto fileExists(const char* fp) -> bool override {
+        return mappings.exists(fp);
     }
     auto getDriverName() -> const char* override {
         return "RivOSFs_DeviceDriver";

@@ -165,3 +165,5 @@ public:
         return gf.mp->fsDriver->write(gf.f, conts, len);
     }
 };
+
+using FsSuccessCodes = FileSystemDriver::SuccessCodes;
