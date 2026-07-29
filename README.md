@@ -4,7 +4,7 @@ RivOS is an operating system designed for the x86 CPU architecture. It features 
 
 ## Bootloader
 
-RivOS features a custom bootloader, which looks like this 
+RivOS features a custom bootloader (RivBoot), which looks like this 
 
 ![ Image of bootloader ][def]
 
@@ -12,18 +12,9 @@ RivOS features a custom bootloader, which looks like this
 
 The bootloader only supports one kernel entry.
 
-### Protocol
+### RivBoot Protocol
 
-The protocol for RivBoot is quite simple. You need to define a few stuff. How to make a kernel entry in RivBoot
-
-Start the sector with
-"BOOTABLE\0" where \0 is the nullbyte.
-
-After that, a few values should be defined. In order:
-* A long (Here, a long is defined as a little endian 32bit unsigned integer) describing the entry point, in memory
-* A long describing the size of the kernel
-* A long describing the start of the kernel. Not to confuse with the entry point. The start of the kernel is simply the first part of the kernel that should be loaded, and thus not neccesarily the entry point
-* A long containing a pointer to the name of the OS/kernel. In C it would be represented as:
+For further information into the RivBoot protocol look at the documentation [here](docs/RivBoot.md)
 
 ~~~C
 

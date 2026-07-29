@@ -7,6 +7,7 @@ prepare_disk:
 	$(eval STAGE2_SIZE := $(shell stat -c%s build/stage2))
 	$(eval STAGE2_SECTORS := $(shell echo $$(( ($(STAGE2_SIZE) + 511) / 512 )) ))
 	$(eval KERNEL_SEEK := $(shell echo $$((1 + $(STAGE2_SECTORS))) ))
+	echo "$(KERNEL_SEEK)"
 	dd if=build/kernel.bin of=build/disk.img bs=512 seek=$(KERNEL_SEEK) conv=notrunc
 	dd if=/dev/zero of=build/rootfs.img bs=1M count=64
 	mkfs.fat -F 32 build/rootfs.img

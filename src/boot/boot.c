@@ -86,17 +86,21 @@ void printi(long n) {
 
 // This struct is the inital struct send over by stage2.asm 
 // This exists because the kernel is found in real mode, so we can not transfer 32bit values
-typedef struct [[gnu::packed]] FoundKernel_initial {
+typedef struct [[gnu::packed]] FoundKernel_Initial {
+    uint16_t versionAddr;
     uint8_t drive;
     uint16_t sector;
     uint16_t sizeAddr;
     uint16_t entryPointAddr;
     uint16_t kernelStartAddr;
     uint16_t osnameAddr;
-} FoundKernel_initial;
+} FoundKernel_Initial;
 
 // This is the actual data of a FoundKernel
+
 typedef struct [[gnu::packed]] FoundKernel {
+    uint16_t versionMajor;
+    uint16_t versionMinor;
     uint8_t drive;
     uint16_t sector;
     uint32_t size;
@@ -190,9 +194,13 @@ void displayMenu(FoundKernel* fkrnl) {
     int activeOption = 0;
     while (true) {
         terminit(); // Clear the screen
-
+       
         puts("Welcome to RivBoot\nAn OS was found: ");
         puts(fkrnl->osName);
+        puts("\nUsing RivBoot version ");
+        printi(fkrnl->versionMajor);
+        putc('.');
+        printi(fkrnl->versionMinor);
         puts("\nPlease select one of the following options: \n");
         term.currentTermColor = (activeOption == 0 ? vgaEntryColor(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY) : VGA_COLOR_WHITE);
         puts("1) boot into "); puts(fkrnl->osName); putc(10);
@@ -216,16 +224,46 @@ void displayMenu(FoundKernel* fkrnl) {
 }
 
 [[gnu::noreturn]]
-void startBoot(FoundKernel_initial* fkrnel_init) {
+void startBoot(FoundKernel_Initial* fkrnel_init) {
     terminit();
 
     FoundKernel fkern;
+
+    const uint32_t* const versionAddr = ((uint32_t*)(uintptr_t) fkrnel_init->versionAddr);
+    union {
+        uint32_t full;
+        uint16_t majorAndMinor[2];
+    } versionUnion;
+    versionUnion.full = *versionAddr;
+    fkern.versionMajor = versionUnion.majorAndMinor[1];
+    fkern.versionMinor = versionUnion.majorAndMinor[0];
+
+    if (versionUnion.full == 0) {
+        puts("Invalid version found in OS\n. Please reboot the PC. Any keypress to reboot: ");
+        getc();
+        asm volatile ("UD2");
+    }
+
     fkern.entryPoint = *(uint32_t*)(uintptr_t) fkrnel_init->entryPointAddr;
     fkern.size = *(uint32_t*)(uintptr_t) fkrnel_init->sizeAddr;
     fkern.drive = fkrnel_init->drive;
     fkern.sector = fkrnel_init->sector - 1; // Translates well to ATA_PIO
     fkern.kernelStart = *(uint32_t*)(uintptr_t)  fkrnel_init->kernelStartAddr;
     fkern.osName = *(char**)(uintptr_t) fkrnel_init->osnameAddr;
+
+    puts("Initial info dump: \nEntryPoint: ");
+    printi((int) fkern.entryPoint);
+    puts("\nKernelSize: ");
+    printi(fkern.size);
+    puts("\nDrive: ");
+    printi(fkern.drive);
+    puts("\nSector: ");
+    printi(fkern.sector);
+    puts("\nStartOfKernel: ");
+    printi(fkern.kernelStart);
+    term.currentTermColor = VGA_COLOR_RED;
+    puts("\nIf you see this message no valid OS was found.");
+    term.currentTermColor = VGA_COLOR_WHITE;
 
     const uint32_t kernelSectorCount = ((uint32_t) fkern.size + SECTOR_SIZE - 1) / SECTOR_SIZE;
 

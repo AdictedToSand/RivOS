@@ -8,7 +8,6 @@
 
 #include <sys/IDT/idt.hpp>
 #include <sys/GDT/gdt.hpp>
-#include <sys/APIC/apic.hpp>
 
 #include <mem/alloc.hpp>
 #include <mem/utils.hpp>
@@ -20,11 +19,6 @@
 #include <drivers/fs/fs.hpp>
 
 #include <str.hpp>
-
-/*
-extern "C" void _init_array_start();
-extern "C" void _init_array_end();
-*/
 
 typedef void (*ctor_t)();
 
@@ -63,11 +57,6 @@ auto kernelMain() -> void {
 
     FileSystem::init();
 
-    if (!Apic::checkApic()) {
-        kpanic("A required module was missing: APIC");
-    }
-    Apic::init();
-   
     Terminal::printf("End of kernel");
     for (;;) ;
 }

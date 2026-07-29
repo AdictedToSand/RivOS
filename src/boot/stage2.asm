@@ -104,6 +104,7 @@ streq:
 ;       Assume each register is clobbered
 ;       
 struc KernelInfo
+    .versionAddr resw 1
     .drive: resb 1
     .sector: resw 1
     .sizeAddr: resw 1 ;
@@ -114,6 +115,7 @@ endstruc
 
 kernelInfo:
     istruc KernelInfo
+        at KernelInfo.versionAddr, dw 0
         at KernelInfo.drive, db 0
         at KernelInfo.sector, dw 0
         at KernelInfo.sizeAddr, dw 0
@@ -126,6 +128,7 @@ findKernel:
     MOV cl, 0x02
 
 .loop:
+    ; Clear ax and es
     XOR ax, ax
     MOV es, ax
 
@@ -151,19 +154,18 @@ findKernel:
     JMP .loop
 
 .kernelFound:
-    ; TODO: More comments
-    MOV byte [kernelInfo + KernelInfo.drive], 0x80
-    MOV word [kernelInfo + KernelInfo.sector], cx
-    
     MOV dx, 0x9000 + bootableStringLen
+    MOV word [kernelInfo + KernelInfo.versionAddr], dx
+
+    MOV word [kernelInfo + KernelInfo.sector], cx
+
+    ADD dx, 4
     MOV word [kernelInfo + KernelInfo.entryPointAddr], dx
 
-    MOV dx, 0x9000 + bootableStringLen + 4 ; sizeof(long)
+    ADD dx, 4
     MOV word [kernelInfo + KernelInfo.sizeAddr], dx
 
-    ; TODO: Remove magic numbers
-
-    MOV dx, 0x9000 + bootableStringLen + (4 * 2) ; sizeof(long * 2)
+    ADD dx, 4
     MOV word [kernelInfo + KernelInfo.kernelStartAddr], dx
 
     ADD dx, 4
