@@ -16,34 +16,6 @@ The bootloader only supports one kernel entry.
 
 For further information into the RivBoot protocol look at the documentation [here](docs/RivBoot.md)
 
-~~~C
-
-char** osnamePtr;
-// (The menu entry format would be):
-printf("1) boot into %s", *osnamePtr);
-
-~~~
-
-An example entry could be: 
-
-~~~nasm
-section .header
-
-initialMagic:
-    db "BOOTABLE", 0 ; Magic required for RivBoot to see the kernel
-    dd _start        ; Tells RivBoot where to jump to
-    dd kernelSize    ; Tells RivBoot how big the kernel is
-    dd kernelStart   ; Tells RivBoot where to start loading the kernel
-    ; This value should be > 0x10000
-    ; (Because thats where the bootloader lives)
-    dd osName
-
-osName:
-    db "RivOS", 0
-~~~
-
-This example can be found in this [file](src/boot.asm)
-
 ## Kernel
 
 The RivOS kernel is designed to be extremely small. It's main job is to get the /sbin/sched started up. The scheduler is not integrated in the kernel: /sbin/sched is the one setting up the APIC and such. There is also a /bin/init but /sbin/sched actually starts that up.

@@ -1,4 +1,3 @@
-ENTRY(_start)
 PHDRS
 {
     text PT_LOAD FILEHDR PHDRS FLAGS(5); /* R-X */

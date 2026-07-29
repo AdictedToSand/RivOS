@@ -195,7 +195,7 @@ void displayMenu(FoundKernel* fkrnl) {
     while (true) {
         terminit(); // Clear the screen
        
-        puts("Welcome to RivBoot\nAn OS was found: ");
+        puts("Welcome to RivBoot\nA kernel was found: ");
         puts(fkrnl->osName);
         puts("\nUsing RivBoot version ");
         printi(fkrnl->versionMajor);
@@ -239,7 +239,7 @@ void startBoot(FoundKernel_Initial* fkrnel_init) {
     fkern.versionMinor = versionUnion.majorAndMinor[0];
 
     if (versionUnion.full == 0) {
-        puts("Invalid version found in OS\n. Please reboot the PC. Any keypress to reboot: ");
+        puts("Invalid version found in kernel\n. Please reboot the PC. Any keypress to reboot: ");
         getc();
         asm volatile ("UD2");
     }
