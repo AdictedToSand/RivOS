@@ -45,6 +45,7 @@ def compile_cpp(file: Path, debug: bool) -> Path:
 
     return out
 
+
 def compile_c(file: Path, debug: bool) -> Path:
     out = OBJ_DIR / Path(str(file.relative_to("src")) + ".o")
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -73,6 +74,7 @@ def compile_c(file: Path, debug: bool) -> Path:
     ])
 
     return out
+
 
 def compile_gas(file: Path) -> Path:
     out = OBJ_DIR / Path(str(file.relative_to("src")) + ".o")
@@ -104,14 +106,14 @@ def compile_nasm(file: Path) -> Path:
     return out
 
 
-def compile_bootloader(file: Path) -> Path:
-    out = BUILD_DIR / file.stem
+def compile_bootloader() -> Path:
+    out = BUILD_DIR / "init"
 
     run([
         "nasm",
         "-f",
         "bin",
-        str(file),
+        str(BUILD_DIR / "generated_init.asm"),
         "-o",
         str(out),
     ])
@@ -119,38 +121,34 @@ def compile_bootloader(file: Path) -> Path:
     return out
 
 
+def generate_bootloader_header():
+    stage2_size = (BUILD_DIR / "stage2").stat().st_size
+    stage2_sectors = (stage2_size + 511) // 512
+
+    with open(BUILD_DIR / "generated_init.asm", "w") as f:
+        f.write(f"%define STAGE2_SECTORS {stage2_sectors}\n")
+        f.write((Path("src/boot/init.asm")).read_text())
+
+
 def build(debug: bool = True):
     BUILD_DIR.mkdir(exist_ok=True)
     OBJ_DIR.mkdir(exist_ok=True)
-
-    objects = []
 
     src = Path("src")
     boot_dir = src / "boot"
 
     #
-    # Stage 1 bootloader
-    #
-
-    loader = boot_dir / "loader.asm"
-
-    if loader.exists():
-        compile_bootloader(loader)
-
-    #
-    # Stage 2
+    # Stage 2 boot program
     #
 
     stage2_objects = []
 
-    stage2_asm = boot_dir / "stage2.asm"
-    stage2_c = boot_dir / "boot.c"
+    for file in sorted(boot_dir.glob("*.asm")):
+        if file.name != "init.asm":
+            stage2_objects.append(compile_nasm(file))
 
-    if stage2_asm.exists():
-        stage2_objects.append(compile_nasm(stage2_asm))
-
-    if stage2_c.exists():
-        stage2_objects.append(compile_c(stage2_c, debug))
+    for file in sorted(boot_dir.glob("*.c")):
+        stage2_objects.append(compile_c(file, debug))
 
     if stage2_objects:
         stage2_elf = BUILD_DIR / "stage2.elf"
@@ -176,19 +174,33 @@ def build(debug: bool = True):
         ])
 
     #
+    # Stage 1 bootloader
+    #
+
+    generate_bootloader_header()
+    compile_bootloader()
+
+    #
     # Kernel
     #
 
-    for file in src.rglob("*.cpp"):
+    objects = []
+
+    init = src / "init.asm"
+
+    if init.exists():
+        objects.append(compile_nasm(init))
+
+    for file in sorted(src.rglob("*.cpp")):
         if "boot" not in file.parts:
             objects.append(compile_cpp(file, debug))
 
-    for file in src.rglob("*.s"):
+    for file in sorted(src.rglob("*.s")):
         if "boot" not in file.parts:
             objects.append(compile_gas(file))
 
-    for file in src.rglob("*.asm"):
-        if "boot" not in file.parts:
+    for file in sorted(src.rglob("*.asm")):
+        if "boot" not in file.parts and file != init:
             objects.append(compile_nasm(file))
 
     kernel = BUILD_DIR / "RivOS"

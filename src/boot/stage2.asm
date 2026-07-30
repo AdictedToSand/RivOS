@@ -1,207 +1,27 @@
 BITS 16
 global _start
 
-; Otherwise whatever function starting first would just execute
-; This makes sure _start is always the entry point
 JMP _start
 
-; Outputs a string to the screen
-;   Parameters:
-;       - Si contains a pointer to the string
-;       - Dx contains the length of the string
-;   Clobbered:
-;       - Ah
-;       - Al
-;       - Si
-;       - Dx
-writes:
-.loop:
-    CMP dx, 0
-    JE .done
-
-    MOV ah, 0x0E
-    MOV al, [si]
-    INT 0x10
-
-    INC si
-    DEC dx
-
-    JMP .loop
-
-.done:
-    RET
-; Returns the length of a null terminated string in ax
-;   Parameters:
-;       - Si contains the string to determine the length
-;   Clobbered:
-;       - Si will contain the address of the null terminator
-strlen:
-    XOR ax, ax
-.loop:
-    CMP byte [si], 0
-    JE .done
-
-    INC ax
-    INC si
-    JMP .loop
-
-.done:
-    RET
-
-; Outputs a string to the screen
-;   Parameters: 
-;       - Si will contain the null terminated string
-;   Clobbered:
-;       - Ax will contain the length of the string
-;       - Dx will be 0
-puts:
-    PUSH si ; Si will be clobbered afterwards
-    ; Si already contains the string
-    CALL strlen
-
-    POP si ; Restore the string in si
-    MOV dx, ax
-    CALL writes
-
-    RET
-
-; Checks if two strings are equal
-;   Parameters:
-;       - Si contains a pointer to the first string
-;       - Di contains a pointer to the second string
-;   Returns:
-;       - Ax contains 1 if the strings are equal
-;       - Ax contains 0 if the strings are different
-;   Clobbered:
-;       - Al
-streq:
-.loop:
-    MOV al, [si]
-    CMP al, [di]
-    JNE .notEqual
-
-    CMP al, 0
-    JE .equal
-
-    INC si
-    INC di
-    JMP .loop
-
-.equal:
-    MOV ax, 1
-    RET
-
-.notEqual:
-    MOV ax, 0
-    RET
-
-; Tries to find a kernel that is considered bootable. 
-;   Params:
-;       None
-;   Returns:
-;       Nothing, however in the kernelInfo variable will now be all the correct data
-;   Clobbered:
-;       Assume each register is clobbered
-;       
-struc KernelInfo
-    .versionAddr resw 1
-    .drive: resb 1
-    .sector: resw 1
-    .sizeAddr: resw 1 ;
-    .entryPointAddr: resw 1 ; Where to look for these variables
-    .kernelStartAddr: resw 1
-    .osnameAddr: resw 1
-endstruc
-
-kernelInfo:
-    istruc KernelInfo
-        at KernelInfo.versionAddr, dw 0
-        at KernelInfo.drive, db 0
-        at KernelInfo.sector, dw 0
-        at KernelInfo.sizeAddr, dw 0
-        at KernelInfo.entryPointAddr, dw 0
-        at KernelInfo.kernelStartAddr, dw 0
-        at KernelInfo.osnameAddr, dw 0 
-    iend
-
-findKernel:
-    MOV cl, 0x02
-
-.loop:
-    ; Clear ax and es
-    XOR ax, ax
-    MOV es, ax
-
-    MOV ah, 0x02
-    MOV al, 0x01 ; read one sector
-    MOV ch, 0 ; Cylinder
-    MOV bx, 0x9000 ; Where to put the sector
-    MOV dh, 0 ; head
-    MOV dl, 0x80 ; Hard disk
-    PUSH cx
-    INT 0x13
-    POP cx
-
-    MOV si, bootableString
-    MOV di, 0x9000
-    CALL streq
-
-    CMP ax, 1
-    JE .kernelFound
-
-    INC cl
-
-    JMP .loop
-
-.kernelFound:
-    MOV dx, 0x9000 + bootableStringLen
-    MOV word [kernelInfo + KernelInfo.versionAddr], dx
-
-    MOV word [kernelInfo + KernelInfo.sector], cx
-
-    ADD dx, 4
-    MOV word [kernelInfo + KernelInfo.entryPointAddr], dx
-
-    ADD dx, 4
-    MOV word [kernelInfo + KernelInfo.sizeAddr], dx
-
-    ADD dx, 4
-    MOV word [kernelInfo + KernelInfo.kernelStartAddr], dx
-
-    ADD dx, 4
-    MOV word [kernelInfo + KernelInfo.osnameAddr], dx
-
-    RET
-
-.diskError:
-    MOV si, readErrorMsg
-    CALL puts
-
-    CLI
-.hlt:
-    HLT
-    JMP .hlt
-
-; GDT code
 gdtStart:
 
 gdtNull:
-    dq 0
+    dq 0x0000000000000000
 
 gdtCode:
-    dw 0xFFFF ; Limit low
-    dw 0x0000 ; Base low
-    db 0x00 ; Base middle
-    db 0b10011010  ; Access
-    db 0b11001111 ; Flags + limit high
-    db 0x00 ; Base high
+    dw 0xFFFF
+    dw 0x0000
+    db 0x00
+    db 10011010b
+    db 11001111b
+    db 0x00
 
 gdtData:
     dw 0xFFFF
     dw 0x0000
     db 0x00
-    db 0b10010010
-    db 0b11001111
+    db 10010010b
+    db 11001111b
     db 0x00
 
 gdtEnd:
@@ -210,67 +30,95 @@ gdtDescriptor:
     dw gdtEnd - gdtStart - 1
     dd gdtStart
 
-CODE_SEG equ gdtCode - gdtStart
-DATA_SEG equ gdtData - gdtStart
+biosPuts:
+   pusha
 
-enterProtectedMode:
-    CLI
+.loop:
+    lodsb ; AL = [DS:SI], SI++
+    test al, al ; Check for null terminator
+    jz .done
 
+    mov ah, 0x0E ; BIOS teletype output
+    mov bh, 0x00 ; Page number
+    int 0x10
+
+    jmp .loop
+
+.done:
+    popa
+    RET    
+
+_start:
+    MOV [bootDrive], dl ; dl will contain the bootDrive (passed on by init)
+
+    ; Right now the only thing we need to is get to protected mode.
+    
+
+%define a20Failed a20NotSupported
+; Hack, should be fixed!
+
+; Credits: wiki.osdev.org/A20_Line
+.enableA20Line:
+    CLI ; It is required to stop interrupts for entering protected mode
+    MOV ax, 0x2403 ; Query A20 gate support
+    INT 0x15
+    JC a20NotSupported
+
+    TEST ah, ah
+    JNZ a20NotSupported
+
+    MOV ax, 0x2402 ; Get A20 gate status
+    INT 0x15
+    JC a20Failed ; Could not get status
+    TEST ah, ah
+    JNZ a20Failed ; Could not get status
+    TEST al, al
+    JNZ .a20Activated ; A20 is already activated!
+
+    MOV ax, 0x2401
+    INT 0x15
+    JC a20Failed
+    TEST ah, ah
+    JNZ a20Failed
+
+.a20Activated:
     LGDT [gdtDescriptor]
-
+    ; We can't directly do bitwise ops (OR) on cr0 so we load it into eax and then store it back
     MOV eax, cr0
     OR eax, 1
     MOV cr0, eax
 
-    jmp CODE_SEG:initProtectedMode
+    ; Now we do a far jump to protected mode
+    JMP 08h:pmodeInit
 
-_start:
-    MOV [bootDrive], dl
+endOfProgram:
 
-    XOR ax, ax
-    MOV ds, ax
+    CLI
+.hlt:
+    HLT
+    JMP .hlt
 
-    CALL findKernel
+a20NotSupported:
+    MOV si, a20ErrMsg
+    CALL biosPuts
+    
+    CLI
+.hlt:
+    HLT
+    JMP .hlt
 
-    JMP enterProtectedMode
+
+bootDrive: resb 1
+
+a20ErrMsg: db "There was a problem when loading the kernel. RivBoot will not continue. A reboot is recommended", 0
+
+BITS 32
+extern startBoot
+
+pmodeInit:
+    CALL startBoot
 
 .hlt:
     CLI
     HLT
     JMP .hlt
-
-bootDrive: db 0
-kernelFoundMsg: db "Kernel found", 0
-bootableString: db "BOOTABLE", 0
-bootableStringLen equ $ - bootableString
-readErrorMsg: db "Disk read failed", 0
-
-bootloaderEnd equ $
-
-BITS 32
-extern stackTop
-extern startBoot
-
-; Right now we have no BIOS interrupts so previous functions are useless
-; Luckily the HDD sector contents are still loaded at the addresses told
-initProtectedMode:
-    MOV ax, DATA_SEG
-    MOV ds, ax
-    MOV es, ax
-    MOV fs, ax
-    MOV gs, ax
-    MOV ss, ax
-
-    MOV esp, stackTop
-    PUSH kernelInfo ; Genuinely tf?
-    CALL startBoot
-    ADD esp, 4
-
-    CLI
-.hlt:
-    hlt
-    JMP .hlt
-
-%if bootloaderEnd - $$ > 512
-    %error "Bootloader is too large!"
-%endif

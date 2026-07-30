@@ -62,7 +62,7 @@ Not to confuse with _start, this defines where the start of the kernel will be l
 
 ### OsName
 
-A pointer to the name of the OS (This should be a C string.). This is a technically option field, but please don't.
+A pointer to the name of the OS (This should be a C string.). This is a technically optional field, but please don't.
 
 (Note that this is NOT represented in C as a char* but a char**.)
 
