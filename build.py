@@ -127,7 +127,7 @@ def generate_bootloader_header():
 
     with open(BUILD_DIR / "generated_init.asm", "w") as f:
         f.write(f"%define STAGE2_SECTORS {stage2_sectors}\n")
-        f.write((Path("src/boot/init.asm")).read_text())
+        f.write((Path("src/boot/initAssembly/init.asm")).read_text())
 
 
 def build(debug: bool = True):
@@ -143,11 +143,11 @@ def build(debug: bool = True):
 
     stage2_objects = []
 
-    for file in sorted(boot_dir.glob("*.asm")):
+    for file in sorted(boot_dir.rglob("*.asm")):
         if file.name != "init.asm":
             stage2_objects.append(compile_nasm(file))
 
-    for file in sorted(boot_dir.glob("*.c")):
+    for file in sorted(boot_dir.rglob("*.c")):
         stage2_objects.append(compile_c(file, debug))
 
     if stage2_objects:

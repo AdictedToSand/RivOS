@@ -1,24 +1,21 @@
 #include <stdint.h>
 
-uint16_t test = 0x0F41;
-
-typedef struct Terminal {
-    uint16_t* vgaCursor;
-} Terminal;
-
-Terminal term;
-
-void initTerm() {
-    term.vgaCursor = (uint16_t*) 0xB8000;
-}
-void putc(char c) {
-    term.vgaCursor[0] = (c | (0x0F << 8));
-}
+#include "utils.h"
+#include "term/term.h"
 
 void startBoot() {
     initTerm();
 
-    putc('A');
+    putsColor("Welcome to RivBoot. Currently we are finding a kernel.\n", VGA_COLOR_GREEN);
+    char c = 'A';
+    const char* s = "SSS";
+    int i = 30505;
+    unsigned int u = 2147483648;
+    void* p = &u;
+    int x = 0xA5BF;
+    print("\nChar: %c\nString: %s\nInt: %i\nUint: %u\nPtr: %p\nHex: %x\nMod: %%\n", c, s, i, u, p, x);
+
+    panic("Very bad panic");
 
     for (;;) ;
 }

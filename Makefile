@@ -21,7 +21,7 @@ build_init:
 	$(eval STAGE2_SECTORS := $(shell echo $$(( ($(STAGE2_SIZE) + 511) / 512 )) ))
 
 	echo "%define STAGE2_SECTORS $(STAGE2_SECTORS)" > build/generated_init.asm
-	cat src/boot/init.asm >> build/generated_init.asm
+	cat src/boot/initAssembly/init.asm >> build/generated_init.asm
 	nasm -f bin build/generated_init.asm -o build/init
 
 

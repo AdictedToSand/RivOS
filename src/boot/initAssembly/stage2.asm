@@ -110,15 +110,16 @@ a20NotSupported:
 
 bootDrive: resb 1
 
-a20ErrMsg: db "There was a problem when loading the kernel. RivBoot will not continue. A reboot is recommended", 0
+a20ErrMsg: db "There was a problem when loading the bootloader. RivBoot will not continue. A reboot is recommended", 0
 
 BITS 32
 extern startBoot
 
-pmodeInit:
-    CALL startBoot
+stackBottom: 
+    resb 16384
+stackTop:
 
-.hlt:
-    CLI
-    HLT
-    JMP .hlt
+pmodeInit:
+    MOV esp, stackBottom
+    JMP startBoot
+    ; Hopefully we don't go past this.

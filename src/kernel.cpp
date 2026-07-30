@@ -34,6 +34,7 @@ void callGlobalConstructors() {
     }
 }
 
+//TODO: i32 inst of int32_t
 //TODO: some files still use <returnType> fn(...) instd of auto fn(...) -> <returnType>
 extern "C" { // Disable name mangling
 
