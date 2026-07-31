@@ -1,15 +1,13 @@
 #pragma once
 #include <terminal/terminal.hpp>
 
-[[gnu::noreturn]]
-static void kpanic(const char* msg) {
-    Terminal::clear();
-
-    Terminal::setColor(Terminal::VgaColor::Red);
-    Terminal::writeStr("Kernel panic: ");
-    Terminal::writeStr(msg);
-
-    for (;;);
+#define kpanic(msg) { \
+    Terminal::clear(); \
+    \
+    Terminal::setColor(Terminal::VgaColor::Red); \
+    Terminal::printf("A kernel panic occurred at: (%s) -> (%s) -> (line %i) -> %s", __FILE__, __FUNCTION__, __LINE__, msg); \
+    \
+    for (;;); \
 }
 
 static inline void kassrt(bool eval, const char* msg) {

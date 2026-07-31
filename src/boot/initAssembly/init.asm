@@ -3,6 +3,8 @@ ORG 0x7C00
 
 JMP _start
 
+rivBootSignature: db "RivBoot", 0
+
 puts:
     PUSHA
 .loop:

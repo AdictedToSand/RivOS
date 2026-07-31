@@ -1,3 +1,4 @@
+#include "drivers/fs/file.hpp"
 #include <terminal/terminal.hpp>
 
 #include <gen/err.hpp>
@@ -57,6 +58,10 @@ auto kernelMain() -> void {
     Storage::init();
 
     FileSystem::init();
+
+    fd_t fd = FileSystem::open("/dev/stdout");
+    char* msg = (char*) "WRITE\n";
+    FileSystem::write(fd, msg, strlen(msg));
 
     Terminal::printf("End of kernel");
     for (;;) ;

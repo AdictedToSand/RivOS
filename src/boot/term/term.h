@@ -29,7 +29,7 @@ extern Terminal term;
 
 #define VGA_WIDTH (80)
 #define VGA_LENGTH (25)
-#define VGA_SIZE (VGA_WIDTH * VGA_LENGTH)
+#define VGA_SIZE (VGA_WIDTH * VGA_LENGTH * 2) // Lol idk why *2 but otherwise it goes way to early to clear:)
 #define VGA_MEMORY ((uint16_t*) 0xB8000)
 
 void initTerm();

@@ -67,7 +67,7 @@ clean:
 
 
 gdb:
-	gdb build/RivOS -ex "target remote :1234" -ex "c" -ex "tui enable"
+	gdb build/RivOS -ex "target remote :1234" -ex "tui enable" -ex "display/i $pc"
 
 
 .PHONY: all build_dbg build_release build_init run debug clean mr
