@@ -30,4 +30,6 @@ SECTIONS
         *(COMMON)
         *(.bss)
     } :data
+
+    bootEnd = .;
 }

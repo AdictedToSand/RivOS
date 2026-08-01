@@ -77,3 +77,10 @@ void* memset(void* ptr, int value, u32 count) {
 
     return ptr;
 }
+
+u8 getSc(void) {
+    while ((inb(0x64) & 0x01) == 0) {
+        // wait
+    }
+    return inb(0x60);
+}

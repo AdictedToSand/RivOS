@@ -1,9 +1,11 @@
 #include <int.h>
 
+#include "io.h"
 #include "storage/drver.h"
 #include "term/term.h"
 #include "string.h"
 #include "utils.h"
+#include "menu/menu.h"
 
 #define RIVBOOT_MAGICSTR "BOOTABLE"
 
@@ -15,6 +17,33 @@ typedef struct [[gnu::packed]] RivBootHeader {
     u32 kernelStart;
     u32 osNamePtr;
 } RivBootHeader;
+
+RivBootHeader* rivbootEntry;
+
+void bootintoOS(MenuItem* this) {
+    print("Booting into %s", this->str);
+    void (*kernelStart)(void) = (void*) (rivbootEntry->entry + x86InstructionLength((u8*) rivbootEntry->entry) - 2); // What the fuck
+    kernelStart();
+}
+
+void reboot(MenuItem* this) {
+    (void) this; // Remove the param not used warning
+    asm volatile ("UD2"); // Since we have not set up a IDT this will triple fault and reboot
+}
+void ioWaitAm(u32 am) {
+    for (u32 i = 0; i < am; i++) ioWait();
+}
+
+void shutdown(MenuItem* this) {
+    (void) this;
+    clearTerm();
+    print("Shutdown not supported currently. Press any key to continue ...");
+
+    u8 sc;
+    do {
+        sc = getSc();
+    } while (sc & 0x80);
+}
 
 static char buf[512];
 void startBoot() {
@@ -30,7 +59,7 @@ void startBoot() {
             break;
         }
     }
-    RivBootHeader* rivbootEntry = (RivBootHeader*) buf;
+    rivbootEntry = (RivBootHeader*) buf;
 
     const char* osName = (char*) &buf[rivbootEntry->osNamePtr - rivbootEntry->kernelStart];
 
@@ -44,8 +73,36 @@ void startBoot() {
         if (readSector(sectorInd + i, SECTOR_SIZE, (char*) loadedAddr)) panic("Unable to load kernel");
     }
 
-    void (*kernelStart)(void) = (void*) (rivbootEntry->entry + x86InstructionLength((u8*) rivbootEntry->entry) - 2); // What the fuck
-    kernelStart();
+    
+    MenuItem menuitems[] = {
+        {
+            .fmt = "%c) Boot into %s",
+            .isLastItem = false,
+            .onPressed = bootintoOS,
+            .str = osName,
+        },
+        {
+            .fmt = "%c) Reboot",
+            .isLastItem = false,
+            .onPressed = reboot,
+        },
+        {
+            .fmt = "%c) Shutdown",
+            .isLastItem = false,
+            .onPressed = shutdown,
+        },
+        {
+            .isLastItem = true,
+        }
+    };
+    Menu men = {
+        .str = osName,
+        .items = menuitems,
+    };
+    displayMenu(&men,
+    "Welcome to RivBoot\n"
+    "An OS was found: %s\n"
+    "Please select one of the following options:\n");
 
     for (;;) ;
 }
