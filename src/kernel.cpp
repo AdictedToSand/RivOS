@@ -94,6 +94,8 @@ auto kernelMain() -> void {
     char* msg = (char*) "WRITE\n";
     FileSystem::write(stdout, msg, strlen(msg));
 
+    Mmu::mapPage((void*)0x200000, (void*)0x40000000, 2);
+
     Terminal::printf("End of kernel reached");
     for (;;) ;
 }

@@ -5,12 +5,18 @@
 #include <mem/utils.hpp>
 #include <mem/pagealloc.hpp>
 
+#include <gen/err.hpp>
+
 extern "C" void loadPageDirectory(unsigned int*);
 extern "C" void enablePaging();
 
 struct Mmu {
     static inline uint32_t pageDirectory[1024] __attribute__((aligned(4096)));
     static inline uint32_t firstPageTable[1024] __attribute__((aligned(4096)));
+
+    // Temporary page table pool until the physical allocator is ready
+    static inline uint32_t pageTables[16][1024] __attribute__((aligned(4096)));
+    static inline uint32_t nextPageTable = 0;
 
     static auto init() -> void {
         for (uint16_t i = 0; i < 1024; i++) {
@@ -32,6 +38,33 @@ struct Mmu {
     }
 
     static auto mapPage(void* phys, void* virt, uint32_t flgs) -> void {
+        uint32_t physical = (uint32_t) phys;
+        uint32_t virtualAddr = (uint32_t) virt;
 
+        uint32_t directoryIndex = virtualAddr >> 22;
+        uint32_t tableIndex = (virtualAddr >> 12) & 0x3FF;
+
+        uint32_t* pageTable;
+
+        if (!(pageDirectory[directoryIndex] & 1)) {
+            if (nextPageTable >= 16) {
+                kpanic("No more pagetables: Should fix this"); // No more temporary page tables available
+            }
+
+            pageTable = pageTables[nextPageTable++];
+
+            for (uint16_t i = 0; i < 1024; i++) {
+                pageTable[i] = 0x00000002;
+            }
+
+            pageDirectory[directoryIndex] = ((uint32_t) pageTable) | 3;
+        } else {
+            pageTable = (uint32_t*)(pageDirectory[directoryIndex] & 0xFFFFF000);
+        }
+
+        pageTable[tableIndex] = (physical & 0xFFFFF000) | flgs | 1;
+
+        // Flush this virtual address from the TLB
+        asm volatile("invlpg (%0)" :: "r"(virtualAddr) : "memory");
     }
 };
