@@ -27,6 +27,7 @@ struct Serial {
         outb(PORT + 4, 0x0F);
         return 0;
 #endif
+        return 0;
     }
 
     static auto received() -> int {
@@ -43,6 +44,7 @@ struct Serial {
 
         return inb(PORT);
 #endif
+        return 0;
     }
     
     static auto isTransmitEmpty() -> int {
@@ -54,6 +56,7 @@ struct Serial {
     }
 
     static auto write(char a) -> void {
+        (void) a;
 #ifdef DEBUG
         while (isTransmitEmpty() == 0) ;
         

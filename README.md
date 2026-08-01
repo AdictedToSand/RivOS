@@ -18,7 +18,7 @@ For further information into the RivBoot protocol look at the documentation [her
 
 ## Kernel
 
-The RivOS kernel is designed to be extremely small. It's main job is to get the /sbin/sched started up. The scheduler is not integrated in the kernel: /sbin/sched is the one setting up the APIC and such. There is also a /bin/init but /sbin/sched actually starts that up.
+The RivOS kernel is designed to be extremely small. It's main job is to get the /krn/bin/sched started up. The scheduler is not integrated in the kernel: sched will own the PIT and such. There is also a /bin/init but sched actually starts that up.
 
 ### Language choice
 
@@ -98,7 +98,7 @@ make
 
 This target will use all the build files generated to make a bootable disk.
 
-This target should the last one you run before the run target itself.
+This target should the last one you run before the run target itself, altough prepare_disk is automatically ran after build_dbg/build_release
 
 ### build_dbg
 

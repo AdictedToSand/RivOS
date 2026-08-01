@@ -50,7 +50,7 @@ void startBoot() {
     initTerm();
     storageInit();
 
-    size_t sectorInd;
+    size_t sectorInd = -1;
     for (size_t i = 0; i < 256; i++) {
         memset(buf, 0, 512);
         if (readSector(i, SECTOR_SIZE, buf)) panic("Unable to read sector");
