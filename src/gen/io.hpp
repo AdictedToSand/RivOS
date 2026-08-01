@@ -1,4 +1,5 @@
 #pragma once
+#include "mem/alloc.hpp"
 #include <int.h>
 
 #include <mem/utils.hpp>
@@ -46,8 +47,8 @@ static auto getSc(void) -> u8 {
 static inline bool caps;
 static inline bool shift;
 
-static char scancodeMap[128];
-static char scancodeMapShift[128];
+static char* scancodeMap = (char*) KernelAllocator::alloc(128);
+static char* scancodeMapShift = (char*) KernelAllocator::alloc(128);
 
 // Hehe poor chatgpt
 static auto ioInit() -> void {

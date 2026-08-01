@@ -96,9 +96,7 @@ make
 
 ### prepare_disk
 
-This target will use all the build files generated to make a bootable disk.
-
-This target should the last one you run before the run target itself, altough prepare_disk is automatically ran after build_dbg/build_release
+This is an internal target: do not use.
 
 ### build_dbg
 
@@ -110,11 +108,31 @@ This target will also build the kernel, however with more optimizations and thus
 
 ### run
 
-This will run the OS. You should have run build_dbg or build_release before this.
+This will run using the GRUB bootloader the OS. You should have run "grub" before this.
+
+### build_init
+
+This is an internal target: Do not use
+
+### run_rivboot
+
+Will run the OS with RivBoot as the expected bootloader.
 
 ### debug
 
-This will set up the OS such that it is available to GDB at localhost:1234 and can be run step by step. A debug build will be done before.
+This will set up the OS such that it is available to GDB at localhost:1234 and can be run step by step. A GRUB build will be done first.
+
+### debug_rivboot
+
+This will do the same thing as debug, however it will be done for the RivBoot bootloader.
+
+### RivBoot
+
+The target rivboot will build the operating system using the RivBoot bootloader.
+
+### Grub
+
+This target will build an iso file using the GRUB bootloader.
 
 #### GDB 
 
@@ -124,9 +142,7 @@ Gdb should be run via
 gdb build/RivOS
 ~~~
 
-It is recommended to set a breakpoint in kernelMain, as the bootloader will be an unknown symbol.
-
-If you want to also have the bootloader code visible in GDB run
+If you want to also have the bootloader (rivboot) code visible in GDB run
 ~~~Bash
 add-symbol-file build/stage2.elf 0x8000
 ~~~
@@ -137,5 +153,10 @@ b startBoot
 c
 ~~~
 
+It is recommended to set a breakpoint in kernelMain, as the bootloader will be an unknown symbol.
+
 The initial [bootcode](src/boot/loader.asm) will be a binary glob in assembly so nothing you can see there.
 
+### Clean
+
+Removes build files. IMPORTANT: The iso/disk image will also be deleted.

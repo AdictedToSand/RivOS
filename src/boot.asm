@@ -32,6 +32,13 @@ stack_bottom:
     resb 16384 ; 16 KiB
 stack_top:
 
+section .multiboot
+align 4
+
+dd 0x1BADB002
+dd 0
+dd -(0x1BADB002)
+
 ; The linker script specifies _start as the entry point to the kernel and the
 ; bootloader will jump to this position once the kernel has been loaded. It
 ; doesn't make sense to return from this function as the bootloader is gone.
@@ -39,6 +46,7 @@ stack_top:
 section .text
 
 global _start
+
 
 _start:
     ; Right now, RivBoot makes no guarantee that a proper stack is set up. So we define our own
@@ -62,3 +70,4 @@ _start:
 .hang:
     HLT
     JMP .hang
+

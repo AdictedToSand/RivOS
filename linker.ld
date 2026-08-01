@@ -1,3 +1,5 @@
+ENTRY(_start)
+
 PHDRS
 {
     text PT_LOAD FILEHDR PHDRS FLAGS(5); /* R-X */
@@ -11,6 +13,12 @@ SECTIONS
     {
         KEEP(*(.header))
     } :text
+    .multiboot ALIGN(4):
+    {
+            KEEP(*(.multiboot))
+    } :text
+
+
     .text ALIGN(4K) :
     {
         *(.text)

@@ -64,10 +64,9 @@ auto kernelMain() -> void {
     Terminal::init();
     disableHardwareCursor();
 
-    ioInit();
-
     ACPI::init();
-    Terminal::writeStr("RivBoot worked yay\n");
+
+    ioInit();
 
     kassrt(Serial::init() == 0, "Unable to initalize serial");
 
@@ -89,12 +88,6 @@ auto kernelMain() -> void {
     Mmu::init();
 
     HardwareInterrupts::init();
-
-    fd_t stdout = FileSystem::open("/dev/stdout");
-    char* msg = (char*) "WRITE\n";
-    FileSystem::write(stdout, msg, strlen(msg));
-
-    Mmu::mapPage((void*)0x200000, (void*)0x40000000, 2);
 
     Terminal::printf("End of kernel reached");
     for (;;) ;

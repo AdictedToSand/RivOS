@@ -7,8 +7,8 @@ struct [[gnu::packed]] ElfHeader32 {
 private:
     char magic[4];
     u8 bitness; // 1 == 32 bit 2 == 64 bit
-    // 1 == little endian 2 == big endian
+    u8 endianNess; // 1 == little endian 2 == big endian
+    u8 headerVersion;
     
-
 public:
 };

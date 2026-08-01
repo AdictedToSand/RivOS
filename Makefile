@@ -1,4 +1,4 @@
-all: build_dbg
+all: grub
 
 prepare_disk:
 	dd if=/dev/zero of=build/disk.img bs=1M count=64
@@ -15,7 +15,6 @@ prepare_disk:
 	mkfs.fat -F 32 build/rootfs.img
 	mcopy -i build/rootfs.img -s rootFs/* ::
 
-
 build_init:
 	$(eval STAGE2_SIZE := $(shell stat -c%s build/stage2))
 	$(eval STAGE2_SECTORS := $(shell echo $$(( ($(STAGE2_SIZE) + 511) / 512 )) ))
@@ -27,19 +26,33 @@ build_init:
 
 build_dbg:
 	python3 build.py
+
+rivboot: build_dbg
 	i686-elf-objcopy -O binary build/RivOS build/kernel.bin
 	make build_init
 	make prepare_disk
-
 
 build_release:
 	python3 build.py release
 	i686-elf-objcopy -O binary build/RivOS build/kernel.bin
 	make build_init
-	make prepare_disk
+
+rivboot: build_dbg prepare_disk
+	
+
+# GRUB ISO build
+grub: build_dbg
+	rm -rf isodir
+	mkdir -p isodir/boot/grub
+
+	cp build/RivOS isodir/boot/RivOS
+
+	cp grub.cfg isodir/boot/grub/
+
+	grub-mkrescue -o build/RivOS.iso isodir
 
 
-run:
+run_rivboot:
 	clear
 	qemu-system-i386 \
 		-drive file=build/disk.img,format=raw \
@@ -48,7 +61,25 @@ run:
 		-boot c
 
 
-debug: build_dbg
+run:
+	clear
+	qemu-system-i386 \
+		-cdrom build/RivOS.iso \
+		-drive file=build/rootfs.img,format=raw,if=ide \
+		-boot d \
+		-serial stdio
+
+
+debug: grub 
+	clear
+	qemu-system-i386 \
+		-cdrom build/RivOS.iso \
+		-drive file=build/rootfs.img,format=raw,if=ide \
+		-serial stdio \
+		-s -S \
+		-boot d
+
+debug_rivboot: rivboot
 	clear
 	qemu-system-i386 \
 		-drive file=build/disk.img,format=raw \
@@ -58,8 +89,7 @@ debug: build_dbg
 		-boot c
 
 
-mr: build_dbg run
-
+mr: build_dbg grub run
 
 clean:
 	rm -rf build
@@ -69,5 +99,4 @@ clean:
 gdb:
 	gdb build/RivOS -ex "target remote :1234" -ex "tui enable" -ex "display/i $pc"
 
-
-.PHONY: all build_dbg build_release build_init run debug clean mr
+.PHONY: all build_dbg build_release build_init prepare_disk grub run run_grub debug clean mr debug_rivboot

@@ -21,18 +21,44 @@ struct StdoutDevSubDriver : DevSubDriver {
     char stdout[4096];
 
     auto init() -> void override {
-        Terminal::printf("I was called yay\n");
         memset(stdout, 0, 4096);
     }
     auto read(char* const obuf, const size_t len) -> FileSystemDriver::SuccessCodes override {
-        for (size_t i = 0; i < len; i++) obuf[i] = stdout[i];
+        for (size_t i = 0; i < len && i < 4096; i++) obuf[i] = stdout[i];
 
         return FileSystemDriver::SuccessCodes::Sucess;
     }
     auto write(const char* conts, size_t len) -> FileSystemDriver::SuccessCodes override {
-        for (size_t i = 0; i < len; i++) stdout[i] = conts[i];
+        for (size_t i = 0; i < len && i < 4096; i++) stdout[i] = conts[i];
         
         Terminal::write(conts, len);
+
+        return FileSystemDriver::SuccessCodes::Sucess;
+    }
+};
+struct StdinDevSubDriver : DevSubDriver {
+    char stdin[4096];
+    u16 cursor;
+
+    auto init() -> void override {
+        cursor = 0;
+        memset(stdin, 0, 4096);
+    }
+    auto read(char* const obuf, const size_t len) -> FileSystemDriver::SuccessCodes override {
+        for (size_t i = 0; i < len && i < 4096; i++) obuf[i] = stdin[i];
+
+        return FileSystemDriver::SuccessCodes::Sucess;
+    }
+    auto write(const char* conts, size_t len) -> FileSystemDriver::SuccessCodes override {
+        if (len != 1) return FileSystemDriver::SuccessCodes::Error; // User input is one at a time
+        
+        Terminal::putChar(*conts);
+
+        if (cursor + 1 >= 4096) {
+            memset(stdin, 0, 4096);
+            cursor = 0;
+        }
+        stdin[cursor++] = conts[0];
 
         return FileSystemDriver::SuccessCodes::Sucess;
     }
@@ -50,10 +76,11 @@ struct StrOperatorEquals {
     StrOperatorEquals() { conts = nullptr; }
 }; // Do not ask
 
-static inline StdoutDevSubDriver stdoutDriver;
-
 struct DevMpDriver : FileSystemDriver {
 private:
+    static inline StdoutDevSubDriver stdoutDriver;
+    static inline StdinDevSubDriver stdinDriver;
+
     static inline Map<StrOperatorEquals, DevSubDriver*> mappings;
     static inline bool generalBool;
 
@@ -64,6 +91,7 @@ public:
 
     virtual auto init() -> void override {
         mappings["stdout"] = &stdoutDriver;
+        mappings["stdin"] = &stdinDriver;
 
         for (auto& kv : mappings) {
             kv.getv()->init();
