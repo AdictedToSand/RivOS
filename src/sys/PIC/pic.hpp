@@ -88,17 +88,13 @@ public:
     static auto init() -> void {
         remap(0x20, 0x28);
 
-        // Unmask everything (Mainly PIT is important)
+        // Mask everything (Mainly unmasking PIT is important)
         outb(PIC1_DATA, 0xFF);
         outb(PIC2_DATA, 0xFF);
-
-        irqClearMask(1);
-        Idt::setDescriptor(0x21, (void*) irq1Stub, 0x8E);
-
-        asm volatile ("STI");
     }
+
     static auto sendEoi(u8 irq) -> void {
-        if (irq > 8)
+        if (irq >= 8)
             outb(PIC2_CMD, PIC_EOI);
         outb(PIC1_CMD, PIC_EOI);
     }

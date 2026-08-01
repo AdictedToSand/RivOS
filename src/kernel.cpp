@@ -20,6 +20,7 @@
 #include <drivers/fs/FAT32/fat.hpp>
 #include <drivers/fs/fs.hpp>
 #include <drivers/fs/file.hpp>
+#include <drivers/interrupts/init.hpp>
 
 #include <ACPI/ACPI.hpp>
 
@@ -83,6 +84,10 @@ auto kernelMain() -> void {
     PIC::init();
 
     PIT::init(100);
+
+    Terminal::printf("NE\n");
+    HardwareInterrupts::init();
+    Terminal::printf("AFFFTT\n");
 
     fd_t stdout = FileSystem::open("/dev/stdout");
     char* msg = (char*) "WRITE\n";

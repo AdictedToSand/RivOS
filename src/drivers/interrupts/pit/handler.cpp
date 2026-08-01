@@ -2,7 +2,7 @@
 
 volatile u64 ticks = 0;
 
-extern "C" void irq0Handler() {
+extern "C" auto pitHandler() -> void {
     ticks++;
     PIC::sendEoi(0);
 }

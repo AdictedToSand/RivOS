@@ -21,9 +21,6 @@ public:
 
         outb(0x40, divisor & 0xFF);
         outb(0x40, divisor >> 8);
-
-        Idt::setDescriptor(0x20, (void*) irq0Stub, 0x8E);
-        PIC::irqClearMask(0);
     }
 };
 
