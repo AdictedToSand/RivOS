@@ -1,4 +1,3 @@
-#include "drivers/fs/file.hpp"
 #include <terminal/terminal.hpp>
 
 #include <gen/err.hpp>
@@ -18,6 +17,7 @@
 #include <drivers/fs/ext2/ext2.hpp>
 #include <drivers/fs/FAT32/fat.hpp>
 #include <drivers/fs/fs.hpp>
+#include <drivers/fs/file.hpp>
 
 #include <str.hpp>
 
@@ -35,12 +35,18 @@ void callGlobalConstructors() {
     }
 }
 
+auto disableHardwareCursor() -> void {
+    outb(0x3D4, 0x0A);
+    outb(0x3D5, 0x20);
+}
+
 //TODO: i32 inst of int32_t
 //TODO: some files still use <returnType> fn(...) instd of auto fn(...) -> <returnType>
 extern "C" { // Disable name mangling
 
 auto kernelMain() -> void {
     Terminal::init();
+    disableHardwareCursor();
 
     ioInit();
 
@@ -59,11 +65,21 @@ auto kernelMain() -> void {
 
     FileSystem::init();
 
-    fd_t fd = FileSystem::open("/dev/stdout");
+    fd_t stdout = FileSystem::open("/dev/stdout");
     char* msg = (char*) "WRITE\n";
-    FileSystem::write(fd, msg, strlen(msg));
+    FileSystem::write(stdout, msg, strlen(msg));
 
-    Terminal::printf("End of kernel");
+    fd_t bootf = FileSystem::open("/boot/sector=1"); 
+    if (!bootf) kpanic("BootFile not found???");
+    char* buf = (char*) KernelAllocator::alloc(512);
+    memset(buf, 0, 512);
+    FileSystem::write(bootf, buf, 512);
+
+    Terminal::printf("%s\n", buf);
+
+    Terminal::printf("End of kernel reached");
+    getc();
+    reboot();
     for (;;) ;
 }
 

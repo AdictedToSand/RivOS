@@ -45,4 +45,7 @@ public:
     static auto writeSector(uint16_t* buf, size_t len, size_t sector) -> StorageDriver::SuccessCodes {
         return winner->writeSector(buf, len, sector);
     }
+    static auto selectNextDrive() -> void {
+        winner->selectNextDrive();
+    }
 };

@@ -82,25 +82,11 @@ struct AtaPioStorageDriver : StorageDriver {
         }
         return StorageDriver::SuccessCodes::Sucess;
     }
-    auto writeSector(u16* conts, size_t len, size_t sector) -> StorageDriver::SuccessCodes override {
-        u16 sectorBuf[256];
-
-        if (len < 512) {
-            readSector(sectorBuf, 512, sector);
-
-            u8* dst = (u8*) sectorBuf;
-            u8* src = (u8*) conts;
-
-            for (size_t i = 0; i < len; i++) {
-                dst[i] = src[i];
-            }
-
-            conts = sectorBuf;
-            len = 512;
-        }
-
+    auto writeSector(uint16_t* conts, size_t len, size_t sector) -> StorageDriver::SuccessCodes override {
         outb(DRIVE_SELECT_PORT, driveSelect | ((sector >> 24) & 0x0F));
 
+        // ~400NS
+        // This is recommended
         inb(STATUS_PORT);
         inb(STATUS_PORT);
         inb(STATUS_PORT);
@@ -109,33 +95,24 @@ struct AtaPioStorageDriver : StorageDriver {
         outb(SECTOR_COUNT_PORT, 1);
         outb(LBA_LO_PORT, sector & 0xFF);
         outb(LBA_MI_PORT, (sector >> 8) & 0xFF);
-        outb(LBA_HI_PORT, (sector >> 16) & 0xFF);
+        outb(LBA_HI_PORT, (sector >> 24) & 0xFF);
+        outb(COMMAND_PORT, 0x30); // Write sectors
 
-        outb(COMMAND_PORT, 0x30); // WRITE SECTORS
+        if (inb(STATUS_PORT) == 0) {
+            kpanic("Drive did not exist.")
+        }
+        while (inb(STATUS_PORT) & 0x80) ;
+        while (!(inb(STATUS_PORT) & 0x08)) ;
 
-        while (inb(STATUS_PORT) & 0x80);
-        while (!(inb(STATUS_PORT) & 0x08));
-
-        for (u16 i = 0; i < 256; i++) {
+        for (u16 i = 0; i < 256 && i < len; i++) {
             outw(DATA_PORT, conts[i]);
         }
 
-        while (inb(STATUS_PORT) & 0x80);
-
-        if (inb(STATUS_PORT) & 0x01) {
-            kpanic("ATA write error.");
-        }
-
-        return StorageDriver::SuccessCodes::Sucess;
+        u16 error = 256 - i;
     }
+
     auto getDriverName() -> const char* override {
         return "RivOS_ATAPIO";
-    }
-    auto selectNextDrive() -> void override {
-        if (driveSelect == DRIVE_SELECT_SLAVEDRIVE) {
-            driveSelect = DRIVE_SELECT_MASTERDRIVE;
-        }
-        else driveSelect = DRIVE_SELECT_SLAVEDRIVE;
     }
 };
 

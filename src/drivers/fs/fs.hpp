@@ -1,10 +1,11 @@
 #pragma once
-#include "drivers/fs/file.hpp"
+#include <drivers/fs/file.hpp>
 #include <drivers/fs/ext2/ext2.hpp>
 #include <drivers/fs/FAT32/fat.hpp>
 #include <drivers/fs/dev/dev.hpp>
 #include <drivers/fs/driver.hpp>
 #include <drivers/fs/mountpoint.hpp>
+#include <drivers/fs/boot/boot.hpp>
 
 #include <gen/vec.hpp>
 #include <gen/map.hpp>
@@ -36,6 +37,9 @@ static inline MountPointCandidate fat32Candidate = {
 };
 static inline MountPointCandidate devCandidate = {
     .conts = &devMp,
+};
+static inline MountPointCandidate bootCandidate = {
+    .conts = &bootMp,
 };
 
 struct GlobalFile {
@@ -87,6 +91,7 @@ public:
         registerMountpoint("/", &ext2Candidate);
         registerMountpoint("/dev/", &devCandidate);
         registerMountpoint("/", &fat32Candidate);
+        registerMountpoint("/boot/", &bootCandidate);
 
         size_t i = 0;
         for (auto mp : mpCandidates) {

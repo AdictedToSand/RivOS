@@ -1,15 +1,15 @@
 #pragma once
-#include <stdint.h>
+#include <int.h>
 
 #include <mem/utils.hpp>
 
 // Credits: https://wiki.osdev.org/Inline_Assembly/Examples
 
-static inline auto outb(uint16_t port, uint8_t val) -> void {
+static inline auto outb(u16 port, u8 val) -> void {
     asm volatile ( "outb %b0, %w1" : : "a"(val), "Nd"(port) : "memory");
 }
 
-static inline auto inb(uint16_t port) -> uint8_t {
+static inline auto inb(u16 port) -> u8 {
     uint8_t ret;
     asm volatile ( "inb %w1, %b0"
                    : "=a"(ret)
@@ -19,7 +19,7 @@ static inline auto inb(uint16_t port) -> uint8_t {
 }
 
 
-static inline auto inw(uint16_t port) -> uint16_t {
+static inline auto inw(u16 port) -> u16 {
     uint16_t ret;
     asm volatile ( "inw %w1, %w0"
                    : "=a"(ret)
@@ -28,11 +28,15 @@ static inline auto inw(uint16_t port) -> uint16_t {
     return ret;
 }
 
+static inline auto outw(u16 port, u16 val) -> void {
+    asm volatile ("outw %0, %w1" : : "a"(val), "Nd"(port) : "memory");
+}
+
 static inline auto ioWait() -> void {
     outb(0x80, 0);
 }
 
-static auto getSc(void) -> uint8_t {
+static auto getSc(void) -> u8 {
     while ((inb(0x64) & 0x01) == 0) {
         // wait
     }

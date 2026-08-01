@@ -62,3 +62,14 @@ static inline char* stradd(char* dest, const char* src) {
 
     return ret;
 }
+
+
+
+static inline bool strBeginsWith(const char* str, const char* prefix) {
+    while (*prefix) {
+        if (*str++ != *prefix++)
+            return false;
+    }
+
+    return true;
+}
