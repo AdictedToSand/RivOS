@@ -11,11 +11,16 @@
 
 typedef struct [[gnu::packed]] RivBootHeader {
     char magic[9];
-    u32 version;
+    union {
+        u32 full;
+        u16 minorThenMajor[2];
+    } version;
     u32 entry;
     u32 kernelSize;
     u32 kernelStart;
     u32 osNamePtr;
+    u32 bssStartVers0_2;
+    u32 bssEndVers0_2;
 } RivBootHeader;
 
 RivBootHeader* rivbootEntry;
@@ -69,10 +74,15 @@ void startBoot() {
 
     for (u32 i = 0; i < kernelSectors; i++) {
         const u8* loadedAddr = (u8*) (rivbootEntry->kernelStart + (i * 512));
- 
-        if (readSector(sectorInd + i, SECTOR_SIZE, (char*) loadedAddr)) panic("Unable to load kernel");
+
+        if (readSector(sectorInd + i, SECTOR_SIZE, (char*) loadedAddr))
+            panic("Unable to load kernel");
     }
 
+    if (rivbootEntry->version.minorThenMajor[0] == 2) {
+        memset((void*) rivbootEntry->bssStartVers0_2, 0,
+               rivbootEntry->bssEndVers0_2 - rivbootEntry->bssStartVers0_2);
+    }
     
     MenuItem menuitems[] = {
         {

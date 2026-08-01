@@ -21,17 +21,20 @@ SECTIONS
         *(.rodata)
         *(.rodata.*)
     } :text
+
     .data ALIGN(4K) :
     {
         *(.data)
         *(.data.*)
     } :data
+
     .ctors ALIGN(4) : {
         ctorsStart = .;
         KEEP(*(SORT(.ctors)))
         KEEP(*(SORT(.ctors.*)))
         ctorsEnd = .;
     } :data
+
     bssStart = .;
     .bss ALIGN(4K) :
     {

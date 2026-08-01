@@ -1,6 +1,8 @@
 extern kernelSize
 extern kernelStart
 extern kernelMain
+extern bssStart
+extern bssEnd
 
 section .header align=1
 
@@ -8,13 +10,16 @@ section .header align=1
 
 initialMagic:
     db "BOOTABLE", 0     ; Magic required for RivBoot to see the kernel
-    dd ABI_VERSION(0, 1) ; Version of RivBoot to use
+    dd ABI_VERSION(0, 2) ; Version of RivBoot to use
     dd _start            ; Tells RivBoot where to jump to
     dd kernelSize        ; Tells RivBoot how big the kernel is
     dd kernelStart       ; Tells RivBoot where to start loading the kernel
     ; This value should be > 0x10000
     ; (Because thats where the bootloader lives)
     dd osName
+
+    dd bssStart
+    dd bssEnd
     ; Future fields for later versions os RivBoot should be added here!
 
 osName:

@@ -5,13 +5,13 @@
 #include <mem/utils.hpp>
 #include <mem/pagealloc.hpp>
 
-static inline uint32_t pageDirectory[1024] __attribute__((aligned(4096)));
-static inline uint32_t firstPageTable[1024] __attribute__((aligned(4096)));
-
 extern "C" void loadPageDirectory(unsigned int*);
 extern "C" void enablePaging();
 
 struct Mmu {
+    static inline uint32_t pageDirectory[1024] __attribute__((aligned(4096)));
+    static inline uint32_t firstPageTable[1024] __attribute__((aligned(4096)));
+
     static auto init() -> void {
         for (uint16_t i = 0; i < 1024; i++) {
             // This sets the following flags to the pages:

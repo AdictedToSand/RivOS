@@ -12,15 +12,19 @@ section .header align=1
 
 %define ABI_VERSION(major, minor) (((major) << 16) | (minor))
 
+
 initialMagic:
     db "BOOTABLE", 0     ; Magic required for RivBoot to see the kernel
-    dd ABI_VERSION(0, 1) ; Version of RivBoot to use
+    dd ABI_VERSION(0, 2) ; Version of RivBoot to use
     dd _start            ; Tells RivBoot where to jump to
     dd kernelSize        ; Tells RivBoot how big the kernel is
     dd kernelStart       ; Tells RivBoot where to start loading the kernel
     ; This value should be > 0x10000
     ; (Because thats where the bootloader lives)
     dd osName
+
+    dd bssStart
+    dd bssEnd
     ; Future fields for later versions os RivBoot should be added here!
 
 osName:
@@ -65,6 +69,14 @@ Not to confuse with _start, this defines where the start of the kernel will be l
 A pointer to the name of the OS (This should be a C string.). This is a technically optional field, but please don't.
 
 (Note that this is NOT represented in C as a char* but a char**.)
+
+### BssStart
+
+Start of the bss section that RivBoot will zero out. This is a version 0.2 extension.
+
+### BssEnd
+
+End of the bss section. This is a version 0.2 extension.
 
 ### Others
 

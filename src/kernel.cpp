@@ -13,6 +13,7 @@
 
 #include <mem/alloc.hpp>
 #include <mem/utils.hpp>
+#include <mem/mmu/mmu.hpp>
 
 #include <drivers/storage/driver.hpp>
 #include <drivers/storage/storage.hpp>
@@ -83,11 +84,11 @@ auto kernelMain() -> void {
 
     PIC::init();
 
-    PIT::init(100);
+    PIT::init(1000);
 
-    Terminal::printf("NE\n");
+    Mmu::init();
+
     HardwareInterrupts::init();
-    Terminal::printf("AFFFTT\n");
 
     fd_t stdout = FileSystem::open("/dev/stdout");
     char* msg = (char*) "WRITE\n";
