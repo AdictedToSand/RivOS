@@ -8,6 +8,7 @@
 
 #include <sys/IDT/idt.hpp>
 #include <sys/GDT/gdt.hpp>
+#include <sys/PIC/pic.hpp>
 
 #include <mem/alloc.hpp>
 #include <mem/utils.hpp>
@@ -18,6 +19,8 @@
 #include <drivers/fs/FAT32/fat.hpp>
 #include <drivers/fs/fs.hpp>
 #include <drivers/fs/file.hpp>
+
+#include <ACPI/ACPI.hpp>
 
 #include <str.hpp>
 
@@ -34,6 +37,15 @@ void callGlobalConstructors() {
         }
     }
 }
+extern "C" void irq1Handler() {
+    if (inb(0x60) & 0x80) {
+
+    }
+    else {
+        Terminal::printf("Keypress");
+    }
+    PIC::sendEoi(1);
+}
 
 auto disableHardwareCursor() -> void {
     outb(0x3D4, 0x0A);
@@ -45,11 +57,13 @@ auto disableHardwareCursor() -> void {
 extern "C" { // Disable name mangling
 
 auto kernelMain() -> void {
+    asm volatile ("CLI");
     Terminal::init();
     disableHardwareCursor();
 
     ioInit();
 
+    ACPI::init();
     Terminal::writeStr("RivBoot worked yay\n");
 
     kassrt(Serial::init() == 0, "Unable to initalize serial");
@@ -64,6 +78,8 @@ auto kernelMain() -> void {
     Storage::init();
 
     FileSystem::init();
+
+    PIC::init();
 
     fd_t stdout = FileSystem::open("/dev/stdout");
     char* msg = (char*) "WRITE\n";
@@ -82,40 +98,3 @@ auto kernelMain() -> void {
 }
 
 } // extern "C"
-
-
-
-/*src/boot/enter.c: In function 'startBoot':                                                                                                                                  
-src/boot/enter.c:70:23: warning: 'sectorInd' may be used uninitialized in this function [-Wmaybe-uninitialized]                                                             
-   70 |     for (u32 i = 0; i < kernelSectors; i++) {                                                                                                                       
-      |                     ~~^~~~~~~~~~~~~~~                                                                                                                               
-In file included from src/terminal/terminal.hpp:2,                                                                                                                          
-                 from src/kernel.cpp:1:                                                                                                                                     
-src/gen/serial.hpp: In static member function 'static int Serial::init()':                                                                                                  
-src/gen/serial.hpp:30:5: warning: no return statement in function returning non-void [-Wreturn-type]                                                                        
-   30 |     }                                                                                                                                                               
-      |     ^                                                                                                                                                               
-src/gen/serial.hpp: In static member function 'static char Serial::read()':                                                                                                 
-src/gen/serial.hpp:46:5: warning: no return statement in function returning non-void [-Wreturn-type]                                                                        
-   46 |     }                                                                                                                                                               
-      |     ^                                                                                                                                                               
-src/gen/serial.hpp: In static member function 'static void Serial::write(char)':                                                                                            
-src/gen/serial.hpp:56:28: warning: unused parameter 'a' [-Wunused-parameter]                                                                                                
-   56 |     static auto write(char a) -> void {                                                                                                                             
-      |                       ~~~~~^                                                                                                                                        
-In file included from src/terminal/terminal.hpp:2,                                                                                                                          
-                 from src/gen/err.hpp:2,                                                                                                                                    
-                 from src/sys/IDT/idt.hpp:4,                                                                                                                                
-                 from src/sys/IDT/idt.cpp:2:                                                                                                                                
-src/gen/serial.hpp: In static member function 'static int Serial::init()':                                                                                                  
-src/gen/serial.hpp:30:5: warning: no return statement in function returning non-void [-Wreturn-type]                                                                        
-   30 |     }                                                                                                                                                               
-      |     ^                                                                                                                                                               
-src/gen/serial.hpp: In static member function 'static char Serial::read()':                                                                                                 
-src/gen/serial.hpp:46:5: warning: no return statement in function returning non-void [-Wreturn-type]                                                                        
-   46 |     }                                                                                                                                                               
-      |     ^                                                                                                                                                               
-src/gen/serial.hpp: In static member function 'static void Serial::write(char)':                                                                                            
-src/gen/serial.hpp:56:28: warning: unused parameter 'a' [-Wunused-parameter]                                                                                                
-   56 |     static auto write(char a) -> void {                                                                                                                             
-      |                       ~~~~~^      */
