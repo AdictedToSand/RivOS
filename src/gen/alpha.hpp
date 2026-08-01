@@ -80,3 +80,7 @@ static inline bool strIsNumber(const char* str) {
 
     return true;
 }
+
+static auto isLower(char c) -> bool {
+    return c >= 'a' && c <= 'z';
+}

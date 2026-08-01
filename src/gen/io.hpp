@@ -44,9 +44,6 @@ static auto getSc(void) -> u8 {
     return inb(0x60);
 }
 
-static inline bool caps;
-static inline bool shift;
-
 static char* scancodeMap = (char*) KernelAllocator::alloc(128);
 static char* scancodeMapShift = (char*) KernelAllocator::alloc(128);
 
@@ -165,32 +162,6 @@ static auto ioInit() -> void {
     scancodeMapShift[0x1B] = '}';
 }
 
-static inline auto getc(void) -> char {
-    unsigned char sc = getSc();
-
-    if (sc & 0x80) {
-        sc &= 0x7F;
-        if (sc == 0x2A || sc == 0x36)
-            shift = 0;
-        return 0;
-    }
-
-    if (sc == 0x2A || sc == 0x36) {
-        shift = 1;
-        return 0;
-    }
-
-    if (sc == 0x3A) {
-        caps = !caps;
-        return 0;
-    }
-
-    char c = shift ? scancodeMapShift[sc] : scancodeMap[sc];
-    if (!c)
-        return 0;
-
-    if (c >= 'a' && c <= 'z' && caps ^ shift) // For sume fucking reason caps+shift == upercase???
-        c -= 32;
-    
-    return c;
+static char getc(void) {
+    return getSc(); // getc() should not be used, use /dev/stdin instead. However to keep waiting consistent 
 }
