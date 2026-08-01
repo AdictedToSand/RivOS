@@ -9,6 +9,7 @@
 #include <sys/IDT/idt.hpp>
 #include <sys/GDT/gdt.hpp>
 #include <sys/PIC/pic.hpp>
+#include <sys/PIT/pit.hpp>
 
 #include <mem/alloc.hpp>
 #include <mem/utils.hpp>
@@ -81,17 +82,11 @@ auto kernelMain() -> void {
 
     PIC::init();
 
+    PIT::init(100);
+
     fd_t stdout = FileSystem::open("/dev/stdout");
     char* msg = (char*) "WRITE\n";
     FileSystem::write(stdout, msg, strlen(msg));
-
-    fd_t bootf = FileSystem::open("/boot/sector=0"); 
-    if (!bootf) kpanic("BootFile not found???");
-    char* buf = (char*) KernelAllocator::alloc(512);
-    memset(buf, 0, 512);
-    FileSystem::read(bootf, buf, 512);
-
-    Terminal::printf("%s\n", buf);
 
     Terminal::printf("End of kernel reached");
     for (;;) ;

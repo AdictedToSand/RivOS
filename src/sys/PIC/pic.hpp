@@ -56,7 +56,7 @@ private:
         outb(PIC1_DATA, 0);
         outb(PIC2_DATA, 0);
     }
-
+public:
     static auto irqSetMask(u8 IRQline) -> void {
         u16 port;
         u8 value;
@@ -85,7 +85,6 @@ private:
         outb(port, value);        
     }
 
-public:
     static auto init() -> void {
         remap(0x20, 0x28);
 
