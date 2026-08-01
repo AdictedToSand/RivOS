@@ -40,7 +40,7 @@ static inline bool strIsDigit(const char* str) {
     return true;
 }
 
-static i32 stoi(const char* str) {
+static inline i32 stoi(const char* str) {
     i32 result = 0;
     bool negative = false;
 
