@@ -55,7 +55,7 @@ driveErr:
     hlt
     JMP .hlt
 
-bootDrive: resb 1
+bootDrive: db 0
 
 diskErrMsg: db "A disk error occurred and execution can not continue.", 0
 

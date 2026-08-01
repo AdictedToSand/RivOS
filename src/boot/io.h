@@ -23,8 +23,3 @@ static u16 inw(u16 port) {
                    : "memory");
     return ret;
 }
-
-static void ioWait() {
-    outb(0x80, 0);
-}
-

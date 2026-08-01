@@ -108,15 +108,15 @@ a20NotSupported:
     JMP .hlt
 
 
-bootDrive: resb 1
+bootDrive: db 0
 
 a20ErrMsg: db "There was a problem when loading the bootloader. RivBoot will not continue. A reboot is recommended", 0
 
 BITS 32
 extern startBoot
 
-stackBottom: 
-    resb 16384
+stackBottom:
+    times 16384 db 0
 stackTop:
 
 pmodeInit:

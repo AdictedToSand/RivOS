@@ -70,6 +70,17 @@ A pointer to the name of the OS (This should be a C string.). This is a technica
 
 Further fields may be added in later versions of RivBoot.
 
+## Start of _start
+The start of _start should be something like:
+
+~~~Nasm
+
+    MOV esp, stackTop
+    CALL kernelMain 
+~~~
+
+(Or at least a single instruction using esp and then a call. This is very much a bug in RivBoot and is planned to be fixed.)
+
 ## Downloading/Using RivBoot
 
 Currently there is no RivBoot github repo, if you want to use it go to src/boot. 

@@ -76,7 +76,7 @@ private:
     }
     static inline auto mountPointMatches(const char* mp, const char* fp) -> bool {
         for (size_t i = 0; i < strlen(mp); i++) {
-            if (strlen(fp) >= strlen(fp) && mp[i] != fp[i]) return false;
+            if (strlen(fp) >= strlen(fp) /* What the fuck*/ && mp[i] != fp[i]) return false;
         }
 
         return true;
@@ -118,6 +118,7 @@ public:
         GlobalFile added;
         MountPoint* lastMountpoint = (MountPoint*) KernelAllocator::alloc(sizeof(MountPoint));
         size_t lastFolderNestage = 0;
+        size_t lastMpLen = 0;
         
         if (fp[0] != '/') return 0;
 
@@ -132,7 +133,8 @@ public:
 
         for (i = 0; i < mountpoints.size(); i++) {
             auto mp = mountpoints[i];
-            if (getFolderNestage(mp.val()->k) > lastFolderNestage && mountPointMatches(mp.val()->k, fp)) {
+            if ((getFolderNestage(mp.val()->k) > lastFolderNestage && mountPointMatches(mp.val()->k, fp))
+                || (getFolderNestage(mp.val()->k) == lastFolderNestage && mountPointMatches(mp.val()->k, fp) && strlen(mp.val()->k) > lastMpLen)) {
                 lastFolderNestage = getFolderNestage(mp.val()->k);
                 lastMountpoint = mp.val()->v;
             }
