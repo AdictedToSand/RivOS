@@ -12,17 +12,13 @@ SECTIONS
         *(.text.*)
     }
 
-    .rodata ALIGN(4K) :
-    {
-        *(.rodata)
-        *(.rodata.*)
-    }
-
     .data ALIGN(4K) :
     {
         *(.data)
         *(.data.*)
-    }
+        *(.rodata)
+        *(.rodata.*)
+    } /* TODO: This is evil as fuck */
 
     .bss ALIGN(4K) :
     {

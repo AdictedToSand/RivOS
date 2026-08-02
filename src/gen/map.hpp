@@ -82,6 +82,12 @@ public:
         }
         return false;
     }
+    auto hasVal(VT v) -> bool {
+        for (MapEntry<KT, VT>& p : entries) {
+            if (p.getv() == v) return true;
+        }
+        return false;
+    }
     auto indraw(size_t ind) -> MapEntry<KT, VT>& {
         return entries[ind];
     }

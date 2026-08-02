@@ -5,7 +5,7 @@
 
 static inline auto vectorToExceptionName(uint32_t vector) -> const char* {
     switch (vector) {
-        case 0: return "FP";
+        case 0: return "DE";
         case 1: return "DB";
         case 3: return "BP";
         case 4: return "OF";
@@ -17,7 +17,7 @@ static inline auto vectorToExceptionName(uint32_t vector) -> const char* {
         case 11: return "NP";
         case 12: return "SS";
         case 13: return "GP";
-        case 14: return "FP";
+        case 14: return "PF";
         case 15: return "RESERVED";
         case 16: return "MF";
         case 17: return "AC";
@@ -113,7 +113,9 @@ auto handleRegular() -> void {
 }
 
 void exceptionHandler(InterruptFrame* ifrm) {
+#ifndef DEBUG
     Terminal::clear();
+#endif
 
     const InterruptTypes itype = interruptToType(ifrm->vector);
 
@@ -131,4 +133,6 @@ The fault is of type: %s
         case InterruptTypes::Regular: handleRegular(); break;
         case InterruptTypes::Trap: handleTrap(); break;
     }
+
+    for (;;) ;
 }

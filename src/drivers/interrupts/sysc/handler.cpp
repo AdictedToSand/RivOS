@@ -1,0 +1,60 @@
+#include <terminal/terminal.hpp>
+
+#include <int.h>
+
+#include <sys/sysmod.hpp>
+
+#include <drivers/fs/fs.hpp>
+
+struct [[gnu::packed]] InterruptFrame {
+    u32 edi;
+    u32 esi;
+    u32 ebp;
+    u32 esp;
+    u32 ebx;
+    u32 edx;
+    u32 ecx;
+    u32 eax;
+
+    u32 eip;
+    u32 cs;
+    u32 eflags;
+};
+
+enum class SyscallNumbers : u8 {
+    Open = 0,
+    Write = 1,
+
+    Claim = 4,
+    SetFunc = 5,
+};
+
+// Things to make (related to syscalls): 
+//      - claim("Device");
+//      - .rap (rivapi) file for kernel functions, alongside a parser
+extern "C" auto syscallHandler(InterruptFrame* ifrm) -> void {
+    const SyscallNumbers syscNum = (SyscallNumbers) ifrm->eax;
+
+    switch (syscNum) {
+        case SyscallNumbers::Open: {
+            ifrm->eax = FileSystem::open((const char*) ifrm->edi);
+            break;
+        }
+        case SyscallNumbers::Write: {
+            ifrm->eax = (u8) FileSystem::write(ifrm->edi, (char*) ifrm->esi, ifrm->edx);
+            break;
+        }
+        case SyscallNumbers::Claim: {
+            ifrm->eax = SysModuleHandler::claim((const char*) ifrm->edi);
+            break;
+        }
+        case SyscallNumbers::SetFunc: {
+            ifrm->eax = SysModuleHandler::setFunc((const char*) ifrm->edi, (void(*)()) ifrm->esi);
+            break;
+        }
+        default: {
+            ifrm->eax = -1;
+            break;
+        }
+    }
+}

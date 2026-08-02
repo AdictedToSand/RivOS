@@ -13,10 +13,13 @@
 
 #include <proc/process.hpp>
 
+#include <sys/sysmod.hpp>
+
 bool shift = false;
 bool capslock = false;
 
 extern "C" auto keyboardHandler() -> void {
+    SysModuleHandler::getFunc(SysModuleId::Keyboard_PS2)();
     const u8 sc = inb(0x60);
     ioInit();
     if (sc & 0x80) {

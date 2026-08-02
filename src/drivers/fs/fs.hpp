@@ -54,6 +54,7 @@ struct MountPointEntry {
 
 struct FileSystem {
 private:
+    //TODO: Duplicate filedescriptors can exist
     static inline Vector<MountPointCandidate*> mpCandidates;
     static inline Vector<MountPointEntry*> mountpoints;
 
