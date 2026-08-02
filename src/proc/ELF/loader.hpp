@@ -1,6 +1,8 @@
 #pragma once
 #include <drivers/fs/fs.hpp>
 
+#include <mem/page.hpp>
+#include <mem/mmu/mmu.hpp>
 #include <mem/alloc.hpp>
 
 #include <int.h>
@@ -18,7 +20,7 @@ struct [[gnu::packed]] ElfHeader32 {
     u16 type; // Should be 2 for executable
     u16 instructionSet;
     u32 version; // General ELF version
-    u32 programEntryOffset;
+    u32 programEntry;
     u32 programHeaderTableOffset;
     u32 sectionHeaderTableOffset;
     u32 flags;
@@ -53,6 +55,19 @@ private:
     static constexpr u8 TYPE_EXECUTABLE = 2;
 
     static constexpr u8 INSTRSET_X86 = 0x03;
+
+    struct [[gnu::packed]] ProgramHeader {
+        static constexpr u32 SEGMENTTYPE_LOAD = 1; // Currently only this is supported
+
+        u32 segmentKind;
+        u32 contentsOffset;
+        u32 virtualAddrStart;
+        u32 physicalPosition; // This is unused: userspace should not control this
+        u32 segmentFilesize;
+        u32 memSize;
+        u32 flags;
+        u32 requiredAllignment;
+    };
 public:
     auto isValid() -> bool {
         if (memcmp(hdr->magic, ELF_MAGIC, 4)) return false;
@@ -68,7 +83,7 @@ public:
         if (hdr->instructionSet != INSTRSET_X86) return false;
         if (hdr->version != VERSION_CURRENT) return false;
 
-        if (hdr->programEntryOffset == 0) return false;
+        if (hdr->programEntry == 0) return false;
 
         return true;
     }
@@ -79,11 +94,36 @@ public:
         proc->pname = pname;
         proc->priveledge = priveledge;
 
+        selfProc = proc;
+
+        const u8* const base = (u8*) hdr;
+        ProgramHeader* phdrs = (ProgramHeader*) (base + hdr->programHeaderTableOffset);
+
+        for (u16 i = 0; i < hdr->programHeaderTableSize; i++) {
+            ProgramHeader* ph = (ProgramHeader*) ((u8*) phdrs + i * hdr->programHeaderEntrySize);
+
+            if (ph->segmentKind == ProgramHeader::SEGMENTTYPE_LOAD) {
+                const u32 pageCount = (ph->memSize + 4095) / 4096;
+                const u32 vaddrBase = ph->virtualAddrStart & ~0xFFF; // Round down to page boundary
+
+                for (u32 j = 0; j < pageCount; j++) {
+                    void* const frame = PhysicalFrameAllocator::allocFrame();
+                    if (!frame) { kpanic("Out of memory"); }
+                    Mmu::mapPage(frame, (void*) (vaddrBase + j * 4096), Mmu::FLAGS_PRESENT | Mmu::FLAGS_WRITABLE);
+                    u8* dest = (u8*) ph->virtualAddrStart;
+                    memcpy(dest, base + ph->contentsOffset, ph->segmentFilesize);
+                    memset(dest + ph->segmentFilesize, 0, ph->memSize - ph->segmentFilesize); // BSS
+                }
+            }
+            else {
+                continue;
+            }
+        }
+        proc->entryPoint = (void*) hdr->programEntry;
+
+        free(); // We don't need the ELF anymore at this point.
         addProcess(proc);
         return proc;
-    }
-    auto run() -> void {
-
     }
     auto fromFile(const char* ifp) -> u8 {
         fp = ifp;

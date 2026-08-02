@@ -9,22 +9,30 @@ LDFLAGS = -m elf_i386 -static
 
 OUT = ../rootFs/krn/bin
 
+DEBUG = build_dbg
+RELEASE = build_release
+
 EXCLUDE_DIRS := build/ build_dbg/ build_release/
 DIRS := $(filter-out $(EXCLUDE_DIRS),$(wildcard */))
 PROGRAMS := $(patsubst %/,%,$(DIRS))
 
-DEBUG = build_dbg
-RELEASE = build_release
-
-.PHONY: all clean debug release
+.PHONY: all clean debug release build_programs
 
 all: debug release
 
-debug: $(PROGRAMS:%=$(OUT)/%)
+debug:
+	rm -rf $(OUT)
+	$(MAKE) build_programs
 
-release: $(PROGRAMS:%=$(OUT)/%)
+release:
+	rm -rf $(OUT)
+	$(MAKE) build_programs
+
+build_programs:
+	$(foreach p,$(PROGRAMS),$(MAKE) $(OUT)/$(p);)
 
 $(OUT)/%:
+	mkdir -p $(OUT)
 	mkdir -p $(DEBUG)/$*
 	mkdir -p $(RELEASE)/$*
 

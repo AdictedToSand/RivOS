@@ -52,7 +52,7 @@ SECTIONS
     } :data
     bssEnd = .;
     heapStart = .;
-    . += 64M;
+    . += 32M;
     heapEnd = .;
     kernelEnd = .;
 }

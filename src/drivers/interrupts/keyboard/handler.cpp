@@ -1,4 +1,3 @@
-#include "mem/alloc.hpp"
 #include <terminal/terminal.hpp>
 
 #include <drivers/fs/fs.hpp>
@@ -9,6 +8,10 @@
 
 #include <gen/io.hpp>
 #include <gen/alpha.hpp>
+
+#include <mem/alloc.hpp>
+
+#include <proc/process.hpp>
 
 bool shift = false;
 bool capslock = false;
@@ -34,6 +37,9 @@ extern "C" auto keyboardHandler() -> void {
         }
 
         fd_t stdinFd = FileSystem::open("/dev/stdin");
+        if (!stdinFd) {
+            kpanic("Stdin not found");
+        }
         char addedC = scancodeMap[sc];
         if (isLower(addedC)) {
             if (capslock ^ shift) addedC = toUpper(addedC);

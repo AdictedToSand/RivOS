@@ -11,6 +11,8 @@
 
 #include <mem/alloc.hpp>
 
+#include <bootInfo.hpp>
+
 struct AtaPioStorageDriver : StorageDriver {
     static constexpr uint16_t DATA_PORT = 0x1F0;
     static constexpr uint16_t SECTOR_COUNT_PORT = 0x1F2;
@@ -50,7 +52,9 @@ struct AtaPioStorageDriver : StorageDriver {
             // If you want to get access to the boot drive, use selectNextDrive()
             driveSelect = DRIVE_SELECT_SLAVEDRIVE;
         }
-
+        if (bootinfo.bootloader == BootloaderKinds::GRUB) {
+            // TODO: Add proper logic here (currently it works but not good!)
+        }
 
         KernelAllocator::free(buf);
         return StorageDriver::SuccessCodes::Sucess;

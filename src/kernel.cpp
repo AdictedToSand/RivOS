@@ -11,6 +11,7 @@
 #include <sys/PIC/pic.hpp>
 #include <sys/PIT/pit.hpp>
 
+#include <mem/page.hpp>
 #include <mem/alloc.hpp>
 #include <mem/utils.hpp>
 #include <mem/mmu/mmu.hpp>
@@ -53,9 +54,16 @@ auto disableHardwareCursor() -> void {
 
 //TODO: i32 inst of int32_t
 //TODO: some files still use <returnType> fn(...) instd of auto fn(...) -> <returnType>
-extern "C" { // Disable name mangling
 
-auto kernelMain(u32 magic) -> void {
+static constexpr u32 FRAME_SIZE = 4096;
+static constexpr u32 ASSUMED_MEM_BYTES = 128 * 1024 * 1024; // 128 MiB -- quick & dirty, replace with real detection later
+static constexpr u32 MAX_FRAMES = ASSUMED_MEM_BYTES / FRAME_SIZE;
+static u8 frameBitmapStorage[MAX_FRAMES / 8]; 
+
+extern char kernelStart[];
+extern char kernelEnd[];
+
+extern "C" auto kernelMain(u32 magic) -> void {
     asm volatile ("CLI");
     if (magic == 0x2BADB002) {
         bootinfo.bootloader = BootloaderKinds::GRUB;
@@ -64,6 +72,11 @@ auto kernelMain(u32 magic) -> void {
         bootinfo.bootloader = BootloaderKinds::RivBoot;
     }
     Terminal::init();
+    PhysicalFrameAllocator::init(ASSUMED_MEM_BYTES, frameBitmapStorage);
+    PhysicalFrameAllocator::markUsed(0);
+    for (u32 addr = (u32) kernelStart; addr < (u32) kernelEnd; addr += 4096) // Mark all the other sections as already used
+        PhysicalFrameAllocator::markUsed(addr / 4096);
+
     disableHardwareCursor();
     Terminal::printf("Bootloader: %s\n", (bootinfo.bootloader == BootloaderKinds::GRUB ? "GRUB" : "RivBoot"));
 
@@ -95,12 +108,11 @@ auto kernelMain(u32 magic) -> void {
     ElfExecutable scheduler;
     if (scheduler.fromFile("/krn/bin/sched")) { kpanic("Scheduler not found!!!"); }
     if (!scheduler.isValid()) { kpanic("Scheduler was not a valid ELF"); }
-    scheduler.load("RivOS_Sched", ProcessPriveledgeLevel::Kernel);
+    if (!scheduler.load("RivOS_Sched", ProcessPriveledgeLevel::Kernel)) { kpanic("Unable to load ELF"); }
     Process* proc = processes[0];
     Terminal::printf("ProcessName: %s, Pid: %u, srcFp: %s\n", proc->pname, proc->pid, proc->srcFp.toCStr());
+    proc->run();
 
     Terminal::printf("End of kernel reached");
     for (;;) ;
 }
-
-} // extern "C"

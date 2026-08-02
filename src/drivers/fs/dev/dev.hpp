@@ -119,8 +119,6 @@ public:
         return mappings[fp]->write(obuf, len);
     }
     auto open(const char* fp, bool* obufFileExists) -> File override {
-        *obufFileExists = mappings.exists(fp);
-
         fp += strlen("/dev/");
 
         File ret;
@@ -128,6 +126,8 @@ public:
         ret.fsData = KernelAllocator::alloc(sizeof(FsData));
         ((FsData*) ret.fsData)->fp = (char*) KernelAllocator::alloc(strlen(fp) + 1);
         strcpy(((FsData*) ret.fsData)->fp, fp);
+        ret.exists = mappings.exists(fp);
+        *obufFileExists = ret.exists;
 
         return ret;
     }

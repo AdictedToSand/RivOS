@@ -3,7 +3,6 @@
 #include <stdint.h>
 
 #include <mem/utils.hpp>
-#include <mem/pagealloc.hpp>
 
 #include <gen/err.hpp>
 
@@ -11,6 +10,10 @@ extern "C" void loadPageDirectory(unsigned int*);
 extern "C" void enablePaging();
 
 struct Mmu {
+    static constexpr u32 FLAGS_PRESENT = 0x001;
+    static constexpr u32 FLAGS_WRITABLE = 0x002;
+    static constexpr u32 FLAGS_USER = 0x004;
+
     static inline uint32_t pageDirectory[1024] __attribute__((aligned(4096)));
     static inline uint32_t firstPageTable[1024] __attribute__((aligned(4096)));
 

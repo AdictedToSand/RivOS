@@ -97,7 +97,8 @@ mr_rivboot: rivboot prepare_disk run_rivboot
 clean:
 	rm -rf build
 	rm -rf isodir
-
+	mkdir build
+	mkdir -p isodir/boot
 
 gdb:
 	gdb build/RivOS -ex "target remote :1234" -ex "tui enable" -ex "display/i $pc"
