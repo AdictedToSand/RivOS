@@ -1,3 +1,4 @@
+#include "mem/alloc.hpp"
 #include <terminal/terminal.hpp>
 
 #include <drivers/fs/fs.hpp>
@@ -34,14 +35,21 @@ extern "C" auto keyboardHandler() -> void {
 
         fd_t stdinFd = FileSystem::open("/dev/stdin");
         char addedC = scancodeMap[sc];
-        
         if (isLower(addedC)) {
             if (capslock ^ shift) addedC = toUpper(addedC);
         }
         else if (shift) {
             addedC = scancodeMapShift[sc];
         }
-        //TODO: Backspace
+        if (addedC == '\b') {
+            char* const tmpStdinBuf = (char*) KernelAllocator::alloc(4096);
+
+            FileSystem::read(stdinFd, tmpStdinBuf, 4096);
+            if (u32 slen = strlen(tmpStdinBuf); slen > 0)
+                tmpStdinBuf[slen - 1] = 0;
+
+            KernelAllocator::free(tmpStdinBuf);
+        }
 
         FileSystem::write(stdinFd, &addedC, 1);
         FileSystem::close(stdinFd);

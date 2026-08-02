@@ -9,6 +9,7 @@ PHDRS
 SECTIONS
 {
     . = 0x8000;
+    bootStart = .;
 
     .text :
     {

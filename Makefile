@@ -26,6 +26,7 @@ build_init:
 
 build_dbg:
 	python3 build.py
+	make -C sbinSrc debug
 
 rivboot: build_dbg
 	i686-elf-objcopy -O binary build/RivOS build/kernel.bin
@@ -34,8 +35,8 @@ rivboot: build_dbg
 
 build_release:
 	python3 build.py release
-	i686-elf-objcopy -O binary build/RivOS build/kernel.bin
-	make build_init
+	make -C sbinSrc release
+
 
 rivboot: build_dbg prepare_disk
 	
@@ -89,7 +90,9 @@ debug_rivboot: rivboot
 		-boot c
 
 
-mr: build_dbg grub run
+mr: build_dbg grub prepare_disk run
+
+mr_rivboot: rivboot prepare_disk run_rivboot
 
 clean:
 	rm -rf build

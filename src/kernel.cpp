@@ -25,7 +25,12 @@
 
 #include <ACPI/ACPI.hpp>
 
+#include <proc/ELF/loader.hpp>
+#include <proc/process.hpp>
+
 #include <str.hpp>
+
+#include <bootInfo.hpp>
 
 typedef void (*ctor_t)();
 
@@ -40,15 +45,6 @@ void callGlobalConstructors() {
         }
     }
 }
-extern "C" void irq1Handler() {
-    if (inb(0x60) & 0x80) {
-
-    }
-    else {
-        Terminal::printf("Keypress");
-    }
-    PIC::sendEoi(1);
-}
 
 auto disableHardwareCursor() -> void {
     outb(0x3D4, 0x0A);
@@ -59,10 +55,17 @@ auto disableHardwareCursor() -> void {
 //TODO: some files still use <returnType> fn(...) instd of auto fn(...) -> <returnType>
 extern "C" { // Disable name mangling
 
-auto kernelMain() -> void {
+auto kernelMain(u32 magic) -> void {
     asm volatile ("CLI");
+    if (magic == 0x2BADB002) {
+        bootinfo.bootloader = BootloaderKinds::GRUB;
+    }
+    else {
+        bootinfo.bootloader = BootloaderKinds::RivBoot;
+    }
     Terminal::init();
     disableHardwareCursor();
+    Terminal::printf("Bootloader: %s\n", (bootinfo.bootloader == BootloaderKinds::GRUB ? "GRUB" : "RivBoot"));
 
     ACPI::init();
 
@@ -88,6 +91,13 @@ auto kernelMain() -> void {
     Mmu::init();
 
     HardwareInterrupts::init();
+
+    ElfExecutable scheduler;
+    if (scheduler.fromFile("/krn/bin/sched")) { kpanic("Scheduler not found!!!"); }
+    if (!scheduler.isValid()) { kpanic("Scheduler was not a valid ELF"); }
+    scheduler.load("RivOS_Sched", ProcessPriveledgeLevel::Kernel);
+    Process* proc = processes[0];
+    Terminal::printf("ProcessName: %s, Pid: %u, srcFp: %s\n", proc->pname, proc->pid, proc->srcFp.toCStr());
 
     Terminal::printf("End of kernel reached");
     for (;;) ;

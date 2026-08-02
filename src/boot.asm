@@ -52,6 +52,7 @@ _start:
     ; Right now, RivBoot makes no guarantee that a proper stack is set up. So we define our own
     MOV esp, stack_top
 
+    PUSH eax
     CALL kernelMain
 
     ; If the system has nothing more to do, put the computer into an

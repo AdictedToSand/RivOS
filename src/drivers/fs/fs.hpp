@@ -171,6 +171,11 @@ public:
 
         return gf.mp->fsDriver->write(gf.f, conts, len);
     }
+    static auto fileSize(fd_t fd) -> u32 {
+        if (!fd) return 0;
+
+        return fdMapping[fd].f.size;
+    }
 };
 
 using FsSuccessCodes = FileSystemDriver::SuccessCodes;

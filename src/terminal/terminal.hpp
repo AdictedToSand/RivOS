@@ -58,8 +58,8 @@ struct Terminal {
 	    }
     }
 
-    static auto setColor(const VgaColor color) -> void {
-        terminalColor = (uint8_t) color;
+    static auto setColor(const u8 color) -> void {
+        terminalColor = color;
     }
 
     static auto putEntryAt(char c, uint8_t color, size_t x, size_t y) -> void {
@@ -74,6 +74,20 @@ struct Terminal {
                 return; //TODO: replace with proper scrolling
             }
             terminalColumn = 0;
+        }
+        else if (c == '\b') {
+            if (terminalColumn > 0) {
+                terminalColumn--;
+            }
+            else if (terminalRow > 0) {
+                terminalRow--;
+                terminalColumn = VGA_WIDTH - 1;
+            }
+            else {
+                return;
+            }
+
+            putEntryAt(' ', terminalColor, terminalColumn, terminalRow);
         }
         else {
             Serial::write(c);
@@ -110,6 +124,10 @@ struct Terminal {
 
         putChar(n % 10 + '0');
     }
+    static auto printu(unsigned int n) -> void {
+        if (n >= 10) printu(n / 10);
+        putChar('0' + (n % 10));
+    }
     static auto printHex(unsigned int n) -> void {
         const char hexChars[] = "0123456789ABCDEF";
       
@@ -129,10 +147,7 @@ struct Terminal {
         }
     }
 
-    static auto printf(const char* fmt, ...) {
-        va_list args;
-        va_start(args, fmt);
-
+    static auto printf_vaArgs(const char* fmt, va_list args) -> void {
         for (size_t i = 0; fmt[i]; i++) {
             switch (fmt[i]) {
                 case '%': {
@@ -145,6 +160,7 @@ struct Terminal {
                         case 'c': putChar(va_arg(args, int)); break;
                         case 'i': printi(va_arg(args, int)); break; 
                         case 'p': printPtr(va_arg(args, void*)); break;
+                        case 'u': ; printu(va_arg(args, unsigned int)); break;
                         default: break;
                     }
 
@@ -155,8 +171,22 @@ struct Terminal {
                 }
             }
         }
-
+    }
+    static auto printf(const char* fmt, ...) -> void {
+        va_list args;
+        va_start(args, fmt);
+        printf_vaArgs(fmt, args);
         va_end(args);
+    }
+
+    static auto printfColor(const char* fmt, u32 color, ...) -> void {
+        const auto orginColor = terminalColor;
+        setColor(color);
+        va_list args;
+        va_start(args, color);
+        printf_vaArgs(fmt, args);
+        va_end(args);
+        setColor(orginColor);
     }
 };
 

@@ -1,14 +1,14 @@
 #pragma once
 #include <terminal/terminal.hpp>
 
-#define kpanic(msg) { \
+#define kpanic(msg) do { \
     Terminal::clear(); \
     \
-    Terminal::setColor(Terminal::VgaColor::Red); \
+    Terminal::setColor((u8) Terminal::VgaColor::Red); \
     Terminal::printf("A kernel panic occurred at: (%s) -> (%s) -> (line %i) -> %s", __FILE__, __FUNCTION__, __LINE__, msg); \
     \
     for (;;); \
-}
+} while (0)
 
 static inline void kassrt(bool eval, const char* msg) {
     if (!eval) 

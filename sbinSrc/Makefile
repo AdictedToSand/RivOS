@@ -9,7 +9,8 @@ LDFLAGS = -m elf_i386 -static
 
 OUT = ../rootFs/krn/bin
 
-DIRS := $(filter-out build/,$(wildcard */))
+EXCLUDE_DIRS := build/ build_dbg/ build_release/
+DIRS := $(filter-out $(EXCLUDE_DIRS),$(wildcard */))
 PROGRAMS := $(patsubst %/,%,$(DIRS))
 
 DEBUG = build_dbg

@@ -20,3 +20,18 @@ static inline bool streq(const char* a, const char* b) {
     return strcmp(a, b) == 0;
 }
 
+
+static inline char* strcpy(char* dest, const char* src) {
+    char* ret = dest;
+
+    while (*src != '\0') {
+        *dest = *src;
+        dest++;
+        src++;
+    }
+
+    *dest = '\0';
+
+    return ret;
+}
+

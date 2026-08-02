@@ -47,9 +47,10 @@ struct AtaPioStorageDriver : StorageDriver {
         if (streq((char*) buf, "RivBoot")) {
             // The drive contains the RivBoot bootcode
             // It should contain the filesystem, so we ignore it
-            // If you want to get access to the boot drive, set driveSelect yourself.
+            // If you want to get access to the boot drive, use selectNextDrive()
             driveSelect = DRIVE_SELECT_SLAVEDRIVE;
         }
+
 
         KernelAllocator::free(buf);
         return StorageDriver::SuccessCodes::Sucess;

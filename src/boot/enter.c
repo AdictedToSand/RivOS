@@ -24,10 +24,11 @@ typedef struct [[gnu::packed]] RivBootHeader {
 } RivBootHeader;
 
 RivBootHeader* rivbootEntry;
+static RivBootHeader header;
 
 void bootintoOS(MenuItem* this) {
     print("Booting into %s", this->str);
-    void (*kernelStart)(void) = (void*) (rivbootEntry->entry + x86InstructionLength((u8*) rivbootEntry->entry) - 2); // What the fuck
+    void (*kernelStart)(void) = (void*) (header.entry + x86InstructionLength((u8*) header.entry) - 2); // What the fuck
     kernelStart();
 }
 
@@ -50,7 +51,12 @@ void shutdown(MenuItem* this) {
     } while (sc & 0x80);
 }
 
+static char osName[128];
 static char buf[512];
+
+extern char bootStart[];
+extern char bootEnd[];
+//TODO: Globals in RivBoot don't work?
 void startBoot() {
     initTerm();
     storageInit();
@@ -65,23 +71,29 @@ void startBoot() {
         }
     }
     rivbootEntry = (RivBootHeader*) buf;
+    header = *rivbootEntry;
 
-    const char* osName = (char*) &buf[rivbootEntry->osNamePtr - rivbootEntry->kernelStart];
+    strcpy(osName, (char*) &buf[header.osNamePtr - header.kernelStart]);
 
     print("An operating system was found: %s\n", osName);
 
-    const u32 kernelSectors = ((u32) rivbootEntry->kernelSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
+    const u32 krnEnd = header.kernelStart + header.kernelSize;
+    if (krnEnd < (u32) bootEnd) {
+        panic("Kernel overlapped with bootloader")
+    }
+
+    const u32 kernelSectors = ((u32) header.kernelSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
 
     for (u32 i = 0; i < kernelSectors; i++) {
-        const u8* loadedAddr = (u8*) (rivbootEntry->kernelStart + (i * 512));
+        const u8* loadedAddr = (u8*) (header.kernelStart + (i * 512));
 
         if (readSector(sectorInd + i, SECTOR_SIZE, (char*) loadedAddr))
             panic("Unable to load kernel");
     }
 
-    if (rivbootEntry->version.minorThenMajor[0] == 2) {
-        memset((void*) rivbootEntry->bssStartVers0_2, 0,
-               rivbootEntry->bssEndVers0_2 - rivbootEntry->bssStartVers0_2);
+    if (header.version.minorThenMajor[0] == 2) {
+        memset((void*) header.bssStartVers0_2, 0,
+            header.bssEndVers0_2 - header.bssStartVers0_2);
     }
     
     MenuItem menuitems[] = {
