@@ -49,11 +49,6 @@ void callGlobalConstructors() {
     }
 }
 
-auto disableHardwareCursor() -> void {
-    outb(0x3D4, 0x0A);
-    outb(0x3D5, 0x20);
-}
-
 //TODO: i32 inst of int32_t
 //TODO: some files still use <returnType> fn(...) instd of auto fn(...) -> <returnType>
 
@@ -79,13 +74,13 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
     else {
         bootinfo.bootloader = BootloaderKinds::RivBoot;
     }
+    Terminal::init();
 
     PhysicalFrameAllocator::init(ASSUMED_MEM_BYTES, frameBitmapStorage);
     PhysicalFrameAllocator::markUsed(0);
     for (u32 addr = (u32) kernelStart; addr < (u32) kernelEnd; addr += 4096) // Mark all the other sections as already used
         PhysicalFrameAllocator::markUsed(addr / 4096);
 
-    disableHardwareCursor();
     Terminal::printf("Bootloader: %s\n", (bootinfo.bootloader == BootloaderKinds::GRUB ? "GRUB" : "RivBoot"));
 
     ACPI::init();

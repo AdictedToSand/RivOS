@@ -35,6 +35,8 @@ struct Terminal {
     static inline u32 terminalX;
     static inline u32 terminalY;
 
+    static inline bool enabled;
+
     static inline auto vgaEntryColor(VgaColor fg, VgaColor bg) -> uint8_t {
 	    return (int) fg | (int) bg << 4;
     }
@@ -46,12 +48,14 @@ struct Terminal {
         Visuals::fillScreen(0x00101010); 
         terminalX = 0, terminalY = 0;
 	    terminalColor = vgaEntryColor(VgaColor::LightGrey, VgaColor::Black);
+        enabled = true;
     }
 
     static auto setColor(const u8 color) -> void {
         terminalColor = color;
     }
     static auto putChar(char c) -> void {
+        if (!enabled) return;
         const int charWidth = 16;
         const int charHeight = 16;
 
