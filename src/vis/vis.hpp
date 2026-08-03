@@ -41,13 +41,21 @@ public:
 
         pixels = (u32*) (u32) fb->addr;
     }
-    static auto putPixel(u32 argb, u32 x, u32 y) -> void {
+    static inline auto putPixel(u32 argb, u32 x, u32 y) -> void {
         pixels[y * (fb->pitch / 4) + x] = argb; 
     }
-    static auto getScreenHeight() -> u32 {
+    static inline auto getScreenHeight() -> u32 {
         return fb->height;
     }
-    static auto getScreenWidth() -> u32 {
+    static inline auto getScreenWidth() -> u32 {
         return fb->width;
     }
+    static auto fillScreen(u32 argb) -> void {
+        for (u32 y = 0; y < getScreenHeight(); y++)
+            for (u32 x = 0; x < getScreenWidth(); x++)
+                putPixel(argb, x, y); 
+    }
+
+    static auto getFbPhysAddr() -> u32 { return (u32) fb->addr; }
+    static auto getFbSizeBytes() -> u32 { return fb->pitch * fb->height; }
 };

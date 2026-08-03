@@ -4,6 +4,8 @@
 #include "sys/sys.h"
 #include "sys/stdio.h"
 
+#include "gen/string.h"
+
 #include "keyboard/keyboard.h"
 
 void pitHandler(void) {
@@ -19,6 +21,7 @@ void _start() {
     setFunc("Keyboard_PS2", keyboardHandler);
     claim("PIT");
     setFunc("PIT", pitHandler);
+    write(stdout, "Hi", strlen("HH"));
 
     for (;;) ;
 }

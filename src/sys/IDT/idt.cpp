@@ -116,6 +116,9 @@ auto handleRegular() -> void {
 }
 
 void exceptionHandler(InterruptFrame* ifrm) {
+    Serial::log("EXCEPTION");
+    Serial::log(vectorToExceptionName(ifrm->vector));
+    for (;;) ;
 #ifndef DEBUG
     Terminal::clear();
 #endif

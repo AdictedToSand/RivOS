@@ -1,4 +1,6 @@
 #pragma once
+#include <terminal/font.hpp>
+
 #include <gen/serial.hpp>
 
 #include <cstring.hpp>
@@ -6,6 +8,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdarg.h>
+
+#include <vis/vis.hpp>
 
 // Credits: https://wiki.osdev.org/Bare_Bones
 struct Terminal {
@@ -26,15 +30,10 @@ struct Terminal {
         LightMagenta = 13,
         LightBrown = 14,
     };
-
-    inline static uint16_t* const VGA_MEMORY = (uint16_t*)0xB8000; // Would make this constexpr but fuck the C++ compiler ig
-    inline static const size_t VGA_WIDTH = 80;
-    inline static const size_t VGA_HEIGHT = 25;                                        
-
-    inline static size_t terminalRow = 0;
-    inline static size_t terminalColumn = 0;
     inline static uint8_t terminalColor = 0;
-    inline static uint16_t* terminalBuffer = nullptr;
+
+    static inline u32 terminalX;
+    static inline u32 terminalY;
 
     static inline auto vgaEntryColor(VgaColor fg, VgaColor bg) -> uint8_t {
 	    return (int) fg | (int) bg << 4;
@@ -44,61 +43,52 @@ struct Terminal {
     }
 
     static auto init() -> void {
-        terminalBuffer = VGA_MEMORY;
-
-	    terminalRow = 0;
-	    terminalColumn = 0;
+        Visuals::fillScreen(0x00101010); 
+        terminalX = 0, terminalY = 0;
 	    terminalColor = vgaEntryColor(VgaColor::LightGrey, VgaColor::Black);
-	
-	    for (size_t y = 0; y < VGA_HEIGHT; y++) {
-		    for (size_t x = 0; x < VGA_WIDTH; x++) {
-			    const size_t index = y * VGA_WIDTH + x;
-			    terminalBuffer[index] = vgaEntry(' ', terminalColor);
-		    }
-	    }
     }
 
     static auto setColor(const u8 color) -> void {
         terminalColor = color;
     }
-
-    static auto putEntryAt(char c, uint8_t color, size_t x, size_t y) -> void {
-        const size_t index = y * VGA_WIDTH + x;
-        terminalBuffer[index] = vgaEntry(c, color);
-    }
     static auto putChar(char c) -> void {
-        if (c == '\n') {
-            Serial::write(c);
-            if (++terminalRow >= VGA_HEIGHT * VGA_WIDTH) {
-                clear();
-                return; //TODO: replace with proper scrolling
-            }
-            terminalColumn = 0;
-        }
-        else if (c == '\b') {
-            if (terminalColumn > 0) {
-                terminalColumn--;
-            }
-            else if (terminalRow > 0) {
-                terminalRow--;
-                terminalColumn = VGA_WIDTH - 1;
-            }
-            else {
-                return;
-            }
+        const int charWidth = 16;
+        const int charHeight = 16;
 
-            putEntryAt(' ', terminalColor, terminalColumn, terminalRow);
+        if (c == '\n') {
+            terminalX = 0;
+            terminalY += charHeight;
+            return;
         }
-        else {
-            Serial::write(c);
-            putEntryAt(c, terminalColor, terminalColumn, terminalRow);
-            if (++terminalColumn == VGA_WIDTH) {
-                terminalColumn = 0;
-                if (++terminalRow == VGA_HEIGHT) {
-                    clear();
+
+        if (terminalX + charWidth > Visuals::getScreenWidth()) {
+            terminalX = 0;
+            terminalY += charHeight;
+        }
+
+        if (terminalY + charHeight > Visuals::getScreenHeight()) {
+            clear();
+            terminalX = 0;
+            terminalY = 0;
+        }
+
+        for (int x = 0; x < 8; x++) {
+            for (int y = 0; y < 8; y++) {
+                bool set = font8x8_basic[(unsigned char)c][y] & (1 << x);
+
+                if (set) {
+                    const int px = terminalX + x * 2;
+                    const int py = terminalY + y * 2;
+
+                    Visuals::putPixel(0x00FFFFFF, px, py);
+                    Visuals::putPixel(0x00FFFFFF, px + 1, py);
+                    Visuals::putPixel(0x00FFFFFF, px, py + 1);
+                    Visuals::putPixel(0x00FFFFFF, px + 1, py + 1);
                 }
             }
         }
+
+        terminalX += charWidth;
     }
     static auto write(const char* const s, size_t len) -> void {
         for (size_t i = 0; i < len; i++)
@@ -109,7 +99,7 @@ struct Terminal {
         write(s, strlen(s));
     }
     static auto clear() -> void {
-        init(); // Does the exact behaviour we need rn
+        Visuals::fillScreen(0x00101010);
     }
 
     // Credits: https://www.geeksforgeeks.org/c/print-long-int-number-c-using-putchar/

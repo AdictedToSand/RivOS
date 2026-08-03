@@ -67,24 +67,19 @@ extern char kernelEnd[];
 
 // Rn: .rap and keyboard handler not being in kernel but sched
 extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
+    Gdt::init();
+    Idt::init();
+
     Visuals::init(mbiAddr);
 
-    for (u32 y = 0; y < Visuals::getScreenHeight(); y++) {
-        for (u32 x = 0; x < Visuals::getScreenWidth(); x++) {
-            Visuals::putPixel(x, x, y);
-        }
-    }
-
-    for (;;) ;
-
     asm volatile ("CLI");
-    if (magic == 0x2BADB002) {
+    if (magic == 0x36D76289) {
         bootinfo.bootloader = BootloaderKinds::GRUB;
     }
     else {
         bootinfo.bootloader = BootloaderKinds::RivBoot;
     }
-    Terminal::init();
+
     PhysicalFrameAllocator::init(ASSUMED_MEM_BYTES, frameBitmapStorage);
     PhysicalFrameAllocator::markUsed(0);
     for (u32 addr = (u32) kernelStart; addr < (u32) kernelEnd; addr += 4096) // Mark all the other sections as already used
@@ -96,9 +91,6 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
     ACPI::init();
 
     kassrt(Serial::init() == 0, "Unable to initalize serial");
-
-    Gdt::init();
-    Idt::init();
 
     KernelAllocator::init();
 
@@ -114,6 +106,13 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
 
     Mmu::init();
 
+    {
+        u32 start = Visuals::getFbPhysAddr() & ~0xFFF;
+        u32 end   = (Visuals::getFbPhysAddr() + Visuals::getFbSizeBytes() + 0xFFF) & ~0xFFF;
+        for (u32 addr = start; addr < end; addr += 4096)
+            Mmu::mapPage((void*) addr, (void*) addr, Mmu::FLAGS_WRITABLE);
+    }
+
     HardwareInterrupts::init();
 
     ElfExecutable scheduler;
@@ -121,7 +120,7 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
     if (!scheduler.isValid()) { kpanic("Scheduler was not a valid ELF"); }
     Process* proc = scheduler.load("RivOS_Sched", ProcessPriveledgeLevel::Kernel);
     if (!proc) { kpanic("Unable to load ELF"); }
-    Terminal::printf("ProcessName: %s, Pid: %u, srcFp: %s\n", proc->pname, proc->pid, proc->srcFp.toCStr());
+    //Terminal::printf("ProcessName: %s, Pid: %u, srcFp: %s\n", proc->pname, proc->pid, proc->srcFp.toCStr());
     proc->run(ProcessImportance::REQ);
 
     kpanic("End of kernel reached");
