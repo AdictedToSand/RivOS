@@ -33,6 +33,11 @@ struct RegisterState {
 
 extern "C" [[gnu::noreturn]] void finalRun(void* pEntry, void* sStart);
 
+enum class ProcessImportance {
+    REQ,
+    OPT,
+};
+
 struct Process {
     pid_t pid;
     const char* pname;
@@ -42,9 +47,11 @@ struct Process {
     void* memEnd;
     RegisterState state;
     void* entryPoint;
+    ProcessImportance importance;
 
     [[gnu::noreturn]]
-    void run() {
+    auto run(ProcessImportance iimportance) -> void {
+        importance = iimportance;
 
         u32 stackPages = (STACK_SIZE + 4095) / 4096;
 
@@ -56,6 +63,16 @@ struct Process {
         activeProcessPid = pid;
 
         finalRun(entryPoint, STACK_BEGIN);
+    }
+    auto exit(u8 code) -> void {
+        if (code != 0) {
+            Serial::log("Process quited with exitcode nonzero");
+        }
+        if (importance == ProcessImportance::REQ) {
+            Serial::log("Required process exited");
+                
+            kpanic("Required process exited");
+        }
     }
 };
 

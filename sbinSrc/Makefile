@@ -4,7 +4,7 @@ CC = $(CROSS)-gcc
 LD = $(CROSS)-ld
 AS = nasm
 
-CFLAGS = -m32 -ffreestanding -nostdlib -static -fno-pie -fno-stack-protector
+CFLAGS = -m32 -ffreestanding -nostdlib -static -fno-pie -fno-stack-protector -I../src/lib
 LDFLAGS = -m elf_i386 -static
 
 OUT = ../rootFs/krn/bin

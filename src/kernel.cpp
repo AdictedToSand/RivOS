@@ -112,7 +112,7 @@ extern "C" auto kernelMain(u32 magic) -> void {
     if (!scheduler.load("RivOS_Sched", ProcessPriveledgeLevel::Kernel)) { kpanic("Unable to load ELF"); }
     Process* proc = processes[0];
     Terminal::printf("ProcessName: %s, Pid: %u, srcFp: %s\n", proc->pname, proc->pid, proc->srcFp.toCStr());
-    proc->run();
+    proc->run(ProcessImportance::REQ);
 
     kpanic("End of kernel reached");
     for (;;) ;

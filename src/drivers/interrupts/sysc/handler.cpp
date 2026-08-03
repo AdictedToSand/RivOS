@@ -8,6 +8,8 @@
 
 #include <drivers/fs/fs.hpp>
 
+#include <proc/process.hpp>
+
 struct [[gnu::packed]] InterruptFrame {
     u32 edi;
     u32 esi;
@@ -26,17 +28,16 @@ struct [[gnu::packed]] InterruptFrame {
 enum class SyscallNumbers : u8 {
     Open = 0,
     Write = 1,
-
+    Read = 2,
+    Close = 3,
     Claim = 4,
     SetFunc = 5,
     Release = 6,
     Mmap = 7,
     Munmap = 8,
+    Exit = 9,
 };
 
-// Things to make (related to syscalls): 
-//      - claim("Device");
-//      - .rap (rivapi) file for kernel functions, alongside a parser
 extern "C" auto syscallHandler(InterruptFrame* ifrm) -> void {
     const SyscallNumbers syscNum = (SyscallNumbers) ifrm->eax;
 
@@ -47,6 +48,14 @@ extern "C" auto syscallHandler(InterruptFrame* ifrm) -> void {
         }
         case SyscallNumbers::Write: {
             ifrm->eax = (u8) FileSystem::write(ifrm->edi, (char*) ifrm->esi, ifrm->edx);
+            break;
+        }
+        case SyscallNumbers::Read: {
+            ifrm->eax = (u8) FileSystem::read(ifrm->edi, (char*) ifrm->esi, ifrm->edx);
+            break;
+        }
+        case SyscallNumbers::Close: {
+            FileSystem::close(ifrm->edi);
             break;
         }
         case SyscallNumbers::Claim: {
@@ -69,6 +78,13 @@ extern "C" auto syscallHandler(InterruptFrame* ifrm) -> void {
             // TODO: This is not safe
             KernelAllocator::free((void*) ifrm->edi);
             break;
+        }
+        case SyscallNumbers::Exit: {
+            for (u32 i = 0; i < processes.size(); i++) {
+                if (processes[i].val()->pid == activeProcessPid) {
+                    processes[i].val()->exit((u8) ifrm->edi);
+                }
+            }
         }
         default: {
             ifrm->eax = -1;

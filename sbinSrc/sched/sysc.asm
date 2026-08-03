@@ -7,6 +7,9 @@ global setFunc
 global release
 global mmap
 global munmap
+global exit
+global read
+global close
 
 open:
     MOV edi, dword [esp+4]
@@ -20,6 +23,21 @@ write:
     MOV edx, dword [esp+12]
 
     MOV eax, 1
+    INT 0x80
+    RET
+
+read:
+    MOV edi, dword [esp+4]
+    MOV esi, dword [esp+8]
+    MOV edx, dword [esp+12]
+
+    MOV eax, 2
+    INT 0x80
+    RET
+
+close:
+    MOV edi, dword [esp+4]
+    MOV eax, 3
     INT 0x80
     RET
 
@@ -49,6 +67,11 @@ mmap:
 munmap: 
     MOV edi, dword [esp+4]
     MOV eax, 8
+    INT 0x80
+    RET
+exit:   
+    MOV edi, dword [esp+4]
+    MOV eax, 9
     INT 0x80
     RET
 

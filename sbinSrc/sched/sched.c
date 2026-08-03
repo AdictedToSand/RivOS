@@ -1,13 +1,9 @@
-#include <stdint.h>
+#include <int.h>
+#include <stdbool.h>
 
 #include "scMap.h"
+#include "alpha.h"
 
-typedef uint8_t u8;
-typedef uint16_t u16;
-
-typedef uint32_t u32;
-
-typedef u8 bool;
 #define true 1
 #define false 0
 typedef u32 fd_t;
@@ -19,6 +15,9 @@ extern u8 release(const char* mod);
 extern u8 setFunc(const char* mod, void (*)(void));
 extern void* mmap(u32 size);
 extern void munmap(void* mem);
+extern void exit(int exitcode);
+extern u8 read(fd_t fd, char* obuf, u32 len);
+extern void close(fd_t fd);
 
 u32 strlen(const char* s) {
     u32 i = 0;
@@ -99,22 +98,49 @@ void keyboardHandler() {
             keyboardState.shift = true;
             return;
         }
+        if (sc == SC_CAPS_LOCK) {
+            keyboardState.capslock = !keyboardState.capslock;
+            return;
+        }
+
+                fd_t stdinFd = open("/dev/stdin");
+        if (!stdinFd) exit(1);
+        char addedC = scancodeMap[sc];
+        if (isLower(addedC)) {
+            if (keyboardState.capslock ^ keyboardState.shift) addedC = toUpper(addedC);
+        }
+        else if (keyboardState.shift) {
+            addedC = scancodeMapShift[sc];
+        }
+        if (addedC == '\b') {
+            char* const tmpStdinBuf = (char*) mmap(4096);
+
+            read(stdinFd, tmpStdinBuf, 4096);
+            const u32 slen = strlen(tmpStdinBuf);
+            if (slen > 0)
+                tmpStdinBuf[slen - 1] = 0;
+
+            munmap(tmpStdinBuf);
+        }
+
+        write(stdinFd, &addedC, 1);
+        write(stdout, &addedC, 1);
+        close(stdinFd);
+
     }
 }
 void keyboardInit() {
-     
+     keyboardState.shift = false;
+     keyboardState.capslock = false;
 }
-
-const u8 i = 8;
 
 void _start() {
     stdout = open("/dev/stdout"); 
 
+    keyboardInit();
+
     claim("Keyboard_PS2");
     setFunc("Keyboard_PS2", keyboardHandler);
 
-    const u8 j = i + '0';
-    write(stdout, (const char*) &j, 1);
-  
     for (;;) ;
 }

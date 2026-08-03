@@ -2,7 +2,7 @@
 
 // index = scancode (make code, bit 7 clear). 0 = no ASCII equivalent
 // (modifier keys, function keys, etc. -- handle those separately by scancode).
-static const char scancodeToAsciiLower[] = {
+static const char scancodeMap[] = {
     [0x02] = '1', [0x03] = '2', [0x04] = '3', [0x05] = '4', [0x06] = '5',
     [0x07] = '6', [0x08] = '7', [0x09] = '8', [0x0A] = '9', [0x0B] = '0',
     [0x0C] = '-', [0x0D] = '=', [0x0E] = '\b', // backspace
@@ -29,7 +29,7 @@ static const char scancodeToAsciiLower[] = {
     [0x52] = '0', [0x53] = '.',
 };
 
-static const char scancodeToAsciiUpper[] = {
+static const char scancodeMapShift[] = {
     [0x02] = '!', [0x03] = '@', [0x04] = '#', [0x05] = '$', [0x06] = '%',
     [0x07] = '^', [0x08] = '&', [0x09] = '*', [0x0A] = '(', [0x0B] = ')',
     [0x0C] = '_', [0x0D] = '+', [0x0E] = '\b',

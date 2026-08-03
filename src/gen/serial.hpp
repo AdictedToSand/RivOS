@@ -63,4 +63,19 @@ struct Serial {
         outb(PORT, a);
 #endif
     }
+    static auto writes(const char* s) -> void {
+        (void) s;
+#ifdef DEBUG
+        for (; *s; s++) {
+            write(*s);
+        }
+    }
+#endif
+    static auto log(const char* mes) -> void {
+        (void) mes;
+#ifdef DEBUG
+        writes("[LOG]: ");
+        writes(mes);
+    }
+#endif
 };
