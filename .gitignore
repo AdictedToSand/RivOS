@@ -1,2 +1,5 @@
 build
 isodir
+sbinSrc/build
+sbinSrc/build_dbg
+sbinSrc/build_release
