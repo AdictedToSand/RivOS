@@ -54,6 +54,6 @@ struct Process {
     auto exit(u8 code) -> void;
 };
 
-static inline Vector<Process*> processes;
+extern Vector<Process*> processes;
 
 auto getNewPid() -> pid_t;

@@ -27,11 +27,17 @@ auto Process::exit(u8 code) -> void {
         Serial::log("Required process exited");
         if (code == 0) Serial::log("With exit code 0");
         else Serial::log("With a nonzero exitcode!");
-            
-        kpanic("Required process exited");
+
+        Str msg = "Required process exited: ";
+        msg += pname;
+ 
+        kpanic(msg.toCStr());
     }
 }
 
 auto getNewPid() -> pid_t {
     return latestPid++;
 }
+
+Vector<Process*> processes;
+

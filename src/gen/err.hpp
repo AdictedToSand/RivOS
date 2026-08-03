@@ -12,7 +12,7 @@
 } while (0)
 #else
 #define kpanic(msg) do { \
-    Terminal::printfColor("\nA kernel panic occurred at: (%s) -> (%s) -> (line %i) -> %s", (u32) Terminal::VgaColor::Red, \
+    Terminal::printfColor("\nA kernel panic occurred at: (%s) -> (%s) -> (line %i): %s", (u32) Terminal::VgaColor::Red, \
         __FILE__, __FUNCTION__, __LINE__, msg); \
     for (;;) ; \
 } while (0)
