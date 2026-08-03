@@ -2,10 +2,11 @@
 #include <stdbool.h>
 
 #include "sys/sys.h"
+#include "sys/stdio.h"
+
 #include "keyboard/keyboard.h"
 
 void pitHandler(void) {
-    
 }
 
 void _start() {
@@ -16,8 +17,8 @@ void _start() {
 
     claim("Keyboard_PS2");
     setFunc("Keyboard_PS2", keyboardHandler);
-
-    //exit(0);
+    claim("PIT");
+    setFunc("PIT", pitHandler);
 
     for (;;) ;
 }

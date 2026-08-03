@@ -33,12 +33,30 @@ stack_bottom:
 stack_top:
 
 section .multiboot
-align 4
 
-dd 0x1BADB002
-dd 0
-dd -(0x1BADB002)
+align 8
+multiboot_header:
+    dd 0xE85250D6        ; magic
+    dd 0                 ; architecture i386
+    dd multiboot_end - multiboot_header
+    dd -(0xE85250D6 + 0 + (multiboot_end - multiboot_header))
 
+    ; framebuffer tag
+    align 8
+    dw 5                 ; framebuffer tag type
+    dw 0                 ; flags
+    dd 20                ; size
+    dd 1024              ; width
+    dd 768               ; height
+    dd 32                ; depth
+
+    ; end tag
+    align 8
+    dw 0
+    dw 0
+    dd 8
+
+multiboot_end:
 ; The linker script specifies _start as the entry point to the kernel and the
 ; bootloader will jump to this position once the kernel has been loaded. It
 ; doesn't make sense to return from this function as the bootloader is gone.
@@ -52,6 +70,7 @@ _start:
     ; Right now, RivBoot makes no guarantee that a proper stack is set up. So we define our own
     MOV esp, stack_top
 
+    PUSH ebx
     PUSH eax
     CALL kernelMain
 

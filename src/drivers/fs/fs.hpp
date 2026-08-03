@@ -106,6 +106,13 @@ public:
             }
             i++;
         }
+        bool rootFound = false;
+        for (auto& mpentry : mountpoints) {
+            if (streq(mpentry->k, "/")) { rootFound = true; break; }
+        }
+        if (!rootFound) {
+            kpanic("No mountpoint was found for root (/)");
+        }
 
         for (auto& kv : mountpoints) {
             kv->v->init();

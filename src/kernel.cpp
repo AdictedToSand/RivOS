@@ -24,6 +24,8 @@
 #include <drivers/fs/file.hpp>
 #include <drivers/interrupts/init.hpp>
 
+#include <vis/vis.hpp>
+
 #include <ACPI/ACPI.hpp>
 
 #include <proc/ELF/loader.hpp>
@@ -64,7 +66,17 @@ extern char kernelStart[];
 extern char kernelEnd[];
 
 // Rn: .rap and keyboard handler not being in kernel but sched
-extern "C" auto kernelMain(u32 magic) -> void {
+extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
+    Visuals::init(mbiAddr);
+
+    for (u32 y = 0; y < Visuals::getScreenHeight(); y++) {
+        for (u32 x = 0; x < Visuals::getScreenWidth(); x++) {
+            Visuals::putPixel(x, x, y);
+        }
+    }
+
+    for (;;) ;
+
     asm volatile ("CLI");
     if (magic == 0x2BADB002) {
         bootinfo.bootloader = BootloaderKinds::GRUB;
