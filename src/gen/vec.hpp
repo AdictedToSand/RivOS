@@ -13,7 +13,6 @@ private:
     T* arr;
     size_t len;
     size_t capacity;
-
 public:
     Vector() {
         len = 0;
@@ -38,7 +37,7 @@ public:
     auto pushBack(T elem) -> void {
         if (len >= capacity) {
             T* newArr = (T*) KernelAllocator::alloc((capacity * 2) * sizeof(T));
-            if (!newArr) kpanic("");
+            if (!newArr) kpanic("New array allocation failed in Vector.");
             capacity *= 2;
            
             for (size_t i = 0; i < len; i++) {

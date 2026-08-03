@@ -124,7 +124,6 @@ public:
         proc->entryPoint = (void*) hdr->programEntry;
 
         free(); // We don't need the ELF anymore at this point.
-        addProcess(proc);
         return proc;
     }
     auto fromFile(const char* ifp) -> u8 {

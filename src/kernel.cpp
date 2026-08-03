@@ -83,8 +83,6 @@ extern "C" auto kernelMain(u32 magic) -> void {
 
     ACPI::init();
 
-    ioInit();
-
     kassrt(Serial::init() == 0, "Unable to initalize serial");
 
     Gdt::init();
@@ -109,8 +107,8 @@ extern "C" auto kernelMain(u32 magic) -> void {
     ElfExecutable scheduler;
     if (scheduler.fromFile("/krn/bin/sched")) { kpanic("Scheduler not found!!!"); }
     if (!scheduler.isValid()) { kpanic("Scheduler was not a valid ELF"); }
-    if (!scheduler.load("RivOS_Sched", ProcessPriveledgeLevel::Kernel)) { kpanic("Unable to load ELF"); }
-    Process* proc = processes[0];
+    Process* proc = scheduler.load("RivOS_Sched", ProcessPriveledgeLevel::Kernel);
+    if (!proc) { kpanic("Unable to load ELF"); }
     Terminal::printf("ProcessName: %s, Pid: %u, srcFp: %s\n", proc->pname, proc->pid, proc->srcFp.toCStr());
     proc->run(ProcessImportance::REQ);
 

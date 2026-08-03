@@ -1,4 +1,3 @@
-#include "gen/io.hpp"
 #include <sys/IDT/idt.hpp>
 
 #include <gen/reboot.hpp>
@@ -91,7 +90,6 @@ auto handleAbort() -> void {
 This is a fatal interrupt. The machine will reboot after any keypress
 If the fault is of type #MC it is recommended to check hardware.
 Press any key to continue... ")");
-    ioInit(); // No idea why the fuck this is neccesary
     while (getc() == 0) {
     
     }
@@ -99,7 +97,6 @@ Press any key to continue... ")");
 }
 
 auto handleTrap() -> void {
-    ioInit();
     Terminal::printf("A trap was triggered. The machine will reboot after any keypress... "); while (getc() == 0)
     reboot();
 }

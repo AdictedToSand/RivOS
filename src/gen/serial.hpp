@@ -76,6 +76,7 @@ struct Serial {
 #ifdef DEBUG
         writes("[LOG]: ");
         writes(mes);
+        write('\n');
     }
 #endif
 };

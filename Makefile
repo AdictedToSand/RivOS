@@ -38,9 +38,6 @@ build_release:
 	make -C sbinSrc release
 
 
-rivboot: build_dbg prepare_disk
-	
-
 # GRUB ISO build
 grub: build_dbg
 	rm -rf isodir

@@ -19,10 +19,10 @@ struct SysModule {
     SysModuleId id;
     const char* name;
 
-    auto operator==(const SysModuleId& lhs) -> bool const {
+    auto operator==(const SysModuleId& lhs) -> bool {
         return id == lhs;
     }
-    auto operator==(const SysModule& lhs) const -> bool {
+    auto operator==(const SysModule& lhs) -> bool {
         return id == lhs.id;
     }
     SysModule(SysModuleId iid) {

@@ -9,8 +9,8 @@
 
 using pid_t = u32;
 
-static inline pid_t activeProcessPid = 0;
-static inline pid_t latestPid = 1;
+extern pid_t activeProcessPid;
+extern pid_t latestPid;
 
 enum class ProcessPriveledgeLevel {
     User,
@@ -50,37 +50,10 @@ struct Process {
     ProcessImportance importance;
 
     [[gnu::noreturn]]
-    auto run(ProcessImportance iimportance) -> void {
-        importance = iimportance;
-
-        u32 stackPages = (STACK_SIZE + 4095) / 4096;
-
-        for (u32 i = 0; i < stackPages; i++) {
-            void* frame = PhysicalFrameAllocator::allocFrame();
-
-            Mmu::mapPage(frame, (void*) ((u32) STACK_BEGIN - i * 4096), Mmu::FLAGS_PRESENT | Mmu::FLAGS_WRITABLE);
-        }
-        activeProcessPid = pid;
-
-        finalRun(entryPoint, STACK_BEGIN);
-    }
-    auto exit(u8 code) -> void {
-        if (code != 0) {
-            Serial::log("Process quited with exitcode nonzero");
-        }
-        if (importance == ProcessImportance::REQ) {
-            Serial::log("Required process exited");
-                
-            kpanic("Required process exited");
-        }
-    }
+    auto run(ProcessImportance iimportance) -> void;
+    auto exit(u8 code) -> void;
 };
 
 static inline Vector<Process*> processes;
 
-static auto getNewPid() -> pid_t {
-    return latestPid++;
-}
-static inline auto addProcess(Process* proc) -> void {
-    processes.pushBack(proc);
-}
+auto getNewPid() -> pid_t;
