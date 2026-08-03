@@ -51,8 +51,6 @@ struct StdinDevSubDriver : DevSubDriver {
     }
     auto write(const char* conts, size_t len) -> FileSystemDriver::SuccessCodes override {
         if (len != 1) return FileSystemDriver::SuccessCodes::Error; // User input is one at a time
-        
-        Terminal::putChar(*conts);
 
         if (cursor + 1 >= 4096) {
             memset(stdin, 0, 4096);

@@ -16,9 +16,12 @@ SECTIONS
     {
         *(.data)
         *(.data.*)
+    }
+    .rodata ALIGN(4K) :
+    {
         *(.rodata)
         *(.rodata.*)
-    } /* TODO: This is evil as fuck */
+    }
 
     .bss ALIGN(4K) :
     {

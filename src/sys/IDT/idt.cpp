@@ -104,12 +104,18 @@ auto handleTrap() -> void {
     reboot();
 }
 
-auto handleFault() -> void {
-    Terminal::printf("A fault was triggered in the kernel. Execution will continue");
+auto handleFault(int ft) -> void {
+    Terminal::printf("A fault was triggered in the kernel. Execution will not continue");
+#ifdef DEBUG
+    if (ft == 14) { // #PF
+        u32 cr2;
+        asm volatile("mov %%cr2, %0" : "=r"(cr2));
+        Terminal::printf("\nCR2=%x", cr2);
+    }
+#endif
 }
 
 auto handleRegular() -> void {
-    
 }
 
 void exceptionHandler(InterruptFrame* ifrm) {
@@ -128,7 +134,7 @@ The fault is of type: %s
     asm volatile ("CLI");
 
     switch (itype) {
-        case InterruptTypes::Fault: handleFault(); break;
+        case InterruptTypes::Fault: handleFault(ifrm->vector); break;
         case InterruptTypes::Abort: handleAbort(); break;
         case InterruptTypes::Regular: handleRegular(); break;
         case InterruptTypes::Trap: handleTrap(); break;

@@ -63,6 +63,7 @@ static u8 frameBitmapStorage[MAX_FRAMES / 8];
 extern char kernelStart[];
 extern char kernelEnd[];
 
+// Rn: .rap and keyboard handler not being in kernel but sched
 extern "C" auto kernelMain(u32 magic) -> void {
     asm volatile ("CLI");
     if (magic == 0x2BADB002) {
@@ -113,6 +114,6 @@ extern "C" auto kernelMain(u32 magic) -> void {
     Terminal::printf("ProcessName: %s, Pid: %u, srcFp: %s\n", proc->pname, proc->pid, proc->srcFp.toCStr());
     proc->run();
 
-    Terminal::printf("End of kernel reached");
+    kpanic("End of kernel reached");
     for (;;) ;
 }

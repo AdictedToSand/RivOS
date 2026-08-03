@@ -4,6 +4,9 @@ global claim
 global open
 global write
 global setFunc
+global release
+global mmap
+global munmap
 
 open:
     MOV edi, dword [esp+4]
@@ -30,6 +33,22 @@ setFunc:
     MOV edi, dword [esp+4]
     MOV esi, dword [esp+8]
     MOV eax, 5
+    INT 0x80
+    RET
+
+release:
+    MOV edi, dword [esp+4]
+    MOV eax, 6
+    INT 0x80
+    RET
+mmap:
+    MOV edi, dword [esp+4]
+    MOV eax, 7
+    INT 0x80
+    RET
+munmap: 
+    MOV edi, dword [esp+4]
+    MOV eax, 8
     INT 0x80
     RET
 

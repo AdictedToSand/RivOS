@@ -1,3 +1,5 @@
+#include <mem/alloc.hpp>
+
 #include <terminal/terminal.hpp>
 
 #include <int.h>
@@ -27,6 +29,9 @@ enum class SyscallNumbers : u8 {
 
     Claim = 4,
     SetFunc = 5,
+    Release = 6,
+    Mmap = 7,
+    Munmap = 8,
 };
 
 // Things to make (related to syscalls): 
@@ -50,6 +55,19 @@ extern "C" auto syscallHandler(InterruptFrame* ifrm) -> void {
         }
         case SyscallNumbers::SetFunc: {
             ifrm->eax = SysModuleHandler::setFunc((const char*) ifrm->edi, (void(*)()) ifrm->esi);
+            break;
+        }
+        case SyscallNumbers::Release: {
+            ifrm->eax = SysModuleHandler::release((const char*) ifrm->edi);
+            break;
+        }
+        case SyscallNumbers::Mmap: {
+            ifrm->eax = (u32) KernelAllocator::alloc(ifrm->edi);
+            break;
+        } 
+        case SyscallNumbers::Munmap: {
+            // TODO: This is not safe
+            KernelAllocator::free((void*) ifrm->edi);
             break;
         }
         default: {

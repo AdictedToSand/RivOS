@@ -68,6 +68,18 @@ public:
 
         return 0;
     }
+    static auto release(const char* mod) -> u8 {
+        const SysModuleId modid = toSysMId(mod);
+
+        if (!owners.exists(modid)) return 1;
+        if (owners[modid] != activeProcessPid) return 1;
+
+        owners.rmkey(modid);
+
+        if (sysModuleFunctions.exists(modid)) sysModuleFunctions[modid] = doNothing;
+
+        return 0;
+    }
     static auto setFunc(const char* mod, void (*func)()) -> u8 {
         SysModuleId modId = toSysMId(mod);
         if (modId == SysModuleId::Unknown) return 1;

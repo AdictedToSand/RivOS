@@ -103,17 +103,19 @@ public:
             ProgramHeader* ph = (ProgramHeader*) ((u8*) phdrs + i * hdr->programHeaderEntrySize);
 
             if (ph->segmentKind == ProgramHeader::SEGMENTTYPE_LOAD) {
-                const u32 pageCount = (ph->memSize + 4095) / 4096;
-                const u32 vaddrBase = ph->virtualAddrStart & ~0xFFF; // Round down to page boundary
+                const u32 vaddrBase = ph->virtualAddrStart & ~0xFFF;
+                const u32 vaddrEnd = (ph->virtualAddrStart + ph->memSize + 4095) & ~0xFFF;
+                const u32 pageCount = (vaddrEnd - vaddrBase) / 4096;
+                u8* const dest = (u8*) ph->virtualAddrStart;
 
                 for (u32 j = 0; j < pageCount; j++) {
                     void* const frame = PhysicalFrameAllocator::allocFrame();
                     if (!frame) { kpanic("Out of memory"); }
                     Mmu::mapPage(frame, (void*) (vaddrBase + j * 4096), Mmu::FLAGS_PRESENT | Mmu::FLAGS_WRITABLE);
-                    u8* dest = (u8*) ph->virtualAddrStart;
-                    memcpy(dest, base + ph->contentsOffset, ph->segmentFilesize);
-                    memset(dest + ph->segmentFilesize, 0, ph->memSize - ph->segmentFilesize); // BSS
                 }
+
+                memcpy(dest, base + ph->contentsOffset, ph->segmentFilesize);
+                memset(dest + ph->segmentFilesize, 0, ph->memSize - ph->segmentFilesize);
             }
             else {
                 continue;

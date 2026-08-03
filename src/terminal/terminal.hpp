@@ -69,7 +69,7 @@ struct Terminal {
     static auto putChar(char c) -> void {
         if (c == '\n') {
             Serial::write(c);
-            if (++terminalRow >= VGA_HEIGHT) {
+            if (++terminalRow >= VGA_HEIGHT * VGA_WIDTH) {
                 clear();
                 return; //TODO: replace with proper scrolling
             }
@@ -94,8 +94,9 @@ struct Terminal {
             putEntryAt(c, terminalColor, terminalColumn, terminalRow);
             if (++terminalColumn == VGA_WIDTH) {
                 terminalColumn = 0;
-                if (++terminalRow == VGA_HEIGHT)
-                    terminalRow = 0;
+                if (++terminalRow == VGA_HEIGHT) {
+                    clear();
+                }
             }
         }
     }
