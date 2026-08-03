@@ -11,7 +11,7 @@ static inline auto outb(u16 port, u8 val) -> void {
 }
 
 static inline auto inb(u16 port) -> u8 {
-    uint8_t ret;
+    u8 ret;
     asm volatile ( "inb %w1, %b0"
                    : "=a"(ret)
                    : "Nd"(port)
@@ -21,7 +21,7 @@ static inline auto inb(u16 port) -> u8 {
 
 
 static inline auto inw(u16 port) -> u16 {
-    uint16_t ret;
+    u16 ret;
     asm volatile ( "inw %w1, %w0"
                    : "=a"(ret)
                    : "Nd"(port)

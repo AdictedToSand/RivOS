@@ -80,7 +80,6 @@ extern "C" auto syscallHandler(InterruptFrame* ifrm) -> void {
             break;
         }
         case SyscallNumbers::Exit: {
-            Terminal::printf("Size=%u", processes.size());
             for (u32 i = 0; i < processes.size(); i++) {
                 if (processes[i].val()->pid == activeProcessPid) {
                     processes[i].val()->exit((u8) ifrm->edi);

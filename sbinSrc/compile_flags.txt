@@ -1,0 +1,7 @@
+-m32
+-ffreestanding 
+-nostdlib 
+-static 
+-fno-pie 
+-fno-stack-protector 
+-I../src/lib

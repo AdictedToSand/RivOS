@@ -36,8 +36,8 @@ $(OUT)/%:
 	mkdir -p $(DEBUG)/$*
 	mkdir -p $(RELEASE)/$*
 
-	$(foreach c,$(wildcard $*/*.c),$(CC) $(CFLAGS) -g -c $(c) -o $(DEBUG)/$*/$(notdir $(c:.c=.o));)
-	$(foreach a,$(wildcard $*/*.asm),$(AS) -f elf32 $(a) -o $(DEBUG)/$*/$(notdir $(a:.asm=.o));)
+	$(foreach c,$(shell find $* -name "*.c"),$(CC) $(CFLAGS) -g -c $(c) -o $(DEBUG)/$*/$(notdir $(c:.c=.o));)
+	$(foreach a,$(shell find $* -name "*.asm"),$(AS) -f elf32 $(a) -o $(DEBUG)/$*/$(notdir $(a:.asm=.o));)
 
 	$(LD) $(LDFLAGS) -T $*/linker.ld $(DEBUG)/$*/*.o -o $@
 

@@ -1,97 +1,15 @@
 #include <int.h>
 #include <stdbool.h>
 
-#include "scMap.h"
-#include "alpha.h"
-
-#define true 1
-#define false 0
-typedef u32 fd_t;
-
-extern fd_t open(const char* fp);
-extern u8 write(fd_t fd, const char* conts, u32 len);
-extern u8 claim(const char* mod);
-extern u8 release(const char* mod);
-extern u8 setFunc(const char* mod, void (*)(void));
-extern void* mmap(u32 size);
-extern void munmap(void* mem);
-extern void exit(int exitcode);
-extern u8 read(fd_t fd, char* obuf, u32 len);
-extern void close(fd_t fd);
-
-u32 strlen(const char* s) {
-    u32 i = 0;
-    while (s[i++]);
-    return i - 1;
-}
-
-fd_t stdout = 1;
+#include "sys/sys.h"
+#include "keyboard/keyboard.h"
 
 void pitHandler(void) {
-}
-
-static inline u8 inb(u16 port) {
-    uint8_t ret;
-    asm volatile ( "inb %w1, %b0"
-                   : "=a"(ret)
-                   : "Nd"(port)
-                   : "memory");
-    return ret;
-}
-
-struct {
-    bool shift;
-    bool capslock;
-} keyboardState;
-
-void keyboardHandler() {
-    const u8 sc = inb(0x60);
-    if (sc & 0x80) {
-        if (sc == SC_LEFT_SHIFT_RELEASE || sc == SC_RIGHT_SHIFT_RELEASE) keyboardState.shift = false;
-    }
-    else {
-        if (sc == SC_LEFT_SHIFT || sc == SC_RIGHT_SHIFT) {
-            keyboardState.shift = true;
-            return;
-        }
-        if (sc == SC_CAPS_LOCK) {
-            keyboardState.capslock = !keyboardState.capslock;
-            return;
-        }
-
-        fd_t stdinFd = open("/dev/stdin");
-        if (!stdinFd) exit(1);
-        char addedC = scancodeMap[sc];
-        if (isLower(addedC)) {
-            if (keyboardState.capslock ^ keyboardState.shift) addedC = toUpper(addedC);
-        }
-        else if (keyboardState.shift) {
-            addedC = scancodeMapShift[sc];
-        }
-        if (addedC == '\b') {
-            char* const tmpStdinBuf = (char*) mmap(4096);
-
-            read(stdinFd, tmpStdinBuf, 4096);
-            const u32 slen = strlen(tmpStdinBuf);
-            if (slen > 0)
-                tmpStdinBuf[slen - 1] = 0;
-
-            munmap(tmpStdinBuf);
-        }
-
-        write(stdinFd, &addedC, 1);
-        // Display character on screen (this is temporary)
-        write(stdout, &addedC, 1);
-        close(stdinFd);
-
-    }
-}
-void keyboardInit() {
-     keyboardState.shift = false;
-     keyboardState.capslock = false;
+    
 }
 
 void _start() {
+    sysInit();
     stdout = open("/dev/stdout"); 
 
     keyboardInit();
@@ -99,7 +17,7 @@ void _start() {
     claim("Keyboard_PS2");
     setFunc("Keyboard_PS2", keyboardHandler);
 
-    exit(0);
+    //exit(0);
 
     for (;;) ;
 }
