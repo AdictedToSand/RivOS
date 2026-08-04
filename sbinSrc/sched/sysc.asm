@@ -10,6 +10,7 @@ global munmap
 global exit
 global read
 global close
+global filesize
 
 open:
     MOV edi, dword [esp+4]
@@ -72,6 +73,11 @@ munmap:
 exit:   
     MOV edi, dword [esp+4]
     MOV eax, 9
+    INT 0x80
+    RET
+filesize:
+    MOV edi, dword [esp+4]
+    MOV eax, 10
     INT 0x80
     RET
 

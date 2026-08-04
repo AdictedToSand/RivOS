@@ -1,10 +1,7 @@
-#pragma once
-#include <stddef.h>
-
-#include <int.h>
+#include "utils.h"
 
 // Credits: https://www.geeksforgeeks.org/cpp/write-memcpy/ 
-static inline void* memcpy(void* dest, const void* src, size_t n) {
+void* memcpy(void* dest, const void* src, size_t n) {
     char* d = (char*)dest;
     const char* s = (const char*)src;
 
@@ -14,7 +11,7 @@ static inline void* memcpy(void* dest, const void* src, size_t n) {
     return dest;
 }
 
-static inline void* memset(void* b, int c, int len) {
+void* memset(void* b, int c, int len) {
     unsigned char* p = (unsigned char*) b;
     while(len > 0) {
         *p = c;
@@ -23,6 +20,3 @@ static inline void* memset(void* b, int c, int len) {
     }
     return b;
 }
-
-auto memcmp(const void* a, const void* b, size_t size) -> int;
-

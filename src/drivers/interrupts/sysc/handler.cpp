@@ -36,6 +36,7 @@ enum class SyscallNumbers : u8 {
     Mmap = 7,
     Munmap = 8,
     Exit = 9,
+    Filesize = 10,
 };
 
 extern "C" auto syscallHandler(SyscInterruptFrame* ifrm) -> void {
@@ -86,6 +87,10 @@ extern "C" auto syscallHandler(SyscInterruptFrame* ifrm) -> void {
                 }
             }
 
+            break;
+        }
+        case SyscallNumbers::Filesize: {
+            ifrm->eax = (u32) FileSystem::fileSize(ifrm->edi);
             break;
         }
         default: {

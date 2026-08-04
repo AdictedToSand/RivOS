@@ -13,6 +13,7 @@ extern void munmap(void* mem);
 extern void exit(int exitcode);
 extern u8 read(fd_t fd, char* obuf, u32 len);
 extern void close(fd_t fd);
+extern u32 filesize(fd_t fd);
 
 extern fd_t stdout;
 

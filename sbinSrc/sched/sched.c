@@ -6,10 +6,14 @@
 
 #include "gen/string.h"
 
+#include "rap/rap.h"
+
 #include "keyboard/keyboard.h"
 
 void pitHandler(void) {
 }
+
+RapFile rap;
 
 [[gnu::noreturn]]
 void _start() {
@@ -25,7 +29,9 @@ void _start() {
     if (claim("Framebuffer") != 0) {
         puts("TODO: Framebuffer\n");
         exit(1);
-    }
+    }          
+    rap = parseRap();
+    printRap(&rap);
 
     for (;;) ;
 }

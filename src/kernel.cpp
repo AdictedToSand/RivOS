@@ -110,13 +110,6 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
 
     HardwareInterrupts::init();
 
-    char buf[1000];
-    memset(buf, 0, 1000);
-    fd_t fd = FileSystem::open("/krn/virt/func.rap");
-    if (FileSystem::read(fd, buf, 999) == FsSuccessCodes::Error) kpanic("EQ");
-    Serial::log(buf);
-    Terminal::printf("IDK: %s\n", buf);
-
     ElfExecutable scheduler;
     if (scheduler.fromFile("/krn/bin/sched")) { kpanic("Scheduler not found!!!"); }
     if (!scheduler.isValid()) { kpanic("Scheduler was not a valid ELF"); }

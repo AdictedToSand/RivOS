@@ -11,6 +11,7 @@ RivOS features a custom bootloader (RivBoot), which looks like this
 [def]: bootloader.png
 
 The bootloader only supports one kernel entry.
+Unfortunately, RivBoot is currently not supported, and GRUB is required
 
 ### RivBoot Protocol
 
