@@ -11,8 +11,8 @@ enum class SysModuleId {
     Unknown,
 
     PIT,
-
     Keyboard_PS2,
+    Framebuffer,
 };
 
 struct SysModule {
@@ -49,6 +49,9 @@ public:
         }
         else if (mod == "Keyboard_PS2") {
             return SysModuleId::Keyboard_PS2;
+        }
+        else if (mod == "Framebuffer") {
+            return SysModuleId::Framebuffer;
         }
 
         return SysModuleId::Unknown;
@@ -96,5 +99,9 @@ public:
             return doNothing;
         }
         return sysModuleFunctions[id];
+    }
+    static auto getowner(SysModuleId mid) -> pid_t {
+        if (!owners.exists(mid)) return 0;
+        return owners[mid];
     }
 };

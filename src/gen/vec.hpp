@@ -79,7 +79,7 @@ public:
         len--;
     }
 
-    auto size() -> size_t {
+    auto size() const -> size_t {
         return len;
     }
 

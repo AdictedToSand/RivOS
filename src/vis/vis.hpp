@@ -59,3 +59,13 @@ public:
     static auto getFbPhysAddr() -> u32 { return (u32) fb->addr; }
     static auto getFbSizeBytes() -> u32 { return fb->pitch * fb->height; }
 };
+
+struct VisualsPidEnforced {
+    static auto enforce() -> bool;
+
+    static auto putPixel(u32 argb, u32 x, u32 y) -> bool;
+    static auto getFbPhysAddr() -> u32;
+    static auto getFbSizeBytes() -> u32;
+    static auto getScreenHeight() -> u32;
+    static auto getScreenWidth() -> u32;
+};

@@ -10,6 +10,7 @@
 
 // Functions for /krn/virt/func.rap
 #include <sys/IDT/idt.hpp>
+#include <vis/vis.hpp>
 
 struct VirtKrnSubDriver {
     virtual auto read(char* obuf, u32 len) -> FileSystemDriver::SuccessCodes = 0;
@@ -41,6 +42,7 @@ struct RapFileSubDriver : VirtKrnSubDriver {
                 out += ' ';
             }
             //TODO: Yeah...
+            if (paraml.size() == 0) out += ' ';
             ((char*) out.toCStr())[out.fstrlen() - 1] = ')';
             out += '=';
             Str tempIntegerStorage;
@@ -82,6 +84,35 @@ public:
                 Param("u8", "flags"),
             }
         ));
+        functions.pushBack(Function(
+            (void*) VisualsPidEnforced::putPixel,
+            "putPixel",
+            {
+                Param("u32", "argb"),
+                Param("u32", "x"),
+                Param("u32", "y"),
+            }
+        ));
+        functions.pushBack(Function(
+            (void*) VisualsPidEnforced::getScreenWidth,
+            "getScreenWidth",
+            {}
+        ));
+        functions.pushBack(Function(
+            (void*) VisualsPidEnforced::getFbPhysAddr,
+            "getFbPhysAddr",
+            {}
+        ));
+        functions.pushBack(Function(
+            (void*) VisualsPidEnforced::getScreenHeight,
+            "getScreenHeight",
+            {}
+        ));
+        functions.pushBack(Function(
+            (void*) VisualsPidEnforced::getFbSizeBytes,
+            "getFbSizeBytes",
+            {}
+        ));
     }
 };
 
@@ -110,7 +141,8 @@ public:
         KernelAllocator::free(((FsData*) f.fsData)->fp);
         KernelAllocator::free(f.fsData);
     }
-    auto write(File f, char* src, u32 len) -> FileSystemDriver::SuccessCodes override {
+    auto write(File _f, char* _src, u32 _len) -> FileSystemDriver::SuccessCodes override {
+        (void) _f; (void) _src; (void) _len;
         return FileSystemDriver::SuccessCodes::Error;
     }
     auto read(File f, char* obuf, u32 len) -> FileSystemDriver::SuccessCodes override {
@@ -142,14 +174,16 @@ public:
 
         return ret;
     }
-    auto mkdir(const char* fp) -> SuccessCodes override {
-        return SuccessCodes::Sucess; 
+    auto mkdir(const char* _fp) -> SuccessCodes override {
+        (void) _fp;
+        return SuccessCodes::Error; 
     }
-    auto dirExists(const char* fp) -> bool override {
+    auto dirExists(const char* _fp) -> bool override {
+        (void) _fp;
         return false;
     }
     auto fileExists(const char* fp) -> bool override {
-        return false;
+        return mapping.exists(fp);
     }
     auto getDriverName() -> const char* override {
         return "RivOSFs_VirtKrn";

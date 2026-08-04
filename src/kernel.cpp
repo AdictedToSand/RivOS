@@ -110,10 +110,10 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
 
     HardwareInterrupts::init();
 
-    char buf[100];
-    memset(buf, 0, 100);
+    char buf[1000];
+    memset(buf, 0, 1000);
     fd_t fd = FileSystem::open("/krn/virt/func.rap");
-    if (FileSystem::read(fd, buf, 99) == FsSuccessCodes::Error) kpanic("EQ");
+    if (FileSystem::read(fd, buf, 999) == FsSuccessCodes::Error) kpanic("EQ");
     Serial::log(buf);
     Terminal::printf("IDK: %s\n", buf);
 

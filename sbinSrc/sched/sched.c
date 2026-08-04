@@ -11,6 +11,7 @@
 void pitHandler(void) {
 }
 
+[[gnu::noreturn]]
 void _start() {
     sysInit();
     stdout = open("/dev/stdout"); 
@@ -22,7 +23,7 @@ void _start() {
     claim("PIT");
     setFunc("PIT", pitHandler);
     if (claim("Framebuffer") != 0) {
-        puts("TODO: Framebuffer, .rap, backspace terminal\n");
+        puts("TODO: Framebuffer\n");
         exit(1);
     }
 
