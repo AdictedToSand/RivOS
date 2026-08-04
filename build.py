@@ -11,6 +11,7 @@ CPPFLAGS = [
     "-fno-rtti",
     "-Isrc",
     "-Isrc/lib",
+    "-Istd",
     "-fno-use-cxa-atexit",
 ]
 

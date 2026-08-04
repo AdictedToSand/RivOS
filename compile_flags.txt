@@ -2,3 +2,6 @@
 -Isrc/lib
 -DDEBUG
 -m32
+-ffreestanding 
+-nostdlib
+-Istd

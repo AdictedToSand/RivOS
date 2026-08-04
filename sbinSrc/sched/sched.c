@@ -21,7 +21,10 @@ void _start() {
     setFunc("Keyboard_PS2", keyboardHandler);
     claim("PIT");
     setFunc("PIT", pitHandler);
-    write(stdout, "Hi", strlen("HH"));
+    if (claim("Framebuffer") != 0) {
+        puts("TODO: Framebuffer, .rap, backspace terminal\n");
+        exit(1);
+    }
 
     for (;;) ;
 }

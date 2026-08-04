@@ -43,11 +43,38 @@ struct Terminal {
     static inline auto vgaEntry(unsigned char uc, uint8_t color) -> uint16_t {
 	    return (uint16_t) uc | (uint16_t) color << 8;
     }
+    static inline auto colorToRgb(uint8_t color) -> u32 {
+        switch (color & 0x0F) {
+            case 0:  return 0x00000000;
+            case 1:  return 0x000000AA;
+            case 2:  return 0x0000AA00;
+            case 3:  return 0x0000AAAA;
+            case 4:  return 0x00AA0000;
+            case 5:  return 0x00AA00AA;
+            case 6:  return 0x00AA5500;
+            case 7:  return 0x00AAAAAA;
+            case 8:  return 0x00555555;
+            case 9:  return 0x005555FF;
+            case 10: return 0x0055FF55;
+            case 11: return 0x0055FFFF;
+            case 12: return 0x00FF5555;
+            case 13: return 0x00FF55FF;
+            case 14: return 0x00FFFF55;
+            case 15: return 0x00FFFFFF;
+            default: return 0x00FFFFFF;
+        }
+    }
 
     static auto init() -> void {
         Visuals::fillScreen(0x00101010); 
         terminalX = 0, terminalY = 0;
 	    terminalColor = vgaEntryColor(VgaColor::LightGrey, VgaColor::Black);
+        enabled = true;
+    }
+    static auto disable() -> void {
+        enabled = false;
+    }
+    static auto enable() -> void {
         enabled = true;
     }
 
@@ -59,7 +86,26 @@ struct Terminal {
         const int charWidth = 16;
         const int charHeight = 16;
 
-        if (c == '\n') {
+        if (c == '\b') {
+            if (terminalX >= charWidth) {
+                terminalX -= charWidth;
+            } else if (terminalY >= charHeight) {
+                terminalY -= charHeight;
+                terminalX = Visuals::getScreenWidth() - charWidth;
+            }
+
+            for (int x = 0; x < charWidth; x++) {
+                for (int y = 0; y < charHeight; y++) {
+                    Visuals::putPixel(0x00101010,
+                        terminalX + x,
+                        terminalY + y
+                    );
+                }
+            }
+
+            return;
+        }
+        else if (c == '\n') {
             terminalX = 0;
             terminalY += charHeight;
             return;
@@ -76,6 +122,8 @@ struct Terminal {
             terminalY = 0;
         }
 
+        const u32 fg = colorToRgb(terminalColor);
+        const u32 bg = colorToRgb(terminalColor >> 4);
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
                 bool set = font8x8_basic[(unsigned char)c][y] & (1 << x);
@@ -84,10 +132,12 @@ struct Terminal {
                     const int px = terminalX + x * 2;
                     const int py = terminalY + y * 2;
 
-                    Visuals::putPixel(0x00FFFFFF, px, py);
-                    Visuals::putPixel(0x00FFFFFF, px + 1, py);
-                    Visuals::putPixel(0x00FFFFFF, px, py + 1);
-                    Visuals::putPixel(0x00FFFFFF, px + 1, py + 1);
+                    const u32 color = set ? fg : bg;
+
+                    Visuals::putPixel(color, px, py);
+                    Visuals::putPixel(color, px + 1, py);
+                    Visuals::putPixel(color, px, py + 1);
+                    Visuals::putPixel(color, px + 1, py + 1);
                 }
             }
         }
@@ -155,7 +205,8 @@ struct Terminal {
                         case 'c': putChar(va_arg(args, int)); break;
                         case 'i': printi(va_arg(args, int)); break; 
                         case 'p': printPtr(va_arg(args, void*)); break;
-                        case 'u': ; printu(va_arg(args, unsigned int)); break;
+                        case 'u': printu(va_arg(args, unsigned int)); break;
+                        case 'b': writeStr((va_arg(args, int) ? "true" : "false"));
                         default: break;
                     }
 

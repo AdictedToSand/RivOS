@@ -22,10 +22,10 @@ public:
         memset(cStr, 0, 5);
     }
     Str(const char* s) {
-        const size_t allocSize = (strlen(s) > MINIMUM_STR_SIZE ? strlen(s) + MINIMUM_STR_SIZE : MINIMUM_STR_SIZE);
+        const size_t allocSize = (strlen(s) >= MINIMUM_STR_SIZE ? strlen(s) + MINIMUM_STR_SIZE : MINIMUM_STR_SIZE);
         cStr = (char*) KernelAllocator::alloc(allocSize);
 
-        len = 0;
+        len = strlen(s);
         capacity = allocSize;
 
         strcpy(cStr, s);
@@ -36,6 +36,12 @@ public:
     }
     inline const char* toCStr() const {
         return cStr;
+    }
+    inline auto size() const -> u32 {
+        return len;
+    }
+    inline auto fstrlen() const -> u32 {
+        return len;
     }
     inline operator const char*() const {
         return cStr;
@@ -57,20 +63,72 @@ public:
         stradd(cStr, s);
     }
     auto operator+=(const char c) -> void {
+        size_t curLen = strlen(cStr);
         if (++len >= capacity) {
             char* newArr = (char*) KernelAllocator::alloc(capacity * 2);
-
             strcpy(newArr, cStr);
-
             KernelAllocator::free(cStr);
             cStr = newArr;
             capacity *= 2;
         }
-
-        cStr[strlen(cStr)] = c;
-        cStr[strlen(cStr)] = '\0';
+        cStr[curLen] = c;
+        cStr[curLen + 1] = '\0';
+    }
+    auto operator+=(Str s) -> void {
+        *this += s.toCStr();
     }
     inline auto pushBack(const char c) -> void {
         *this += c; // Use the operator+= alr defined
+    }
+    inline auto add(const char* s) -> void {
+        *this += s;
+    }
+    auto fromi(i32 n) -> void {
+        len = 0;
+        cStr[0] = '\0';
+
+        if (n == 0) {
+            *this += '0';
+            return;
+        }
+
+        if (n < 0) {
+            *this += '-';
+            n = -n;
+        }
+
+        char buffer[12];
+        size_t index = 0;
+
+        while (n > 0) {
+            buffer[index++] = '0' + (n % 10);
+            n /= 10;
+        }
+
+        while (index > 0) {
+            *this += buffer[--index];
+        }
+    }
+
+    auto fromu(u32 n) -> void {
+        len = 0;
+        cStr[0] = '\0';
+
+        if (n == 0) {
+            *this += '0';
+            return;
+        }
+
+        char buffer[11];
+        size_t index = 0;
+
+        while (n > 0) {
+            buffer[index++] = '0' + (n % 10);
+            n /= 10;
+        }
+
+        while (index > 0) {
+            *this += buffer[--index];
+        }
     }
 };

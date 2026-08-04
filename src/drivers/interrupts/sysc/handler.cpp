@@ -10,7 +10,7 @@
 
 #include <proc/process.hpp>
 
-struct [[gnu::packed]] InterruptFrame {
+struct [[gnu::packed]] SyscInterruptFrame {
     u32 edi;
     u32 esi;
     u32 ebp;
@@ -38,7 +38,7 @@ enum class SyscallNumbers : u8 {
     Exit = 9,
 };
 
-extern "C" auto syscallHandler(InterruptFrame* ifrm) -> void {
+extern "C" auto syscallHandler(SyscInterruptFrame* ifrm) -> void {
     const SyscallNumbers syscNum = (SyscallNumbers) ifrm->eax;
 
     switch (syscNum) {

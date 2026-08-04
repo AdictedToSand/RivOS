@@ -110,12 +110,19 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
 
     HardwareInterrupts::init();
 
+    char buf[100];
+    memset(buf, 0, 100);
+    fd_t fd = FileSystem::open("/krn/virt/func.rap");
+    if (FileSystem::read(fd, buf, 99) == FsSuccessCodes::Error) kpanic("EQ");
+    Serial::log(buf);
+    Terminal::printf("IDK: %s\n", buf);
+
     ElfExecutable scheduler;
     if (scheduler.fromFile("/krn/bin/sched")) { kpanic("Scheduler not found!!!"); }
     if (!scheduler.isValid()) { kpanic("Scheduler was not a valid ELF"); }
     Process* proc = scheduler.load("RivOS_Sched", ProcessPriveledgeLevel::Kernel);
     if (!proc) { kpanic("Unable to load ELF"); }
-    //Terminal::printf("ProcessName: %s, Pid: %u, srcFp: %s\n", proc->pname, proc->pid, proc->srcFp.toCStr());
+    Terminal::printf("ProcessName: %s, Pid: %u, srcFp: %s\n", proc->pname, proc->pid, proc->srcFp.toCStr());
     proc->run(ProcessImportance::REQ);
 
     kpanic("End of kernel reached");

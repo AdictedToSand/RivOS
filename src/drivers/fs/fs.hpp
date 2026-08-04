@@ -6,6 +6,7 @@
 #include <drivers/fs/driver.hpp>
 #include <drivers/fs/mountpoint.hpp>
 #include <drivers/fs/boot/boot.hpp>
+#include <drivers/fs/virtkrn/virtkrn.hpp>
 
 #include <gen/vec.hpp>
 #include <gen/map.hpp>
@@ -40,6 +41,9 @@ static inline MountPointCandidate devCandidate = {
 };
 static inline MountPointCandidate bootCandidate = {
     .conts = &bootMp,
+};
+static inline MountPointCandidate virtKrnCandidate = {
+    .conts = &virtKrnMp,
 };
 
 struct GlobalFile {
@@ -81,7 +85,7 @@ private:
     }
     static inline auto mountPointMatches(const char* mp, const char* fp) -> bool {
         for (size_t i = 0; i < strlen(mp); i++) {
-            if (strlen(fp) >= strlen(fp) /* What the fuck*/ && mp[i] != fp[i]) return false;
+            if (strlen(fp) >= strlen(mp) && mp[i] != fp[i]) return false;
         }
 
         return true;
@@ -93,6 +97,7 @@ public:
         registerMountpoint("/dev/", &devCandidate);
         registerMountpoint("/", &fat32Candidate);
         registerMountpoint("/boot/", &bootCandidate);
+        registerMountpoint("/krn/virt/", &virtKrnCandidate);
 
         size_t i = 0;
         for (auto mp : mpCandidates) {
