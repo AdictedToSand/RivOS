@@ -10,6 +10,7 @@
 #include <mem/utils.hpp>
 
 #include <cstring.hpp>
+#include <str.hpp>
 
 struct DevSubDriver {
     virtual auto read(char* obuf, size_t len) -> FileSystemDriver::SuccessCodes = 0;
@@ -61,6 +62,21 @@ struct StdinDevSubDriver : DevSubDriver {
         return FileSystemDriver::SuccessCodes::Sucess;
     }
 };
+struct StdLogSubDriver : DevSubDriver {
+    auto read(char* const obuf, const size_t len) -> FileSystemDriver::SuccessCodes override {
+        (void) obuf; (void) len;
+        return FileSystemDriver::SuccessCodes::Error;
+    }
+    auto write(const char* conts, size_t len) -> FileSystemDriver::SuccessCodes override {
+        Str s = conts;
+        *(char*) (&s[len]) = 0;
+
+        Serial::log(s.toCStr());
+
+        return FileSystemDriver::SuccessCodes::Sucess;
+    }
+    auto init() -> void override {}
+};
 
 struct StrOperatorEquals {
     const char* conts;
@@ -78,6 +94,7 @@ struct DevMpDriver : FileSystemDriver {
 private:
     static inline StdoutDevSubDriver stdoutDriver;
     static inline StdinDevSubDriver stdinDriver;
+    static inline StdLogSubDriver stdlogDriver;
 
     static inline Map<StrOperatorEquals, DevSubDriver*> mappings;
     static inline bool generalBool;
@@ -90,6 +107,7 @@ public:
     virtual auto init() -> void override {
         mappings["stdout"] = &stdoutDriver;
         mappings["stdin"] = &stdinDriver;
+        mappings["stdlog"] = &stdlogDriver;
 
         for (auto& kv : mappings) {
             kv.getv()->init();
@@ -103,7 +121,7 @@ public:
         KernelAllocator::free(((FsData*) f.fsData)->fp);
         KernelAllocator::free(f.fsData);
     }
-    auto read(File f, char* obuf, size_t len) -> FileSystemDriver::SuccessCodes override {
+    auto read(File f, char* const obuf, size_t len) -> FileSystemDriver::SuccessCodes override {
         if (!mappings.exists(((FsData*) f.fsData)->fp)) {
             return FileSystemDriver::SuccessCodes::Error;
         }

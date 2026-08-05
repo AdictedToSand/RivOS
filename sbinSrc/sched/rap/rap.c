@@ -25,12 +25,12 @@ RapFile parseRap(void) {
         exit(1);
     }
     read(rapFd, buf, MEM_DEF_ALLOCSIZE);
-    puts(buf);
-    
-       
+    log(buf);
+     
 
     close(rapFd);
     munmap(buf);
+    log("Im here!");
     return ret;
 }
 

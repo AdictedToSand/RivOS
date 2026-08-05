@@ -22,6 +22,12 @@ public:
         outb(0x40, divisor & 0xFF);
         outb(0x40, divisor >> 8);
     }
-};
+    static auto sleepMs(u64 ms) -> void {
+        const u64 targetTicks = (ms * frequency + 999) / 1000;
+        const u64 start = ticks;
 
-/*irq0Stub*/
+        while ((ticks - start) < targetTicks) {
+            asm volatile("hlt");
+        }
+    }
+};

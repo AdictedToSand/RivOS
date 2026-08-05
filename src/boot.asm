@@ -67,7 +67,7 @@ global _start
 
 
 _start:
-    ; Right now, RivBoot makes no guarantee that a proper stack is set up. So we define our own
+    ; Right now, RivBoot/Multiboot2 makes no guarantee that a proper stack is set up. So we define our own
     MOV esp, stack_top
 
     PUSH ebx

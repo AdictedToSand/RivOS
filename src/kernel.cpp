@@ -26,8 +26,6 @@
 
 #include <vis/vis.hpp>
 
-#include <ACPI/ACPI.hpp>
-
 #include <proc/ELF/loader.hpp>
 #include <proc/process.hpp>
 
@@ -82,8 +80,6 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
         PhysicalFrameAllocator::markUsed(addr / 4096);
 
     Terminal::printf("Bootloader: %s\n", (bootinfo.bootloader == BootloaderKinds::GRUB ? "GRUB" : "RivBoot"));
-
-    ACPI::init();
 
     kassrt(Serial::init() == 0, "Unable to initalize serial");
 

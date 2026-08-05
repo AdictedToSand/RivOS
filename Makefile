@@ -65,7 +65,9 @@ run:
 		-cdrom build/RivOS.iso \
 		-drive file=build/rootfs.img,format=raw,if=ide \
 		-boot d \
-		-serial stdio
+		-serial stdio \
+		-d int \
+		-D qemu.log
 
 
 debug: grub 
@@ -90,6 +92,7 @@ debug_rivboot: rivboot
 mr: build_dbg grub prepare_disk run
 
 mr_rivboot: rivboot prepare_disk run_rivboot
+mr_rb: mr_rivboot
 
 clean:
 	rm -rf build

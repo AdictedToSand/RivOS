@@ -18,8 +18,6 @@ RapFile rap;
 [[gnu::noreturn]]
 void _start() {
     sysInit();
-    stdout = open("/dev/stdout"); 
-
     keyboardInit();
 
     claim("Keyboard_PS2");
@@ -27,7 +25,6 @@ void _start() {
     claim("PIT");
     setFunc("PIT", pitHandler);
     if (claim("Framebuffer") != 0) {
-        puts("TODO: Framebuffer\n");
         exit(1);
     }          
     rap = parseRap();

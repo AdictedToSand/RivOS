@@ -16,5 +16,6 @@ extern void close(fd_t fd);
 extern u32 filesize(fd_t fd);
 
 extern fd_t stdout;
+extern fd_t stdlog;
 
 void sysInit(void);

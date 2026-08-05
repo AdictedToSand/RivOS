@@ -113,6 +113,9 @@ public:
             "getFbSizeBytes",
             {}
         ));
+        /*functions.pushBack(Function(
+            (void*) 
+        ));*/
     }
 };
 
