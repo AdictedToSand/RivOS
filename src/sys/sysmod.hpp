@@ -29,6 +29,7 @@ struct SysModule {
         id = iid;
         if (id == SysModuleId::PIT) name = "PIT";
         else if (id == SysModuleId::Keyboard_PS2) name = "Keyboard_PS2";
+        else if (id == SysModuleId::Framebuffer) name = "Framebuffer";
         else name = "Unknown";
     }
     SysModule() {
@@ -67,7 +68,8 @@ public:
         if (owners.exists(sysm)) {
             return 1;
         }
-        owners[sysm] = activeProcessPid; 
+        owners.insert(sysm, activeProcessPid);
+        //owners[sysm] = activeProcessPid; 
 
         return 0;
     }
@@ -79,7 +81,7 @@ public:
 
         owners.rmkey(modid);
 
-        if (sysModuleFunctions.exists(modid)) sysModuleFunctions[modid] = doNothing;
+        if (sysModuleFunctions.exists(modid)) sysModuleFunctions.insert(modid, doNothing);
 
         return 0;
     }
@@ -90,7 +92,9 @@ public:
         if (!owners.exists(modId)) return 1;
         if (activeProcessPid != owners[modId]) return 1;
 
-        sysModuleFunctions[modId] = func;
+        if (sysModuleFunctions.exists(modId))
+            sysModuleFunctions[modId] = func;
+        else sysModuleFunctions.insert(modId, func);
 
         return 0;
     }

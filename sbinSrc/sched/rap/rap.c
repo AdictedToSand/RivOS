@@ -28,6 +28,7 @@ RapFile parseRap(void) {
     log(buf);
      
 
+
     close(rapFd);
     munmap(buf);
     log("Im here!");

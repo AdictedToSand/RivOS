@@ -101,7 +101,7 @@ public:
      }
 
      auto getDriverName() -> const char* override {
-         return "RivOSFs_BootFilesDriver";
+         return "RivOSFs_BootDriver";
      }
 };
 

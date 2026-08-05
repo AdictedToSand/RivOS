@@ -19,6 +19,8 @@ bool shift = false;
 bool capslock = false;
 
 extern "C" auto keyboardHandler() -> void {
+    SysModuleHandler::
     SysModuleHandler::getFunc(SysModuleId::Keyboard_PS2)();
+    //inb(0x60);
     PIC::sendEoi(1);
 }

@@ -77,6 +77,6 @@ struct Serial {
         writes("[LOG]: ");
         writes(mes);
         write('\n');
-    }
 #endif
+    }
 };

@@ -60,6 +60,9 @@ public:
 
         return entries[foundIndex].val().getv();
     }
+    auto insert(KT k, VT v) -> void {
+        entries.pushBack(MapEntry(k, v));
+    }
 
     auto rmkey(KT k) -> void {
         int foundIndex = -1;
