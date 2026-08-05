@@ -5,7 +5,7 @@ LD = $(CROSS)-ld
 AS = nasm
 
 CFLAGS = -m32 -ffreestanding -nostdlib -static -fno-pie -fno-stack-protector -I../src/lib
-LDFLAGS = -m elf_i386 -static
+LDFLAGS = -static -nostdlib
 
 OUT = ../rootFs/krn/bin
 
@@ -39,7 +39,8 @@ $(OUT)/%:
 	$(foreach c,$(shell find $* -name "*.c"),$(CC) $(CFLAGS) -g -c $(c) -o $(DEBUG)/$*/$(notdir $(c:.c=.o));)
 	$(foreach a,$(shell find $* -name "*.asm"),$(AS) -f elf32 $(a) -o $(DEBUG)/$*/$(notdir $(a:.asm=.o));)
 
-	$(LD) $(LDFLAGS) -T $*/linker.ld $(DEBUG)/$*/*.o -o $@
+	# Using LD would not allow us to link gcc
+	$(CC) $(LDFLAGS) -T $*/linker.ld $(DEBUG)/$*/*.o -o $@ -lgcc
 
 clean:
 	rm -rf $(DEBUG) $(RELEASE)
