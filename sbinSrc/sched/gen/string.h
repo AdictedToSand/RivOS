@@ -35,3 +35,24 @@ static inline u32 countOccurence(const char* s, char c) {
 
     return count;
 }
+
+static inline void strcpyLen(char* dest, const char* src, u32 len) {
+    for (u32 i = 0; i < len; i++) {
+        dest[i] = src[i];
+    }
+    dest[len] = 0;
+}
+
+static inline int strcmp(const char* a, const char* b) {
+    while (*a && (*a == *b)) {
+        a++;
+        b++;
+    }
+    return (unsigned char)*a - (unsigned char)*b;
+}
+
+static inline u8 streq(const char* a, const char* b) {
+    return strcmp(a, b) == 0;
+}
+
+

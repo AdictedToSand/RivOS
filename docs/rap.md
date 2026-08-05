@@ -9,19 +9,19 @@ A .rap file (shorthand for rivapi) is a file that describes where functions live
 A .rap file, raw may look like this:
 
 ~~~ Rust
-idtSetDescriptor(u8 vector ptr isr u8 flags)=1065293                                                                                                           
-putPixel(u32 argb u32 x u32 y)=1063056                                                                                                                                       
-getScreenWidth()=1063196                                                                                                                                                     
-getFbPhysAddr()=1063106                                                                                                                                                      
-getScreenHeight()=1063166                                                                                                                                                    
-getFbSizeBytes()=1063136    
+idtSetDescriptor(u8 vector ptr isr u8 flags )=1065293                                                                                                          
+putPixel(u32 argb u32 x u32 y )=1063056                                                                                                                                      
+getScreenWidth( )=1063196                                                                                                                                                    
+getFbPhysAddr( )=1063106                                                                                                                                                     
+getScreenHeight( )=1063166                                                                                                                                                   
+getFbSizeBytes( )=1063136    
 ~~~
 
 ## Specification
 
 A rap file will always look like this:
 
-functionName(params)=addrOfFunctionToJumpToAsAnUnsignedInt\n
+functionName(params )=addrOfFunctionToJumpToAsAnUnsignedInt\n
 
 ### Allowed parameter types
 

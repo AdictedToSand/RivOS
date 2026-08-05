@@ -44,11 +44,38 @@ RapFile parseRap(void) {
 
         logf("Function=%s", funcNameBuf);
 
+        buf += strlenOfFuncName + 1; // name + openparen
+
+        while (*buf != ')') {
+            const u32 strlenOfType = strlenSpecChar(buf, ' '); 
+            char* const typebuf = mmap(strlenOfType + 1);
+            strcpyLen(typebuf, buf, strlenOfType);
+            if (streq(typebuf, "")) break;
+            // For some reason only happens with empty variables
+            logf("\tParamName='%s'", typebuf);
+
+            buf += strlenOfType + 1; // Type strlen + space
+            
+            const u32 strlenOfVarName = strlenSpecChar(buf, ' ');
+            char* const namebuf = mmap(strlenOfVarName + 1);
+            strcpyLen(namebuf, buf, strlenOfVarName);
+            logf("\tVarName=%s", namebuf);
+            buf += strlenOfVarName + 1; // Name strlen + space
+        }
+        buf += 2; // Closeparen and equals sign
+        const u32 strlenOfAddr = strlenSpecChar(buf, '\n');
+        char* sBuf = mmap(strlenOfAddr + 1);
+        strcpyLen(sBuf, buf, strlenOfAddr);
+        const u32 addr = stou(sBuf);
+        logf("Addr=%u", addr);
+
+        munmap(sBuf);
         buf += strlenSpecChar(buf, '\n') + 1;
         if (!(*buf))
             break;
     }
 
+    logf("Parsing rap complete");
     close(rapFd);
     munmap(buf);
     return ret;

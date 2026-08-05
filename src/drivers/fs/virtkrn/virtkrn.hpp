@@ -43,7 +43,7 @@ struct RapFileSubDriver : VirtKrnSubDriver {
             }
             //TODO: Yeah...
             if (paraml.size() == 0) out += ' ';
-            ((char*) out.toCStr())[out.fstrlen() - 1] = ')';
+            out += ')';
             out += '=';
             Str tempIntegerStorage;
             tempIntegerStorage.fromu((u32) raw);

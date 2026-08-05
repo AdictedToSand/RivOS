@@ -82,6 +82,17 @@ static inline bool strIsNumber(const char* str) {
     return true;
 }
 
+static inline u32 stou(const char* s) {
+    u32 result = 0;
+
+    while (*s >= '0' && *s <= '9') {
+        result = result * 10 + (*s - '0');
+        s++;
+    }
+
+    return result;
+}
+
 static bool isLower(char c) {
     return c >= 'a' && c <= 'z';
 }
