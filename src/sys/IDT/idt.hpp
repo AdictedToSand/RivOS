@@ -14,14 +14,28 @@ struc InterruptFrame
     .vector: resd 1
 endstruc*/
 
-struct [[gnu::packed]] InterruptFrame {
-    uint32_t vector;
+struct InterruptFrame {
+    u32 edi;
+    u32 esi;
+    u32 ebp;
+    u32 esp;
+    u32 ebx;
+    u32 edx;
+    u32 ecx;
+    u32 eax;
+
+    u32 vector;
+    u32 errorCode;
+
+    u32 eip;
+    u32 cs;
+    u32 eflags;
+    u32 userEsp;
+    u32 ss;
 };
 
-extern "C" {
-    // Disable name mangling
+extern "C" // Disable name mangling
     void exceptionHandler(InterruptFrame* ifrm); // Must be defined in a .cpp due to static linking shit
-}
 
 struct [[gnu::packed]] IdtEntry {
     uint16_t isr_low;

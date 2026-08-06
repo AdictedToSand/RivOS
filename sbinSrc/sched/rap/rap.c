@@ -109,13 +109,13 @@ void printRap(RapFile* rap) {
     for (u32 i = 0; i < rap->entriesArr.len; i++) {
         RapEntry* entry = &rap->entriesArr.arr[i];
 
-        logf("Function=%s", entry->functionName);
-        logf("\t\tAddr=%u", (u32)entry->callLocation);
+        printf("Function=%s\n", entry->functionName);
+        printf("\t\tAddr=%u\n", (u32)entry->callLocation);
 
         for (u32 j = 0; j < entry->paramCount; j++) {
             RapParameter* param = &entry->paramArr[j];
 
-            logf("\t\tParam=%s %s", param->type, param->name);
+            printf("\t\tParam=%s %s\n", param->type, param->name);
         }
     }
 }

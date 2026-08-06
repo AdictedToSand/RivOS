@@ -88,11 +88,16 @@ public:
         return true;
     }
     auto load(const char* const pname, const ProcessPriveledgeLevel priveledge) -> Process* {
-        Process* proc = (Process*) KernelAllocator::alloc(sizeof(Process));
+        Process* proc = new (KernelAllocator::alloc(sizeof(Process))) Process();
         proc->srcFp = fp;
         proc->pid = getNewPid();
         proc->pname = pname;
         proc->priveledge = priveledge;
+        proc->pageDirectory = Mmu::createAddressSpace();
+
+        for (u32 i = 0; i < 1024; i++) {
+            proc->pageDirectory[i] = Mmu::activeDirectory[i];
+        }
 
         selfProc = proc;
 
@@ -111,11 +116,19 @@ public:
                 for (u32 j = 0; j < pageCount; j++) {
                     void* const frame = PhysicalFrameAllocator::allocFrame();
                     if (!frame) { kpanic("Out of memory"); }
-                    Mmu::mapPage(frame, (void*) (vaddrBase + j * 4096), Mmu::FLAGS_PRESENT | Mmu::FLAGS_WRITABLE);
+                    PhysToVirt addr;
+                    addr.phys = frame;
+                    addr.virt = (void*) (vaddrBase + j * 4096);
+                    proc->pages.pushBack(addr);
+                    Mmu::mapPageIn(proc->pageDirectory, frame, (void*) (vaddrBase + j * 4096),
+                        Mmu::FLAGS_PRESENT | Mmu::FLAGS_WRITABLE);
                 }
 
+                u32* const callerDirectory = Mmu::activeDirectory;
+                Mmu::switchAddressSpace(proc->pageDirectory);
                 memcpy(dest, base + ph->contentsOffset, ph->segmentFilesize);
                 memset(dest + ph->segmentFilesize, 0, ph->memSize - ph->segmentFilesize);
+                Mmu::switchAddressSpace(callerDirectory);
             }
             else {
                 continue;

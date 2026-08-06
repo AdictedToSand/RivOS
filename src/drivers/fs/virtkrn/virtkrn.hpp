@@ -1,4 +1,5 @@
 #pragma once
+#include "proc/process.hpp"
 #include <mem/alloc.hpp>
 
 #include <gen/map.hpp>
@@ -113,9 +114,15 @@ public:
             "getFbSizeBytes",
             {}
         ));
-        /*functions.pushBack(Function(
-            (void*) 
-        ));*/
+        functions.pushBack(Function(
+            (void*) loadProcessFromFile,
+            "loadProcess",
+            {
+                Param("str", "fp"),
+                Param("str", "procname"),
+                Param("u8", "enum_ProcessPriveledgeLevel_priv"),
+            }
+        ));
     }
 };
 

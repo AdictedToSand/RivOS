@@ -26,3 +26,4 @@ static inline void* memset(void* b, int c, int len) {
 
 auto memcmp(const void* a, const void* b, size_t size) -> int;
 
+auto operator new(size_t, void* ptr) noexcept -> void*;

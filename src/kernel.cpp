@@ -77,7 +77,7 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
 
     PhysicalFrameAllocator::init(ASSUMED_MEM_BYTES, frameBitmapStorage);
     PhysicalFrameAllocator::markUsed(0);
-    for (u32 addr = (u32) kernelStart; addr < (u32) kernelEnd; addr += 4096) // Mark all the other sections as already used
+    for (u32 addr = 0; addr < (u32) kernelEnd; addr += 4096) // Mark all the other sections as already used
         PhysicalFrameAllocator::markUsed(addr / 4096);
 
     Terminal::printf("Bootloader: %s\n", (bootinfo.bootloader == BootloaderKinds::GRUB ? "GRUB" : "RivBoot"));

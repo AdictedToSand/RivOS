@@ -13,8 +13,8 @@ struct Vector {
    
 private:
     T* arr;
-    size_t len;
-    size_t capacity;
+    u32 len;
+    u32 capacity;
 public:
     Vector() {
         len = 0;

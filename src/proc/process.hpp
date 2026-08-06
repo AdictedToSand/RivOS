@@ -12,7 +12,7 @@ using pid_t = u32;
 extern pid_t activeProcessPid;
 extern pid_t latestPid;
 
-enum class ProcessPriveledgeLevel {
+enum class ProcessPriveledgeLevel : u8 {
     User,
     Driver,
     Kernel,
@@ -33,9 +33,14 @@ struct RegisterState {
 
 extern "C" [[gnu::noreturn]] void finalRun(void* pEntry, void* sStart);
 
-enum class ProcessImportance {
+enum class ProcessImportance : u8 {
     REQ,
     OPT,
+};
+
+struct PhysToVirt {
+    void* phys;
+    void* virt;
 };
 
 struct Process {
@@ -43,17 +48,22 @@ struct Process {
     const char* pname;
     Str srcFp;
     ProcessPriveledgeLevel priveledge;
-    void* memStart;
-    void* memEnd;
+    Vector<PhysToVirt> pages;
+    Vector<PhysToVirt> stackPages;
     RegisterState state;
     void* entryPoint;
     ProcessImportance importance;
+    u32* pageDirectory;
 
     [[gnu::noreturn]]
     auto run(ProcessImportance iimportance) -> void;
     auto exit(u8 code) -> void;
+
+    Process() = default;
 };
 
 extern Vector<Process*> processes;
 
 auto getNewPid() -> pid_t;
+
+auto loadProcessFromFile(const char* fp, const char* procname, ProcessPriveledgeLevel priv) -> Process*;

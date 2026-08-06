@@ -11,3 +11,7 @@ auto memcmp(const void* a, const void* b, size_t size) -> int {
 
     return 0;
 }
+
+auto operator new(size_t, void* ptr) noexcept -> void* {
+    return ptr;
+}

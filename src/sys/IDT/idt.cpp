@@ -1,3 +1,4 @@
+#include "gen/serial.hpp"
 #include <sys/IDT/idt.hpp>
 
 #include <gen/reboot.hpp>
@@ -107,7 +108,7 @@ auto handleFault(int ft) -> void {
     if (ft == 14) { // #PF
         u32 cr2;
         asm volatile("mov %%cr2, %0" : "=r"(cr2));
-        Terminal::printf("\nCR2=%x", cr2);
+        Serial::logf("\nCR2=%x", cr2);
     }
 #endif
 }
@@ -116,20 +117,20 @@ auto handleRegular() -> void {
 }
 
 void exceptionHandler(InterruptFrame* ifrm) {
-    Serial::log("EXCEPTION");
-    Serial::log(vectorToExceptionName(ifrm->vector));
-    for (;;) ;
+    Serial::logf("EXCEPTION: #%s", vectorToExceptionName(ifrm->vector));
 #ifndef DEBUG
     Terminal::clear();
 #endif
+    Serial::logf("EIP=%x CS=%x EFLAGS=%x", ifrm->eip, ifrm->cs, ifrm->eflags);
+    Serial::logf("Error code=0x%x", ifrm->errorCode);
 
     const InterruptTypes itype = interruptToType(ifrm->vector);
 
-    Terminal::printf(R"(An unhandled interrupt happened. The machine will abort.
+    Terminal::printfColor(R"(An unhandled interrupt happened. The machine will abort.
 The fault was: #%s
 The fault is of type: %s
 )"
-        , vectorToExceptionName(ifrm->vector), interruptTypeToStr(itype));
+        , (u8) Terminal::VgaColor::Red,vectorToExceptionName(ifrm->vector), interruptTypeToStr(itype));
 
     asm volatile ("CLI");
 

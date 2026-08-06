@@ -3,40 +3,62 @@ BITS 32
 
 extern exceptionHandler
 
-section .text
-
 struc InterruptFrame
-    .vector: resd 1
+    .edi:       resd 1
+    .esi:       resd 1
+    .ebp:       resd 1
+    .esp:       resd 1
+    .ebx:       resd 1
+    .edx:       resd 1
+    .ecx:       resd 1
+    .eax:       resd 1
+
+    .vector:    resd 1
+
+    .errorCode: resd 1
+    .eip:       resd 1
+    .cs:        resd 1
+    .eflags:    resd 1
+    .userEsp:   resd 1
+    .ss:        resd 1
 endstruc
 
-ifrm:
-    istruc InterruptFrame
-        at InterruptFrame.vector, dd 0
-    iend
 
 %macro isr_err_stub 1
 isr_stub_%+%1:
-    MOV dword [ifrm + InterruptFrame.vector], %1
+    PUSH %1
 
-    PUSHA
-    PUSH ifrm ; fuckass ABI
+    PUSHA 
+
+    PUSH esp
     CALL exceptionHandler
-    POP edi
-    POPA
     ADD esp, 4
-    IRET
+
+    POPA
+
+    ADD esp, 4 ; remove vector
+    ADD esp, 4 ; remove CPU error code
+
+    IRETD 
 %endmacro
+
 
 %macro isr_no_err_stub 1
 isr_stub_%+%1:
-    mov dword [ifrm + InterruptFrame.vector], %1
+    PUSH 0          ; fake error code
+    PUSH %1         ; vector
 
     PUSHA
-    PUSH ifrm
+
+    PUSH esp
     CALL exceptionHandler
-    POP edi
+    ADD esp, 4
+
     POPA
-    IRET
+
+    ADD esp, 8 ; vector + fake error code
+
+    IRETD
 %endmacro
 
 isr_no_err_stub 0

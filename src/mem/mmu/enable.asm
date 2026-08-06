@@ -3,6 +3,8 @@ BITS 32
 global loadPageDirectory
 global enablePaging
 
+extern stack_top
+
 loadPageDirectory:
     PUSH ebp
     MOV ebp, esp

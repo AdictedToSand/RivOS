@@ -2,6 +2,7 @@
 #include <int.h>
 
 typedef u32 fd_t;
+typedef u32 pid_t;
 
 extern fd_t open(const char* fp);
 extern u8 write(fd_t fd, const char* conts, u32 len);

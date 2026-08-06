@@ -9,8 +9,8 @@
 struct Str {
 private:
     char* cStr;
-    size_t len;
-    size_t capacity;
+    u32 len;
+    u32 capacity;
     static constexpr size_t MINIMUM_STR_SIZE = 5;
 public:
     Str() {

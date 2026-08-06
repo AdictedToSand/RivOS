@@ -1,6 +1,8 @@
 #pragma once
 #include <gen/io.hpp>
 
+#include <stdarg.h>
+
 // Credits: https://wiki.osdev.org/Serial_Ports
 
 #define PORT 0x3f8 // COM1
@@ -76,6 +78,74 @@ struct Serial {
 #ifdef DEBUG
         writes("[LOG]: ");
         writes(mes);
+        write('\n');
+#endif
+    }
+    static auto logf(const char* fmt, ...) -> void {
+#ifdef DEBUG
+        char buffer[256];
+        u32 pos = 0;
+
+        va_list args;
+        va_start(args, fmt);
+
+        writes("[LOG]: ");
+
+        for (; *fmt && pos < sizeof(buffer) - 1; fmt++) {
+            if (*fmt != '%') {
+                buffer[pos++] = *fmt;
+                continue;
+            }
+
+            fmt++;
+
+            if (*fmt == 's') {
+                const char* s = va_arg(args, const char*);
+                while (*s && pos < sizeof(buffer) - 1)
+                    buffer[pos++] = *s++;
+            }
+            else if (*fmt == 'c') {
+                buffer[pos++] = (char)va_arg(args, int);
+            }
+            else if (*fmt == 'u') {
+                u32 n = va_arg(args, u32);
+                char tmp[16];
+                u32 i = 0;
+
+                if (n == 0)
+                    tmp[i++] = '0';
+
+                while (n) {
+                    tmp[i++] = '0' + (n % 10);
+                    n /= 10;
+                }
+
+                while (i)
+                    buffer[pos++] = tmp[--i];
+            }
+            else if (*fmt == 'x') {
+                u32 n = va_arg(args, u32);
+                char tmp[16];
+                u32 i = 0;
+
+                if (n == 0)
+                    tmp[i++] = '0';
+
+                while (n) {
+                    u32 digit = n & 0xF;
+                    tmp[i++] = digit < 10 ? '0' + digit : 'A' + digit - 10;
+                    n >>= 4;
+                }
+
+                while (i)
+                    buffer[pos++] = tmp[--i];
+            }
+        }
+
+        va_end(args);
+
+        buffer[pos] = 0;
+        writes(buffer);
         write('\n');
 #endif
     }

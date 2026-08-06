@@ -41,7 +41,6 @@ enum class SyscallNumbers : u8 {
 
 extern "C" auto syscallHandler(SyscInterruptFrame* ifrm) -> void {
     const SyscallNumbers syscNum = (SyscallNumbers) ifrm->eax;
-
     switch (syscNum) {
         case SyscallNumbers::Open: {
             ifrm->eax = FileSystem::open((const char*) ifrm->edi);

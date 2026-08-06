@@ -4,6 +4,9 @@ extern kernelMain
 extern bssStart
 extern bssEnd
 
+global stack_bottom
+global stack_top
+
 section .header align=1
 
 %define ABI_VERSION(major, minor) (((major) << 16) | (minor))
