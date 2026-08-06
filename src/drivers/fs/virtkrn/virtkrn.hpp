@@ -133,7 +133,7 @@ public:
         return 1;
     }
     auto init() -> void override {
-        mapping["func.rap"] = &rapfile;
+        mapping.insert("func.rap", &rapfile);
 
         for (MapEntry<StrOperatorEquals, VirtKrnSubDriver*>& kv : mapping) {
             kv.getv()->init();

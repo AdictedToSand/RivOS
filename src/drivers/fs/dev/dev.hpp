@@ -105,9 +105,9 @@ private:
 public:
 
     virtual auto init() -> void override {
-        mappings["stdout"] = &stdoutDriver;
-        mappings["stdin"] = &stdinDriver;
-        mappings["stdlog"] = &stdlogDriver;
+        mappings.insert("stdout", &stdoutDriver);
+        mappings.insert("stdin", &stdinDriver);
+        mappings.insert("stdlog", &stdlogDriver);
 
         for (auto& kv : mappings) {
             kv.getv()->init();

@@ -161,7 +161,10 @@ public:
         added.mp = lastMountpoint;
         added.f = lastMountpoint->fsDriver->open(fp, &added.f.exists);
 
-        fdMapping[currentFd] = added;
+        if (fdMapping.exists(currentFd))
+            fdMapping[currentFd] = added;
+        else 
+            fdMapping.insert(currentFd, added);
 
         return added.f.exists ? currentFd : 0;
     }
@@ -180,12 +183,14 @@ public:
     }
     static auto write(fd_t fd, char* conts, size_t len) -> FileSystemDriver::SuccessCodes {
         if (!fd) return FileSystemDriver::SuccessCodes::Error;
+        if (!fdMapping.exists(fd)) return FileSystemDriver::SuccessCodes::Error;
         const auto gf = fdMapping[fd];
 
         return gf.mp->fsDriver->write(gf.f, conts, len);
     }
     static auto fileSize(fd_t fd) -> u32 {
         if (!fd) return 0;
+        if (!fdMapping.exists(fd)) return 0;
 
         return fdMapping[fd].f.size;
     }

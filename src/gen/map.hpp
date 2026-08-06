@@ -51,13 +51,6 @@ public:
             }
         }
 
-        if (foundIndex == -1) {
-            size_t indOfNewItem = entries.size();
-
-            entries.pushBack(MapEntry(k, VT{}));
-            return entries[indOfNewItem].val().getv();
-        }
-
         return entries[foundIndex].val().getv();
     }
     auto insert(KT k, VT v) -> void {
