@@ -30,16 +30,21 @@ void _start() {
     rap = parseRap();
     printRap(&rap);
 
-    /*[LOG]: Function=getScreenWidth                                                                                                                                               
-[LOG]:          Addr=1062948                                                                                                                                                 
-[LOG]: Function=getFbPhysAddr                                                                                                                                                
-[LOG]:          Addr=1062858                                                                                                                                                 
-[LOG]: Function=getScreenHeight                                                                                                                                              
-[LOG]:          Addr=1062918    */
+    PutPixelT putPixel = getRapAddr(&rap, "putPixel");
+    if (!putPixel) exit(1);
+    u32 (*getScreenWidth)(void) = getRapAddr(&rap, "getScreenWidth");
+    u32 (*getScreenHeight)(void) = getRapAddr(&rap, "getScreenHeight");
+    logf("ScreenWidth=%u", getScreenWidth());
+    logf("ScreenHeight=%u", getScreenHeight());
 
-    //PutPixelT putp = getRapAddr(&rap, "putPixel");
-    //if (!putp) exit(1);
-    //u32 (*getScreenWidth)(void) = getRapAddr();
+    const u32 screenWidth = getScreenWidth();
+    const u32 screenHeight = getScreenHeight();
+
+    for (u32 x = 0; x < screenWidth; x++) {
+        for (u32 y = 0; y < screenHeight; y++) {
+            putPixel(0x0000FF00, x, y); 
+        }
+    }
 
     for (;;) ;
 }
