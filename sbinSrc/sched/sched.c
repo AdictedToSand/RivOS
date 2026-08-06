@@ -72,6 +72,20 @@ RapFile rap;
 typedef void (*PutPixelT)(u32 argb, u32 x, u32 y);
 typedef Process* (*LoadProcessT)(const char* fp, const char* pname, ProcessPriveledgeLevel privlvl);
 
+void perPixel(u32 (*calc)(u32 x, u32 y), PutPixelT putPixel, u32 screenWidth, u32 screenHeight) {
+    for (u32 x = 0; x < screenWidth; x++) {
+        for (u32 y = 0; y < screenHeight; y++) {
+            putPixel(calc(x, y), x, y);
+        } 
+    }
+}
+
+u32 calcPixel(u32 x, u32 y) {
+   u32 colorx = y > 0 ? x % y : 0;
+    u32 colory = x > 0 ? y % x : 0;
+    return (colorx ^ colory);
+}
+
 [[gnu::noreturn]]
 void _start() {
     sysInit();
@@ -92,19 +106,12 @@ void _start() {
     u32 (*getScreenHeight)(void) = getRapAddr(&rap, "getScreenHeight");
     LoadProcessT loadProcess = getRapAddr(&rap, "loadProcess");
 
-    //loadProcess("/krn/bin/de", "DesktopEnviroment", PROC_PRIV_LVL_Kernel);
+    loadProcess("/krn/bin/de", "DesktopEnviroment", PROC_PRIV_LVL_Kernel);
 
     const u32 screenWidth = getScreenWidth();
     const u32 screenHeight = getScreenHeight();
 
-    for (u32 x = 0; x < screenWidth; x++) {
-        for (u32 y = 0; y < screenHeight; y++) {
-            if (y != 0)
-                putPixel(x % y, x, y); 
-            else 
-                putPixel(0x00000000, x, y);
-        }
-    }
+    perPixel(calcPixel, putPixel, screenWidth, screenHeight);
 
     for (;;) ;
 }

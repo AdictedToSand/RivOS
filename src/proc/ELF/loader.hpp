@@ -95,10 +95,6 @@ public:
         proc->priveledge = priveledge;
         proc->pageDirectory = Mmu::createAddressSpace();
 
-        for (u32 i = 0; i < 1024; i++) {
-            proc->pageDirectory[i] = Mmu::activeDirectory[i];
-        }
-
         selfProc = proc;
 
         const u8* const base = (u8*) hdr;

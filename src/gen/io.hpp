@@ -33,6 +33,15 @@ static inline auto outw(u16 port, u16 val) -> void {
     asm volatile ("outw %0, %w1" : : "a"(val), "Nd"(port) : "memory");
 }
 
+static inline void outl(uint16_t port, uint32_t value) {
+    asm volatile("outl %0, %1" : : "a"(value), "Nd"(port));
+}
+static inline u32 inl(u16 port) {
+    u32 value;
+    asm volatile("inl %1, %0" : "=a"(value) : "Nd"(port));
+    return value;
+}
+
 static inline auto ioWait() -> void {
     outb(0x80, 0);
 }

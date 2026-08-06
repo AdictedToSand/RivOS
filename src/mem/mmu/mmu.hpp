@@ -17,25 +17,23 @@ struct Mmu {
     static constexpr u32 FLAGS_WRITABLE = 0x002;
     static constexpr u32 FLAGS_USER = 0x004;
 
-    static inline uint32_t pageDirectory[1024] __attribute__((aligned(4096)));
-    static inline uint32_t firstPageTable[1024] __attribute__((aligned(4096)));
+    static inline u32 pageDirectory[1024] __attribute__((aligned(4096)));
+    static inline u32 firstPageTable[1024] __attribute__((aligned(4096)));
 
-    static inline uint32_t pageTables[16][1024] __attribute__((aligned(4096)));
-    static inline uint32_t nextPageTable = 0;
+    static inline u32 pageTables[16][1024] __attribute__((aligned(4096)));
+    static inline u32 nextPageTable = 0;
 
-    static inline uint32_t processDirectories[16][1024] __attribute__((aligned(4096)));
-    static inline uint32_t nextDirectory = 0;
+    static inline u32 processDirectories[16][1024] __attribute__((aligned(4096)));
+    static inline u32 nextDirectory = 0;
 
-    // Tracks whichever directory is currently loaded in cr3.
-    // Set at init() and kept in sync by switchAddressSpace().
-    static inline uint32_t* activeDirectory = nullptr;
+    static inline u32* activeDirectory = nullptr;
 
     static auto init() -> void {
-        for (uint16_t i = 0; i < 1024; i++) {
+        for (u16 i = 0; i < 1024; i++) {
             pageDirectory[i] = 0x00000002;
         } 
 
-        for (uint16_t i = 0; i < 1024; i++) {
+        for (u16 i = 0; i < 1024; i++) {
             firstPageTable[i] = (i * 0x1000) | 3;
         }
         pageDirectory[0] = ((unsigned int) firstPageTable) | 3;
@@ -68,14 +66,14 @@ struct Mmu {
         loadPageDirectory((unsigned int*) dir);
     }
 
-    static auto mapPageIn(uint32_t* dir, void* phys, void* virt, uint32_t flgs) -> void {
-        uint32_t physical = (uint32_t) phys;
-        uint32_t virtualAddr = (uint32_t) virt;
+    static auto mapPageIn(u32* dir, void* phys, void* virt, u32 flgs) -> void {
+        u32 physical = (uint32_t) phys;
+        u32 virtualAddr = (uint32_t) virt;
 
-        uint32_t directoryIndex = virtualAddr >> 22;
-        uint32_t tableIndex = (virtualAddr >> 12) & 0x3FF;
+        u32 directoryIndex = virtualAddr >> 22;
+        u32 tableIndex = (virtualAddr >> 12) & 0x3FF;
 
-        uint32_t* pageTable;
+        u32* pageTable;
 
         if (!(dir[directoryIndex] & 1)) {
             if (nextPageTable >= 16) {
@@ -84,13 +82,14 @@ struct Mmu {
 
             pageTable = pageTables[nextPageTable++];
 
-            for (uint16_t i = 0; i < 1024; i++) {
+            for (u16 i = 0; i < 1024; i++) {
                 pageTable[i] = 0x00000002;
             }
 
             dir[directoryIndex] = ((uint32_t) pageTable) | 3;
-        } else {
-            pageTable = (uint32_t*)(dir[directoryIndex] & 0xFFFFF000);
+        }
+        else {
+            pageTable = (u32*) (dir[directoryIndex] & 0xFFFFF000);
         }
 
         pageTable[tableIndex] = (physical & 0xFFFFF000) | flgs | 1;
@@ -100,21 +99,21 @@ struct Mmu {
         }
     }
 
-    static auto mapPage(void* phys, void* virt, uint32_t flgs) -> void {
+    static auto mapPage(void* phys, void* virt, u32 flgs) -> void {
         mapPageIn(pageDirectory, phys, virt, flgs);
     }
 
     static auto unmapPage(void* virt) -> void {
         // unchanged
-        uint32_t virtualAddr = (uint32_t) virt;
+        u32 virtualAddr = (u32) virt;
 
-        uint32_t directoryIndex = virtualAddr >> 22;
-        uint32_t tableIndex = (virtualAddr >> 12) & 0x3FF;
+        u32 directoryIndex = virtualAddr >> 22;
+        u32 tableIndex = (virtualAddr >> 12) & 0x3FF;
 
         if (!(pageDirectory[directoryIndex] & FLAGS_PRESENT))
             return;
 
-        uint32_t* pageTable = (uint32_t*)(pageDirectory[directoryIndex] & 0xFFFFF000);
+        u32* pageTable = (u32*) (pageDirectory[directoryIndex] & 0xFFFFF000);
 
         pageTable[tableIndex] = 0;
 

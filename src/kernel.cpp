@@ -34,6 +34,8 @@
 
 #include <bootInfo.hpp>
 
+#include <PCI/pci.hpp>
+
 typedef void (*ctor_t)();
 
 extern "C" ctor_t ctorsStart[];
@@ -92,11 +94,16 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
 
     FileSystem::init();
 
+    PCI::init();
+
     PIC::init();
 
     PIT::init(1000);
 
     Mmu::init();
+    for (u32 addr = (u32) heapStart & ~0xFFF; addr < (u32) heapEnd; addr += 4096) {
+        Mmu::mapPage((void*) addr, (void*) addr, Mmu::FLAGS_WRITABLE);
+    }
     SysModuleHandler::init();
 
     {
