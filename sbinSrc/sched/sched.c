@@ -63,8 +63,9 @@ typedef struct Process {
     u32* pageDirectory;
 } Process;
 
-
+u64 ticks = 0;
 void pitHandler(void) {
+    ticks++;
 }
 
 RapFile rap;
@@ -83,7 +84,7 @@ void perPixel(u32 (*calc)(u32 x, u32 y), PutPixelT putPixel, u32 screenWidth, u3
 u32 calcPixel(u32 x, u32 y) {
    u32 colorx = y > 0 ? x % y : 0;
     u32 colory = x > 0 ? y % x : 0;
-    return (colorx ^ colory);
+    return colorx ^ colory;
 }
 
 [[gnu::noreturn]]

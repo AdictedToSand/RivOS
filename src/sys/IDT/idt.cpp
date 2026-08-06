@@ -87,7 +87,7 @@ inline auto interruptTypeToStr(InterruptTypes t) -> const char* {
 
 [[gnu::noreturn]]
 auto handleAbort() -> void {
-    Terminal::printf(R"(An interrupt of type "Abort" was called.
+    Serial::logf(R"(An interrupt of type "Abort" was called.
 This is a fatal interrupt. The machine will reboot after any keypress
 If the fault is of type #MC it is recommended to check hardware.
 Press any key to continue... ")");
@@ -98,12 +98,12 @@ Press any key to continue... ")");
 }
 
 auto handleTrap() -> void {
-    Terminal::printf("A trap was triggered. The machine will reboot after any keypress... "); while (getc() == 0)
+    Serial::logf("A trap was triggered. The machine will reboot after any keypress... "); while (getc() == 0)
     reboot();
 }
 
 auto handleFault(int ft) -> void {
-    Terminal::printf("A fault was triggered in the kernel. Execution will not continue");
+    Serial::logf("A fault was triggered in the kernel. Execution will not continue");
 #ifdef DEBUG
     if (ft == 14) { // #PF
         u32 cr2;
@@ -119,20 +119,17 @@ auto handleRegular() -> void {
 void exceptionHandler(InterruptFrame* ifrm) {
     Serial::logf("EXCEPTION: #%s", vectorToExceptionName(ifrm->vector));
 #ifndef DEBUG
-    Terminal::clear();
 #endif
     Serial::logf("EIP=%x CS=%x EFLAGS=%x", ifrm->eip, ifrm->cs, ifrm->eflags);
     Serial::logf("Error code=0x%x", ifrm->errorCode);
 
     const InterruptTypes itype = interruptToType(ifrm->vector);
 
-    Terminal::printfColor(R"(An unhandled interrupt happened. The machine will abort.
+    Serial::logf(R"(An unhandled interrupt happened. The machine will abort.
 The fault was: #%s
 The fault is of type: %s
 )"
         , (u8) Terminal::VgaColor::Red,vectorToExceptionName(ifrm->vector), interruptTypeToStr(itype));
-
-    asm volatile ("CLI");
 
     switch (itype) {
         case InterruptTypes::Fault: handleFault(ifrm->vector); break;
@@ -140,6 +137,7 @@ The fault is of type: %s
         case InterruptTypes::Regular: handleRegular(); break;
         case InterruptTypes::Trap: handleTrap(); break;
     }
+    kpanic("An unhandled IDT interrupt fired.");
 
     for (;;) ;
 }

@@ -1,16 +1,26 @@
 #pragma once
 #include <terminal/terminal.hpp>
 
-#ifndef DEBUG
+static const char* KERN_PANICBANNER = R"(                       _         __
+  ___   ___  _ __  ___(_) ___ _ / /
+ / _ \ / _ \| '_ \/ __| |/ _ (_) |
+| (_) | (_) | |_) \__ \ |  __/_| |
+ \___/ \___/| .__/|___/_|\___(_) |
+            |_|                 \_\)";
+
 #define kpanic(msg) do { \
+    asm volatile ("CLI"); \
     Terminal::clear(); \
+    Visuals::fillScreen(0x000000CC); \
     Terminal::enable(); \
+    Terminal::setColor(255);/* Evil hack */ \
+    Terminal::printf("%s\n\n\n", KERN_PANICBANNER); \
     \
-    Terminal::setColor((u8) Terminal::VgaColor::Red); \
     Terminal::printf("A kernel panic occurred at: (%s) -> (%s) -> (line %i) -> %s", __FILE__, __FUNCTION__, __LINE__, msg); \
     \
     for (;;); \
 } while (0)
+/*
 #else
 #define kpanic(msg) do { \
     Terminal::enable(); \
@@ -18,7 +28,7 @@
         __FILE__, __FUNCTION__, __LINE__, msg); \
     for (;;) ; \
 } while (0)
-#endif
+#endif*/
 
 static inline void kassrt(bool eval, const char* msg) {
     if (!eval) 

@@ -153,6 +153,7 @@ struct Terminal {
         write(s, strlen(s));
     }
     static auto clear() -> void {
+        terminalX = 0, terminalY = 0;
         Visuals::fillScreen(0x00101010);
     }
 

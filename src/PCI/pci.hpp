@@ -6,6 +6,8 @@
 #include <gen/vec.hpp>
 #include <gen/serial.hpp>
 
+#include <PCI/classes.hpp>
+
 struct PCI {
     struct PciVendor {
         uint16_t id;
@@ -24,11 +26,20 @@ struct PCI {
         const char* name;
     };
 public:
+    struct ClassAndSubClass {
+        u8 baseClass;
+        u8 subClass;
+
+        const char* baseName;
+        const char* subName;
+    };
     struct FullPciDevice {
         PciDevice dev;
         PciVendor vend;
 
         u8 bus, slot;
+
+        ClassAndSubClass classAndSubclass;
     };
 private:
 
@@ -87,6 +98,14 @@ private:
 
         return nullptr;
     }
+    static auto getClassAndSubclass(u8 bus, u8 slot, u8 func) -> ClassAndSubClass {
+        u16 classAndSubclass  = configReadWord(bus, slot, func, 0x0A);
+
+        ClassAndSubClass ret;
+        ret.baseClass = (classAndSubclass >> 8) & 0xFF;
+        ret.subClass = classAndSubclass & 0xFF;
+        return ret;
+    }
 
     static auto getAllPciDevices(Vector<FullPciDevice>& pciDeviceVec) -> void {
         for (u8 bus = 0; bus < 255; bus++) {
@@ -100,18 +119,24 @@ private:
                     pciDev.dev.deviceId = device; 
                     pciDev.bus = bus;
                     pciDev.slot = slot;
+                    pciDev.classAndSubclass = getClassAndSubclass(bus, slot, 0);
 
                     const char*& vname = pciDev.vend.name;
                     const char*& dname = pciDev.dev.name;
+                    const char*& subclName = pciDev.classAndSubclass.subName;
+                    const char*& baseClName = pciDev.classAndSubclass.baseName;
                     vname = getNameFromVendorId(vendor);
                     dname = getNameFromDeviceId(device);
+                    baseClName = baseclassToString(pciDev.classAndSubclass.baseClass);
+                    subclName = subclassToString(pciDev.classAndSubclass.subClass, pciDev.classAndSubclass.baseClass);
                     if (!vname) {
                         vname = "Vendor not found";
                     }
                     if (!dname) {
                         dname = "Device not found";
                     }
-                    Serial::logf("PCI device found, vendor=%s,device=%s", vname, dname);
+                    Serial::logf("PCI device found, vendor=%s,device=%s\nBaseClass=%s,SubClass=%s",
+                        vname, dname, baseClName, subclName);
                     pciDeviceVec.pushBack(pciDev);
                 }
             }
