@@ -123,6 +123,13 @@ public:
                 Param("u8", "enum_ProcessPriveledgeLevel_priv"),
             }
         ));
+        functions.pushBack(Function(
+            (void*) runProcess,
+            "runProcess",
+            {
+                Param("ptr", "proc"),
+            }
+        ));
     }
 };
 

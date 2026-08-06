@@ -106,13 +106,15 @@ void _start() {
     u32 (*getScreenWidth)(void) = getRapAddr(&rap, "getScreenWidth");
     u32 (*getScreenHeight)(void) = getRapAddr(&rap, "getScreenHeight");
     LoadProcessT loadProcess = getRapAddr(&rap, "loadProcess");
+    void (*runProcess)(const Process* proc) = getRapAddr(&rap, "runProcess");
 
-    loadProcess("/krn/bin/de", "DesktopEnviroment", PROC_PRIV_LVL_Kernel);
+    const Process* const de = loadProcess("/krn/bin/de", "DesktopEnviroment", PROC_PRIV_LVL_Kernel);
 
     const u32 screenWidth = getScreenWidth();
     const u32 screenHeight = getScreenHeight();
 
     perPixel(calcPixel, putPixel, screenWidth, screenHeight);
+    runProcess(de);
 
     for (;;) ;
 }

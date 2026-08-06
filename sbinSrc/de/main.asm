@@ -19,7 +19,7 @@ _start:
 section .data
 msg: db "Hello, world!"
 msgLen equ $ - msg
-stdoutFp: db "/dev/stdlog", 0
+stdoutFp: db "/dev/stdout", 0
 
 section .bss
 stdoutFd: resd 1

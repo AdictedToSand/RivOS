@@ -4,11 +4,15 @@
 pid_t latestPid = 1;
 pid_t activeProcessPid = 0;
 
+extern "C" [[gnu::noreturn]] void finalRun(void* entryPoint, void* stackTop, void* pageDirectory);
+
 [[gnu::noreturn]]
 auto Process::run(ProcessImportance iimportance) -> void {
     importance = iimportance;
 
     u32 stackPagesf = (STACK_SIZE + 4095) / 4096;
+    u32 stackPde = ((u32) STACK_BEGIN) >> 22;
+    pageDirectory[stackPde] = 0;
 
     for (u32 i = 0; i < stackPagesf; i++) {
         void* frame = PhysicalFrameAllocator::allocFrame();
@@ -16,7 +20,6 @@ auto Process::run(ProcessImportance iimportance) -> void {
         stackaddr.virt = (void*) ((u32) STACK_BEGIN - i * 4096);
         stackaddr.phys = frame;
         stackPages.pushBack(stackaddr);
-
         Mmu::mapPageIn(pageDirectory, frame, (void*) ((u32) STACK_BEGIN - i * 4096), Mmu::FLAGS_PRESENT | Mmu::FLAGS_WRITABLE);
     }
     activeProcessPid = pid;
@@ -27,10 +30,11 @@ auto Process::run(ProcessImportance iimportance) -> void {
 
     processes.pushBack(this);
 
-    Mmu::switchAddressSpace(pageDirectory);
-    finalRun(entryPoint, STACK_BEGIN);
+    Mmu::activeDirectory = pageDirectory; // bookkeeping only -- no cr3 write here anymore
+    finalRun(entryPoint, STACK_BEGIN, pageDirectory);
 }
 auto Process::exit(u8 code) -> void {
+
     //TODO: Cleanup
     if (code != 0) {
         Serial::log("Process quited with exitcode nonzero");
@@ -59,4 +63,7 @@ auto loadProcessFromFile(const char* fp, const char* procname, ProcessPriveledge
     if (!elf.isValid()) return nullptr;
     Process* proc = elf.load(procname, priv);
     return proc;
+}
+auto runProcess(Process* proc) -> void {
+    proc->run(ProcessImportance::REQ); //TODO
 }

@@ -12,6 +12,8 @@ extern "C" void enablePaging();
 extern "C" char stack_bottom[];
 extern "C" char stack_top[];
 
+#define STACK_BEGIN ((void*) 0xBFFF0000)
+
 struct Mmu {
     static constexpr u32 FLAGS_PRESENT = 0x001;
     static constexpr u32 FLAGS_WRITABLE = 0x002;
@@ -44,21 +46,28 @@ struct Mmu {
         enablePaging();
     }
 
-    static auto createAddressSpace() -> uint32_t* {
-        if (nextDirectory >= 16) {
-            kpanic("No more process address spaces: Should fix this");
-        }
-        uint32_t* dir = processDirectories[nextDirectory++];
-        for (u16 i = 0; i < 1024; i++) {
-            dir[i] = pageDirectory[i]; // inherit the kernel's current mappings
-        }
-
-        for (u32 addr = (u32) stack_bottom; addr < (u32) stack_top; addr += 0x1000) {
-            mapPageIn(dir, (void*) addr, (void*) addr, FLAGS_WRITABLE);
-        }
-
-        return dir;
+static auto createAddressSpace() -> uint32_t* {
+    if (nextDirectory >= 16) {
+        kpanic("No more process address spaces: Should fix this");
     }
+    uint32_t* dir = processDirectories[nextDirectory++];
+    for (u16 i = 0; i < 1024; i++) {
+        dir[i] = pageDirectory[i]; // inherit the kernel's current mappings
+    }
+
+    for (u32 addr = (u32) stack_bottom; addr < (u32) stack_top; addr += 0x1000) {
+        mapPageIn(dir, (void*) addr, (void*) addr, FLAGS_WRITABLE);
+    }
+
+    // Whoever calls createAddressSpace() may still be executing on their own
+    // process stack (not the boot stack) when load() later switches cr3 into
+    // this new directory mid-call. Keep that stack's PDE valid too, so the
+    // switch doesn't yank the rug out from under the currently-running code.
+    u32 stackPde = ((u32) STACK_BEGIN) >> 22;
+    dir[stackPde] = activeDirectory[stackPde];
+
+    return dir;
+}
 
     static auto switchAddressSpace(u32* dir) -> void {
         if (dir == activeDirectory) return; // no-op, also avoids a pointless TLB flush

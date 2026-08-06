@@ -31,7 +31,7 @@ struct RegisterState {
 #define STACK_SIZE (0x10000)
 #define STACK_END ((u32) STACK_BEGIN - STACK_SIZE)
 
-extern "C" [[gnu::noreturn]] void finalRun(void* pEntry, void* sStart);
+extern "C" [[gnu::noreturn]] void finalRun(void* pEntry, void* sStart, void* pagedir);
 
 enum class ProcessImportance : u8 {
     REQ,
@@ -67,3 +67,4 @@ extern Vector<Process*> processes;
 auto getNewPid() -> pid_t;
 
 auto loadProcessFromFile(const char* fp, const char* procname, ProcessPriveledgeLevel priv) -> Process*;
+auto runProcess(Process* proc) -> void;
