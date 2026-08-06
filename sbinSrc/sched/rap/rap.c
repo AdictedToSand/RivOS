@@ -17,70 +17,116 @@ RapFile parseRap(void) {
         puts("RAP was not found");
         exit(1);
     }
-    // We do not get to know the size of /krn/virt/func.rap (currently)
-    // Just reserve a shit ton
+
     char* buf = mmap(MEM_DEF_ALLOCSIZE);
 
     if (!buf) {
         puts("Allocation failed");
         exit(1);
     }
+
     memset(buf, 0, MEM_DEF_ALLOCSIZE);
     read(rapFd, buf, MEM_DEF_ALLOCSIZE);
-    logf("rivapi=%s", buf);
-     
+
     log("Read successfull, parsing RAP");
 
-    const u32 rapEntries = countOccurence(buf, '\n'); 
-    while (true) {
-        u32 i = 0;
+    const u32 rapEntries = countOccurence(buf, '\n');
+
+    ret.entriesArr.arr = mmap(rapEntries * sizeof(RapEntry));
+    ret.entriesArr.len = rapEntries;
+
+    u32 entryIndex = 0;
+
+    while (*buf) {
+        RapEntry* entry = &ret.entriesArr.arr[entryIndex];
+
         const u32 strlenOfFuncName = strlenSpecChar(buf, '(');
+
         char* funcNameBuf = mmap(strlenOfFuncName + 1);
-        memset(funcNameBuf, 0, strlenOfFuncName);
-        for (u32 i = 0; i < strlenOfFuncName; i++) {
-            funcNameBuf[i] = buf[i]; 
-        }
-        funcNameBuf[strlenOfFuncName] = 0;
+        strcpyLen(funcNameBuf, buf, strlenOfFuncName);
 
-        logf("Function=%s", funcNameBuf);
+        entry->functionName = funcNameBuf;
+        entry->paramCount = 0;
 
-        buf += strlenOfFuncName + 1; // name + openparen
+        buf += strlenOfFuncName + 1;
+
+        entry->paramArr = mmap(16 * sizeof(RapParameter));
 
         while (*buf != ')') {
-            const u32 strlenOfType = strlenSpecChar(buf, ' '); 
-            char* const typebuf = mmap(strlenOfType + 1);
-            strcpyLen(typebuf, buf, strlenOfType);
-            if (streq(typebuf, "")) break;
-            // For some reason only happens with empty variables
-            logf("\t\tParamName=%s", typebuf);
+            const u32 strlenOfType = strlenSpecChar(buf, ' ');
 
-            buf += strlenOfType + 1; // Type strlen + space
-            
+            if (strlenOfType == 0)
+                break;
+
+            RapParameter* param = &entry->paramArr[entry->paramCount++];
+
+            char* typebuf = mmap(strlenOfType + 1);
+            strcpyLen(typebuf, buf, strlenOfType);
+            param->type = typebuf;
+
+            buf += strlenOfType + 1;
+
             const u32 strlenOfVarName = strlenSpecChar(buf, ' ');
-            char* const namebuf = mmap(strlenOfVarName + 1);
+
+            char* namebuf = mmap(strlenOfVarName + 1);
             strcpyLen(namebuf, buf, strlenOfVarName);
-            logf("\t\tVarName=%s", namebuf);
-            buf += strlenOfVarName + 1; // Name strlen + space
+            param->name = namebuf;
+
+            buf += strlenOfVarName;
+
+            if (*buf == ' ')
+                buf++;
         }
-        while (*buf++ != '=') ;
+
+        while (*buf++ != '=') {}
+
         const u32 strlenOfAddr = strlenSpecChar(buf, '\n');
+
         char* sBuf = mmap(strlenOfAddr + 1);
         strcpyLen(sBuf, buf, strlenOfAddr);
-        const u32 addr = stou(sBuf);
-        logf("\t\tAddr=%u", addr);
+
+        entry->callLocation = (void*) stou(sBuf);
 
         munmap(sBuf);
-        buf += strlenSpecChar(buf, '\n') + 1;
-        if (!(*buf))
-            break;
+
+        buf += strlenOfAddr;
+
+        if (*buf == '\n')
+            buf++;
+
+        entryIndex++;
     }
 
-    logf("Parsing rap complete");
     close(rapFd);
     munmap(buf);
+
+    log("Parsing rap complete");
+
     return ret;
 }
 
 void printRap(RapFile* rap) {
+    for (u32 i = 0; i < rap->entriesArr.len; i++) {
+        RapEntry* entry = &rap->entriesArr.arr[i];
 
+        logf("Function=%s", entry->functionName);
+        logf("\t\tAddr=%u", (u32)entry->callLocation);
+
+        for (u32 j = 0; j < entry->paramCount; j++) {
+            RapParameter* param = &entry->paramArr[j];
+
+            logf("\t\tParam=%s %s", param->type, param->name);
+        }
+    }
+}
+
+//TODO: Proper parameter checking
+void* getRapAddr(RapFile* rap, const char* func) {
+    for (u32 i = 0; i < rap->entriesArr.len; i++) {
+        if (streq(rap->entriesArr.arr[i].functionName, func)) {
+            return rap->entriesArr.arr[i].callLocation;
+        }
+    }
+
+    return NULL;
 }

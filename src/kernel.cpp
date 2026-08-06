@@ -10,6 +10,7 @@
 #include <sys/GDT/gdt.hpp>
 #include <sys/PIC/pic.hpp>
 #include <sys/PIT/pit.hpp>
+#include <sys/sysmod.hpp>
 
 #include <mem/page.hpp>
 #include <mem/alloc.hpp>
@@ -96,6 +97,7 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
     PIT::init(1000);
 
     Mmu::init();
+    SysModuleHandler::init();
 
     {
         u32 start = Visuals::getFbPhysAddr() & ~0xFFF;

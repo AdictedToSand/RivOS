@@ -1,4 +1,8 @@
-all: grub
+all: 
+	mkdir -p isodir/boot
+	mkdir build
+	make rivboot
+
 
 prepare_disk:
 	dd if=/dev/zero of=build/disk.img bs=1M count=64

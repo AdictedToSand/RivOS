@@ -72,6 +72,7 @@ extern "C" auto syscallHandler(SyscInterruptFrame* ifrm) -> void {
             break;
         }
         case SyscallNumbers::Mmap: {
+            //TODO: Replace with pageAlloc()
             ifrm->eax = (u32) KernelAllocator::alloc(ifrm->edi);
             break;
         } 
