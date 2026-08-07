@@ -1,8 +1,6 @@
 #pragma once
 #include <terminal/font.hpp>
 
-#include <gen/serial.hpp>
-
 #include <cstring.hpp>
 
 #include <stddef.h>

@@ -89,6 +89,7 @@ public:
     }
     auto load(const char* const pname, const ProcessPriveledgeLevel priveledge) -> Process* {
         Process* proc = new (KernelAllocator::alloc(sizeof(Process))) Process();
+        proc->state = (RegisterState*) KernelAllocator::alloc(sizeof(RegisterState));
         proc->srcFp = fp;
         proc->pid = getNewPid();
         proc->pname = pname;
@@ -104,7 +105,6 @@ public:
             ProgramHeader* ph = (ProgramHeader*) ((u8*) phdrs + i * hdr->programHeaderEntrySize);
 
             if (ph->segmentKind == ProgramHeader::SEGMENTTYPE_LOAD) {
-                Serial::logf("Segment %u: vaddr=0x%x memsz=0x%x", i, ph->virtualAddrStart, ph->memSize);
                 const u32 vaddrBase = ph->virtualAddrStart & ~0xFFF;
                 const u32 vaddrEnd = (ph->virtualAddrStart + ph->memSize + 4095) & ~0xFFF;
                 const u32 pageCount = (vaddrEnd - vaddrBase) / 4096;
@@ -120,12 +120,13 @@ public:
                     Mmu::mapPageIn(proc->pageDirectory, frame, (void*) (vaddrBase + j * 4096),
                         Mmu::FLAGS_PRESENT | Mmu::FLAGS_WRITABLE);
                 }
-                Serial::logf("Segment %u mapped, switching to write contents", i);
+                asm volatile("CLI");
                 u32* const callerDirectory = Mmu::activeDirectory;
                 Mmu::switchAddressSpace(proc->pageDirectory);
                 memcpy(dest, base + ph->contentsOffset, ph->segmentFilesize);
                 memset(dest + ph->segmentFilesize, 0, ph->memSize - ph->segmentFilesize);
                 Mmu::switchAddressSpace(callerDirectory);
+                asm volatile ("STI");
             }
             else {
                 continue;

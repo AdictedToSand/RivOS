@@ -99,6 +99,7 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
     PIC::init();
 
     PIT::init(1000);
+    Serial::log("PIT initalized");
 
     Mmu::init();
     for (u32 addr = (u32) heapStart & ~0xFFF; addr < (u32) heapEnd; addr += 4096) {
@@ -120,7 +121,6 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
     if (!scheduler.isValid()) { kpanic("Scheduler was not a valid ELF"); }
     Process* proc = scheduler.load("RivOS_Sched", ProcessPriveledgeLevel::Kernel);
     if (!proc) { kpanic("Unable to load ELF"); }
-    Terminal::printf("ProcessName: %s, Pid: %u, srcFp: %s\n", proc->pname, proc->pid, proc->srcFp.toCStr());
     proc->run(ProcessImportance::REQ);
 
     kpanic("End of kernel reached");

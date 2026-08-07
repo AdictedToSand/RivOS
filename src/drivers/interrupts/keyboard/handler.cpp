@@ -51,6 +51,7 @@ struct {
 } keyboardState;
 
 // Genuinely what the fuck is up with PS/2
+// TODO: Shift & Capslock stopped working
 extern "C" auto keyboardHandler() -> void {
     scInit();
 

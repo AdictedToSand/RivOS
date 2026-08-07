@@ -57,7 +57,7 @@ typedef struct Process {
     ProcessPriveledgeLevel priveledge;
     VEC(PhysToVirt) pages;
     VEC(PhysToVirt) stackPages;
-    RegisterState state;
+    RegisterState* state;
     void* entryPoint;
     ProcessImportance importance;
     u32* pageDirectory;
@@ -65,6 +65,8 @@ typedef struct Process {
 
 u64 ticks = 0;
 void pitHandler(void) {
+    if (ticks % 100 == 0)
+        logf("PIT CALLED");
     ticks++;
 }
 
@@ -82,7 +84,7 @@ void perPixel(u32 (*calc)(u32 x, u32 y), PutPixelT putPixel, u32 screenWidth, u3
 }
 
 u32 calcPixel(u32 x, u32 y) {
-   u32 colorx = y > 0 ? x % y : 0;
+    u32 colorx = y > 0 ? x % y : 0;
     u32 colory = x > 0 ? y % x : 0;
     return colorx ^ colory;
 }
@@ -95,26 +97,13 @@ void _start() {
         exit(1);
     };
     setFunc("PIT", pitHandler);
-    if (claim("Framebuffer") != 0) {
-        puts("Could not claim Framebuffer");
-        exit(1);
-    }          
     rap = parseRap();
 
-    PutPixelT putPixel = getRapAddr(&rap, "putPixel");
-    if (!putPixel) exit(1);
-    u32 (*getScreenWidth)(void) = getRapAddr(&rap, "getScreenWidth");
-    u32 (*getScreenHeight)(void) = getRapAddr(&rap, "getScreenHeight");
     LoadProcessT loadProcess = getRapAddr(&rap, "loadProcess");
     void (*runProcess)(const Process* proc) = getRapAddr(&rap, "runProcess");
 
     const Process* const de = loadProcess("/krn/bin/de", "DesktopEnviroment", PROC_PRIV_LVL_Kernel);
 
-    const u32 screenWidth = getScreenWidth();
-    const u32 screenHeight = getScreenHeight();
-
-    perPixel(calcPixel, putPixel, screenWidth, screenHeight);
     runProcess(de);
-
     for (;;) ;
 }

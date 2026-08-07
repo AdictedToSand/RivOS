@@ -80,9 +80,3 @@ filesize:
     MOV eax, 10
     INT 0x80
     RET
-
-section .rodata
-
-conts: db "Hello, world!", 10, 0
-contsLen equ $ - conts
-fp: db "/dev/stdout", 0

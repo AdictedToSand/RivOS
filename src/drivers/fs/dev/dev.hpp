@@ -71,8 +71,6 @@ struct StdLogSubDriver : DevSubDriver {
         Str s = conts;
         *(char*) (&s[len]) = 0;
 
-        Serial::log(s.toCStr());
-
         return FileSystemDriver::SuccessCodes::Sucess;
     }
     auto init() -> void override {}

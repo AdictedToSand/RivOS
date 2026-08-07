@@ -1,6 +1,8 @@
 #pragma once
 #include <stddef.h>
 
+#include <terminal/terminal.hpp>
+
 extern "C" char heapStart[];
 extern "C" char heapEnd[];
 
@@ -49,6 +51,7 @@ struct KernelAllocator {
             currentBlock = currentBlock->next;
         }
 
+        Terminal::printf("HeapAllocator out of memory");
         return nullptr;
     }
 

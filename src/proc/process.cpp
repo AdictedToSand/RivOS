@@ -1,5 +1,7 @@
-#include "proc/ELF/loader.hpp"
+#include <proc/ELF/loader.hpp>
 #include <proc/process.hpp>
+
+#include <gen/serial.hpp>
 
 pid_t latestPid = 1;
 pid_t activeProcessPid = 0;
@@ -8,6 +10,8 @@ extern "C" [[gnu::noreturn]] void finalRun(void* entryPoint, void* stackTop, voi
 
 [[gnu::noreturn]]
 auto Process::run(ProcessImportance iimportance) -> void {
+    asm volatile ("CLI");
+    Serial::logf("Process %s Ran as pid: %u", pname, pid);
     importance = iimportance;
 
     u32 stackPagesf = (STACK_SIZE + 4095) / 4096;
@@ -24,13 +28,9 @@ auto Process::run(ProcessImportance iimportance) -> void {
     }
     activeProcessPid = pid;
 
-    for (auto& p : pages) {
-        Serial::logf("Phys=0x%x,Virt=0x%x", p.phys, p.virt); 
-    }
-
     processes.pushBack(this);
 
-    Mmu::activeDirectory = pageDirectory; // bookkeeping only -- no cr3 write here anymore
+    Mmu::activeDirectory = pageDirectory;
     finalRun(entryPoint, STACK_BEGIN, pageDirectory);
 }
 auto Process::exit(u8 code) -> void {

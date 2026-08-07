@@ -1,6 +1,8 @@
-#include "gen/serial.hpp"
+#include <proc/process.hpp>
+
 #include <sys/IDT/idt.hpp>
 
+#include <gen/serial.hpp>
 #include <gen/reboot.hpp>
 
 static inline auto vectorToExceptionName(uint32_t vector) -> const char* {
@@ -137,7 +139,11 @@ The fault is of type: %s
         case InterruptTypes::Regular: handleRegular(); break;
         case InterruptTypes::Trap: handleTrap(); break;
     }
-    kpanic("An unhandled IDT interrupt fired.");
+    if (!activeProcessPid)
+        kpanic("An unhandled IDT interrupt fired.");
+    else {
+        kpanic("an unhandled IDT interrupt fired in a user process");
+    }
 
     for (;;) ;
 }

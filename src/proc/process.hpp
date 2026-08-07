@@ -50,7 +50,7 @@ struct Process {
     ProcessPriveledgeLevel priveledge;
     Vector<PhysToVirt> pages;
     Vector<PhysToVirt> stackPages;
-    RegisterState state;
+    RegisterState* state;
     void* entryPoint;
     ProcessImportance importance;
     u32* pageDirectory;

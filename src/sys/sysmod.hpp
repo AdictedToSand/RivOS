@@ -46,8 +46,10 @@ private:
         SysModule module;
         pid_t owner;
         void (*func)();
+        u32* ownerDir;
 
         Entry(SysModule m) {
+            ownerDir = nullptr;
             module = m;
             owner = 0;
             func = nullptr;
@@ -119,7 +121,6 @@ public:
 
     static auto setFunc(const char* mod, void (*func)()) -> u8 {
         SysModuleId modId = toSysMId(mod);
-
         if (modId == SysModuleId::Unknown)
             return 1;
 
@@ -130,8 +131,8 @@ public:
 
         if (entry->owner != activeProcessPid)
             return 1;
-
         entry->func = func;
+        entry->ownerDir = Mmu::activeDirectory;
 
         return 0;
     }
@@ -143,6 +144,11 @@ public:
             return doNothing;
 
         return entry->func;
+    }
+    static auto getFuncEntry(SysModuleId id) -> Entry* {
+        Entry* entry = find(id);
+        if (!entry || !entry->func) return nullptr;
+        return entry;
     }
 
     static auto getowner(SysModuleId id) -> pid_t {
