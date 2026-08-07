@@ -32,9 +32,6 @@ void vectorInit(Vector* vec, u32 typesize) {
     vec->size = 0;
 }
 void vectorPushBack(Vector* vec, void* elem) {
-    logf("vec=%x arr=%x size=%u capac=%u typesize=%u\n",
-        vec, vec->arr, vec->size, vec->capac, vec->typesize);
-
     if (vec->size >= vec->capac) {
         const u32 newCapac = vec->capac * 2;
 
@@ -86,6 +83,15 @@ StringView svFromLitLen(const char* lit, u32 len) {
         .len = len,
         .conts = lit,
     };
+}
+bool svEq(StringView sv1, StringView sv2) {
+    if (sv1.len != sv2.len) return false;
+
+    for (u32 i = 0; i < sv1.len; i++) {
+        if (sv1.conts[i] != sv2.conts[i]) return false;
+    }
+
+    return true;
 }
 
 #define SV_ASLIT(sv, name, code) \
@@ -317,7 +323,7 @@ void printExpr(Expr* expr, u32 indent) {
             printf("LIST\n");
 
             for (u32 i = 0; i < expr->list.items.size; i++) {
-                Expr* child = *(Expr**)vectorAt(&expr->list.items, i);
+                Expr* child = *(Expr**) vectorAt(&expr->list.items, i);
                 printExpr(child, indent + 1);
             }
 
@@ -326,19 +332,254 @@ void printExpr(Expr* expr, u32 indent) {
     }
 }
 
+typedef enum ValueType {
+    VAL_NONE,
+    VAL_INT,
+    VAL_STRING
+} ValueType;
+
+typedef struct Value {
+    ValueType type;
+
+    union {
+        int intVal;
+        StringView strVal;
+    };
+} Value;
+
+typedef struct VariableMapEntry {
+    StringView name;
+    Value val;
+} VariableMapEntry;
+
+typedef struct Enviroment {
+    Vector variableMap;
+} Enviroment;
+
+void enviromentInit(Enviroment* env) {
+    vectorInit(&env->variableMap, sizeof(VariableMapEntry));
+}
+void createVariable(Enviroment* env, StringView name, Value init) {
+    // Check if variable already exists
+    for (u32 i = 0; i < env->variableMap.size; i++) {
+        VariableMapEntry* entry = vectorAt(&env->variableMap, i);
+    
+        if (svEq(entry->name, name)) {
+            return; 
+        }
+    }
+    VariableMapEntry* mentry = mmap(sizeof(VariableMapEntry));
+    mentry->val = init;
+    mentry->name = name;
+    vectorPushBack(&env->variableMap, mentry);
+}
+void setVariable(Enviroment* env, StringView name, Value init) {
+    u32 i;
+    for (i = 0; i < env->variableMap.size; i++) {
+        VariableMapEntry* entry = vectorAt(&env->variableMap, i);
+
+        if (svEq(name, entry->name)) {
+            break;
+        }
+
+        if (i == env->variableMap.size - 1) {
+            i = -1;
+            break;
+        }
+    }
+
+    if (i == -1) {
+        printf("Undefined variable: %s\n", name);
+        for (;;) ;
+    }
+
+    VariableMapEntry* entry = vectorAt(&env->variableMap, i);
+    entry->val = init;
+}
+Value getVariable(Enviroment* env, StringView name) {
+    for (u32 i = 0; i < env->variableMap.size; i++) {
+        VariableMapEntry* entry = vectorAt(&env->variableMap, i); 
+
+        if (svEq(entry->name, name))
+            return entry->val;
+    }
+
+    SV_ASLIT(name, conts, {
+        printf("Undefined variable: %s\n", conts);
+    });
+    for (;;) ;
+}
+
+Enviroment globalScope;
+
+Value makeInt(int x) {
+    return (Value) {
+        .type = VAL_INT,
+        .intVal = x
+    };
+}
+
+Value makeString(StringView str) {
+    return (Value) {
+        .type = VAL_STRING,
+        .strVal = str
+    };
+}
+
+Value execExpr(Expr* expr);
+
+extern u32 screenWidth;
+extern u32 screenHeight;
+
+extern void (*putPixel)(u32 argb, u32 x, u32 y);
+
+Value execList(Expr* expr) {
+    Expr* first = *(Expr**) vectorAt(&expr->list.items, 0);
+
+    if (first->type != EXPR_SYMBOL) {
+        puts("First item is not callable\n");
+        for (;;);
+    }
+
+    SV_ASLIT(first->symbol, name, {
+
+        if (streq(name, "+") || streq(name, "-") || streq(name, "*") || streq(name, "/") || streq(name, "%")) {
+            Expr* a = *(Expr**) vectorAt(&expr->list.items, 1);
+            Expr* b = *(Expr**) vectorAt(&expr->list.items, 2);
+
+            Value va = execExpr(a);
+            Value vb = execExpr(b);
+            if (streq(name, "+"))
+                return makeInt(va.intVal + vb.intVal);
+            else if (streq(name, "-")) 
+                return makeInt(va.intVal - vb.intVal);
+            else if (streq(name, "*")) 
+                return makeInt(va.intVal * vb.intVal);
+            else if (streq(name, "/")) {
+                if (vb.intVal == 0) return makeInt(0);
+                return makeInt(va.intVal / vb.intVal);
+            }
+            else if (streq(name, "%")) {
+                if (vb.intVal == 0) return makeInt(0);
+                return makeInt(va.intVal % vb.intVal);
+            }
+        }
+        else if (streq(name, "var")) {
+            Expr* symb = *(Expr**) vectorAt(&expr->list.items, 1);
+            Expr* initExpr = *(Expr**) vectorAt(&expr->list.items, 2);
+
+            if (symb->type != EXPR_SYMBOL) {
+                puts("Usage: (var <name> <init>)");
+            }
+
+            Value init = execExpr(initExpr);
+
+            createVariable(&globalScope, symb->symbol, init);
+
+            return (Value) {
+                .type = VAL_NONE
+            };
+        }
+        else if (streq(name, "set")) {
+            Expr* symb = *(Expr**) vectorAt(&expr->list.items, 1);
+            Expr* initExpr = *(Expr**) vectorAt(&expr->list.items, 2);
+
+            if (symb->type != EXPR_SYMBOL) {
+                puts("Usage: (var <name> <init>)");
+            }
+
+            Value init = execExpr(initExpr);
+
+            setVariable(&globalScope, symb->symbol, init);
+
+            return (Value) {
+                .type = VAL_NONE
+            };
+        }
+        else if (streq(name, "fragment")) {
+            Expr* returnValue = *(Expr**) vectorAt(&expr->list.items, 1);      
+
+            for (u32 x = 0; x < screenWidth; x++) {
+                for (u32 y = 0; y < screenHeight; y++) {
+                    setVariable(&globalScope, svFromLit("x"), makeInt(x));
+                    setVariable(&globalScope, svFromLit("y"), makeInt(y));
+
+                    Value argb = execExpr(returnValue);
+                    /*if (argb.type != VAL_INT) {
+                        printf("Invalid usage of a fragment shader"); 
+                        for (;;) ;
+                    }*/
+                    putPixel(argb.intVal, x, y);
+                }
+            }
+
+            return (Value) {
+                .type = VAL_NONE
+            };
+        }
+
+        else if (streq(name, "print")) {
+            Expr* arg = *(Expr**) vectorAt(&expr->list.items, 1);
+
+            Value val = execExpr(arg);
+
+            if (val.type == VAL_STRING) {
+                SV_ASLIT(val.strVal, str, {
+                    printf("%s\n", str);
+                });
+            }
+
+            if (val.type == VAL_INT) {
+                printf("%u\n", val.intVal);
+            }
+
+            return (Value) {
+                .type = VAL_NONE
+            };
+        }
+
+        printf("Unknown function: %s\n", name);
+        for (;;);
+    });
+
+    return (Value) {0};
+}
+Value execIdent(Expr* expr) {
+    return getVariable(&globalScope, expr->symbol);
+}
+
+Value execExpr(Expr* expr) {
+    switch (expr->type) {
+
+        case EXPR_INT:
+            return makeInt(expr->intVal);
+
+        case EXPR_STRING:
+            return makeString(expr->strVal);
+
+        case EXPR_SYMBOL:
+            return execIdent(expr);
+
+        case EXPR_LIST:
+            return execList(expr);
+    }
+
+    return (Value) {0};
+}
+
 void lispRun(const char* code) {
     VEC(Token, tokens);
 
     tokenize(code, &tokens); 
-    printTs(&tokens);
 
-    printf("Token count: %u\n", tokens.size);
+    enviromentInit(&globalScope);
+    createVariable(&globalScope, svFromLit("x"), makeInt(0));
+    createVariable(&globalScope, svFromLit("y"), makeInt(0));
 
     u32 pos = 0;
     while (pos < tokens.size) {
         Expr* expr = parseExpr(&tokens, &pos);
-
-        printExpr(expr, 0);
+        Value result = execExpr(expr);
     }
 
     vectorFree(&tokens);

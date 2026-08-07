@@ -10,6 +10,7 @@
 
 #include <gen/vec.hpp>
 #include <gen/map.hpp>
+#include <gen/serial.hpp>
 
 #include <cstring.hpp>
 #include <str.hpp>
@@ -138,7 +139,7 @@ public:
         size_t lastFolderNestage = 0;
         size_t lastMpLen = 0;
         
-        if (fp[0] != '/') return 0;
+        if (fp[0] != '/') { Serial::logf("Invalid path: %s", fp); return 0; }
 
         size_t i;
         for (i = 0; i < mountpoints.size(); i++) {
@@ -147,7 +148,10 @@ public:
 
             if (i == mountpoints.size() - 1) i = -1;
         }
-        if (i == (size_t) -1) return 0;
+        if (i == (size_t) -1) { 
+            Serial::logf("Mountpoint not founnd");
+            return 0;
+        }
 
         for (i = 0; i < mountpoints.size(); i++) {
             auto mp = mountpoints[i];
@@ -165,6 +169,9 @@ public:
             fdMapping[currentFd] = added;
         else 
             fdMapping.insert(currentFd, added);
+        if (!added.f.exists) {
+            Serial::logf("File didn't exist");
+        }
 
         return added.f.exists ? currentFd : 0;
     }

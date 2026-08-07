@@ -29,6 +29,10 @@ struct KernelAllocator {
 
         while (true) {
             if (!currentBlock->inUse && currentBlock->size >= bytes) {
+                if (currentBlock->size > bytes) {
+                    // TODO: make another HeapBlock here instead of using the whole space
+                }
+
                 currentBlock->inUse = true;
                 return currentBlock + 1;
             }

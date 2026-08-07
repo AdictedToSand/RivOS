@@ -101,7 +101,7 @@ void _start() {
 
     LoadProcessT loadProcess = getRapAddr(&rap, "loadProcess");
     void (*runProcess)(const Process* proc) = getRapAddr(&rap, "runProcess");
-
+        
     const Process* const de = loadProcess("/krn/bin/de", "DesktopEnviroment", PROC_PRIV_LVL_Kernel);
 
     runProcess(de);

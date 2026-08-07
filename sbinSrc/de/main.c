@@ -5,7 +5,14 @@
 
 #include "lisp/lisp.h"
 
+#include "mem/utils.h"
+
 RapFile rap;
+
+u32 screenWidth;
+u32 screenHeight;
+
+void (*putPixel)(u32 argb, u32 x, u32 y);
 
 void _start() {
     sysInit();
@@ -13,9 +20,11 @@ void _start() {
     claim("Framebuffer");
     rap = parseRap();
 
-    void (*putPixel)(u32 argb, u32 x, u32 y) = getRapAddr(&rap, "putPixel");
+    putPixel = getRapAddr(&rap, "putPixel");
     u32 (*getScreenWidth)(void) = getRapAddr(&rap, "getScreenWidth");
     u32 (*getScreenHeight)(void) = getRapAddr(&rap, "getScreenHeight");
+
+    screenHeight = getScreenHeight(), screenWidth = getScreenWidth();
 
     for (u32 x = 0; x < getScreenWidth(); x++) {
         for (u32 y = 0; y < getScreenHeight(); y++) {
@@ -24,9 +33,18 @@ void _start() {
             putPixel(colorx ^ colory, x, y);
         }
     }
+    fd_t shaderSrc = open("/krn/de/shder.lsp");
+    if (!shaderSrc) {
+        exit(1);
+    }
+    #define DEF_FILESIZE 100
+    char* buf = mmap(DEF_FILESIZE);
+    memset(buf, 0, DEF_FILESIZE);
+    read(shaderSrc, buf, DEF_FILESIZE);
+    printf("Src='%s'", buf);
+    lispRun(buf);
+    close(shaderSrc);
 
-    lispRun("(defun foo (x)\n"
-    "(print \"Hello world\"))");
-
+    munmap(buf);
     for (;;) ;
 }

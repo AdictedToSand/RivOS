@@ -2,6 +2,8 @@
 
 #include <terminal/terminal.hpp>
 
+#include <gen/serial.hpp>
+
 #include <int.h>
 
 #include <sys/sysmod.hpp>
