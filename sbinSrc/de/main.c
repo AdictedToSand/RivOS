@@ -25,9 +25,8 @@ void _start() {
         }
     }
 
-    lispRun("(+ 145 2)\n"
-    "(print \"Hello world\")");
-    //"(print \"Hello, world!\")\n");
+    lispRun("(defun foo (x)\n"
+    "(print \"Hello world\"))");
 
     for (;;) ;
 }

@@ -54,6 +54,11 @@ void vectorPushBack(Vector* vec, void* elem) {
      vec->size++;
 }
 void* vectorAt(Vector* vec, u32 ind) {
+    if (ind >= vec->size) {
+        printf("Vector OOB: index=%u size=%u\n", ind, vec->size);
+        for (;;);
+    }
+
     return (char*) vec->arr + (ind * vec->typesize);
 }
 
@@ -104,8 +109,6 @@ typedef struct Token {
         TT_STRLIT,
 
         TT_IDENT,
-
-        TT_BINOP,
     } type;
 } Token;
 
@@ -117,7 +120,8 @@ Token makeToken(StringView conts, u8 type) {
 } 
 
 bool isIdent(char c) {
-    return isAlpha(c) || isdigit(c) || c == '_' || c == '-';
+    return isAlpha(c) || isdigit(c) || c == '_' || c == '-' ||
+        c == '+' || c == '*' || c == '/' || c == '%';;
 }
 
 void tokenize(const char* src, Vector* tokenOutbuf) {
@@ -126,12 +130,6 @@ void tokenize(const char* src, Vector* tokenOutbuf) {
         if (isSkippable(*src))
             continue;
         switch (*src) {
-            case '+': case '-': case '*': case '/': case '%':  {
-                Token* tok = mmap(sizeof(Token));
-                *tok = makeToken(svFromLitLen(src, 1), TT_BINOP);
-                vectorPushBack(tokenOutbuf, tok);
-                break;
-            }
             case '(': {
                 Token* tok = mmap(sizeof(Token));
                 *tok = makeToken(svFromLitLen("(", 1), TT_OPENPAREN);
@@ -169,7 +167,7 @@ void tokenize(const char* src, Vector* tokenOutbuf) {
                     while (isIdent(src[i++])) ;
                     Token* tok = mmap(sizeof(Token));
                     *tok = makeToken(svFromLitLen(src, i-1), TT_IDENT);
-                    src += i-1;
+                    src += i-2;
                     vectorPushBack(tokenOutbuf, tok);
                     break;
                 }
@@ -185,7 +183,6 @@ const char* tokenNames[] = {
     "INTLIT",
     "STRLIT",
     "IDENT",
-    "BINOP"
 };
 
 void printTok(Token* t) {
@@ -202,10 +199,147 @@ void printTs(Vector* ts) {
     }
 }
 
+
+typedef enum ExprType {
+    EXPR_INT,
+    EXPR_STRING,
+    EXPR_SYMBOL,
+    EXPR_LIST
+} ExprType;
+
+typedef struct Expr {
+    ExprType type;
+
+    union {
+        int intVal;
+        StringView strVal;
+        StringView symbol;
+
+        struct {
+            Vector items;
+        } list;
+    };
+} Expr;
+
+Expr* newExpr(ExprType t) {
+    Expr* const ret = mmap(sizeof(Expr));
+    ret->type = t;
+    return ret;
+} 
+
+Expr* parseExpr(Vector* tokens, u32* pos);
+Expr* parseList(Vector* tokens, u32* pos) {
+    (*pos)++; // skip '('
+
+    Expr* list = newExpr(EXPR_LIST);
+    vectorInit(&list->list.items, sizeof(Expr*));
+
+    while (1) {
+        Token* tok = vectorAt(tokens, *pos);
+
+        if (tok->type == TT_CLOSEPAREN) {
+            (*pos)++; // skip ')'
+            break;
+        }
+
+        Expr* child = parseExpr(tokens, pos);
+        vectorPushBack(&list->list.items, &child);
+    }
+
+    return list;
+}
+
+Expr* parseExpr(Vector* tokens, u32* pos) {
+    Token* tok = vectorAt(tokens, *pos);
+
+    switch (tok->type) {
+        case TT_INTLIT: {
+            (*pos)++;
+
+            Expr* expr = newExpr(EXPR_INT);
+            SV_ASLIT(tok->conts, conts, {
+                expr->intVal = stoi(conts);
+            })
+
+            return expr;
+        }
+        case TT_STRLIT: {
+            (*pos)++;
+
+            Expr* expr = newExpr(EXPR_STRING);
+            expr->strVal = tok->conts;
+
+            return expr;
+        }
+        case TT_IDENT: {
+            (*pos)++;
+
+            Expr* expr = newExpr(EXPR_SYMBOL);
+            expr->symbol = tok->conts;
+
+            return expr;
+        }
+        case TT_OPENPAREN: {
+            return parseList(tokens, pos);
+        }
+        default: {
+            puts("Unknown symbol\n");
+            printTok(tok);
+            for (;;) ;
+        }
+    }
+
+    return NULL;
+}
+
+void printExpr(Expr* expr, u32 indent) {
+    for (u32 i = 0; i < indent; i++)
+        printf("  ");
+
+    switch (expr->type) {
+        case EXPR_INT:
+            printf("INT: %u\n", expr->intVal);
+            break;
+
+        case EXPR_STRING: {
+            SV_ASLIT(expr->strVal, str, {
+                printf("STRING: \"%s\"\n", str);
+            });
+            break;
+        }
+        case EXPR_SYMBOL: {
+            SV_ASLIT(expr->symbol, sym, {
+                printf("SYMBOL: %s\n", sym);
+            });
+            break;
+        }
+        case EXPR_LIST: {
+            printf("LIST\n");
+
+            for (u32 i = 0; i < expr->list.items.size; i++) {
+                Expr* child = *(Expr**)vectorAt(&expr->list.items, i);
+                printExpr(child, indent + 1);
+            }
+
+            break;
+        }
+    }
+}
+
 void lispRun(const char* code) {
     VEC(Token, tokens);
 
     tokenize(code, &tokens); 
     printTs(&tokens);
+
+    printf("Token count: %u\n", tokens.size);
+
+    u32 pos = 0;
+    while (pos < tokens.size) {
+        Expr* expr = parseExpr(&tokens, &pos);
+
+        printExpr(expr, 0);
+    }
+
     vectorFree(&tokens);
 }
