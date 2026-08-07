@@ -1,1 +1,2 @@
-(fragment x)
+(fragment
+  (^ (% x y) (% y x)))

@@ -26,13 +26,6 @@ void _start() {
 
     screenHeight = getScreenHeight(), screenWidth = getScreenWidth();
 
-    for (u32 x = 0; x < getScreenWidth(); x++) {
-        for (u32 y = 0; y < getScreenHeight(); y++) {
-            const u32 colorx = y > 0 ? x % y : 0;
-            const u32 colory = x > 0 ? y % x : 0;
-            putPixel(colorx ^ colory, x, y);
-        }
-    }
     fd_t shaderSrc = open("/krn/de/shder.lsp");
     if (!shaderSrc) {
         exit(1);

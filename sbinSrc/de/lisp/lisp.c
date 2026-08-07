@@ -93,6 +93,13 @@ bool svEq(StringView sv1, StringView sv2) {
 
     return true;
 }
+bool svEqLit(StringView sv, const char* cstr) {
+    for (u32 i = 0; i < sv.len; i++) {
+        if (sv.conts[i] != cstr[i]) return false;
+    }
+
+    return true;
+}
 
 #define SV_ASLIT(sv, name, code) \
     char* name = mmap(sv.len + 1); \
@@ -127,7 +134,7 @@ Token makeToken(StringView conts, u8 type) {
 
 bool isIdent(char c) {
     return isAlpha(c) || isdigit(c) || c == '_' || c == '-' ||
-        c == '+' || c == '*' || c == '/' || c == '%';;
+        c == '+' || c == '*' || c == '/' || c == '%' || c == '^' || c == '&' || c == '|' || c == '~';
 }
 
 void tokenize(const char* src, Vector* tokenOutbuf) {
@@ -433,6 +440,30 @@ extern u32 screenHeight;
 
 extern void (*putPixel)(u32 argb, u32 x, u32 y);
 
+float fabs(float x) {
+    return x < 0 ? -x : x;
+}
+
+int sinInt(int x) {
+    const int PI = 3141;
+    const int TWO_PI = 6283;
+
+    // wrap angle to [-pi, pi]
+    while (x > PI)
+        x -= TWO_PI;
+
+    while (x < -PI)
+        x += TWO_PI;
+
+    // parabolic approximation
+    int y = x * (1000 - (x < 0 ? -x : x) * 1000 / PI) / 1000;
+
+    // correction
+    y = (225 * (y * (y < 0 ? -y : y) / 1000 - y) / 1000) + y;
+
+    return y;
+}
+
 Value execList(Expr* expr) {
     Expr* first = *(Expr**) vectorAt(&expr->list.items, 0);
 
@@ -441,106 +472,125 @@ Value execList(Expr* expr) {
         for (;;);
     }
 
-    SV_ASLIT(first->symbol, name, {
+    const StringView name = first->symbol;
 
-        if (streq(name, "+") || streq(name, "-") || streq(name, "*") || streq(name, "/") || streq(name, "%")) {
-            Expr* a = *(Expr**) vectorAt(&expr->list.items, 1);
-            Expr* b = *(Expr**) vectorAt(&expr->list.items, 2);
+    if (svEqLit(name, "+") || svEqLit(name, "-") || svEqLit(name, "*") || svEqLit(name, "/") || svEqLit(name, "%")
+        || svEqLit(name, "^") || svEqLit(name, "&") || svEqLit(name, "|") || svEqLit(name, "~")) {
+        Expr* a = *(Expr**) vectorAt(&expr->list.items, 1);
+        Expr* b = *(Expr**) vectorAt(&expr->list.items, 2);
 
-            Value va = execExpr(a);
-            Value vb = execExpr(b);
-            if (streq(name, "+"))
-                return makeInt(va.intVal + vb.intVal);
-            else if (streq(name, "-")) 
-                return makeInt(va.intVal - vb.intVal);
-            else if (streq(name, "*")) 
-                return makeInt(va.intVal * vb.intVal);
-            else if (streq(name, "/")) {
-                if (vb.intVal == 0) return makeInt(0);
-                return makeInt(va.intVal / vb.intVal);
-            }
-            else if (streq(name, "%")) {
-                if (vb.intVal == 0) return makeInt(0);
-                return makeInt(va.intVal % vb.intVal);
-            }
+        Value va = execExpr(a);
+        Value vb = execExpr(b);
+        if (svEqLit(name, "+"))
+            return makeInt(va.intVal + vb.intVal);
+        else if (svEqLit(name, "-")) 
+            return makeInt(va.intVal - vb.intVal);
+        else if (svEqLit(name, "*")) 
+            return makeInt(va.intVal * vb.intVal);
+        else if (svEqLit(name, "/")) {
+            if (vb.intVal == 0) return makeInt(0);
+            return makeInt(va.intVal / vb.intVal);
         }
-        else if (streq(name, "var")) {
-            Expr* symb = *(Expr**) vectorAt(&expr->list.items, 1);
-            Expr* initExpr = *(Expr**) vectorAt(&expr->list.items, 2);
-
-            if (symb->type != EXPR_SYMBOL) {
-                puts("Usage: (var <name> <init>)");
-            }
-
-            Value init = execExpr(initExpr);
-
-            createVariable(&globalScope, symb->symbol, init);
-
-            return (Value) {
-                .type = VAL_NONE
-            };
+        else if (svEqLit(name, "%")) {
+            if (vb.intVal == 0) return makeInt(0);
+            return makeInt(va.intVal % vb.intVal);
         }
-        else if (streq(name, "set")) {
-            Expr* symb = *(Expr**) vectorAt(&expr->list.items, 1);
-            Expr* initExpr = *(Expr**) vectorAt(&expr->list.items, 2);
-
-            if (symb->type != EXPR_SYMBOL) {
-                puts("Usage: (var <name> <init>)");
-            }
-
-            Value init = execExpr(initExpr);
-
-            setVariable(&globalScope, symb->symbol, init);
-
-            return (Value) {
-                .type = VAL_NONE
-            };
+        else if (svEqLit(name, "^")) {
+            return makeInt(va.intVal ^ vb.intVal);
         }
-        else if (streq(name, "fragment")) {
-            Expr* returnValue = *(Expr**) vectorAt(&expr->list.items, 1);      
+        else if (svEqLit(name, "&")) {
+            return makeInt(va.intVal & vb.intVal);
+        }
+        else if (svEqLit(name, "|")) {
+            return makeInt(va.intVal | vb.intVal);
+        }
+        else if (svEqLit(name, "~")) {
+            return makeInt(~va.intVal);
+        }
+    }
+    else if (svEqLit(name, "var")) {
+        Expr* symb = *(Expr**) vectorAt(&expr->list.items, 1);
+        Expr* initExpr = *(Expr**) vectorAt(&expr->list.items, 2);
 
-            for (u32 x = 0; x < screenWidth; x++) {
-                for (u32 y = 0; y < screenHeight; y++) {
-                    setVariable(&globalScope, svFromLit("x"), makeInt(x));
-                    setVariable(&globalScope, svFromLit("y"), makeInt(y));
+        if (symb->type != EXPR_SYMBOL) {
+            puts("Usage: (var <name> <init>)");
+        }
 
-                    Value argb = execExpr(returnValue);
-                    /*if (argb.type != VAL_INT) {
-                        printf("Invalid usage of a fragment shader"); 
-                        for (;;) ;
-                    }*/
-                    putPixel(argb.intVal, x, y);
+        Value init = execExpr(initExpr);
+
+        createVariable(&globalScope, symb->symbol, init);
+
+        return (Value) {
+            .type = VAL_NONE
+        };
+    }
+    else if (svEqLit(name, "set")) {
+        Expr* symb = *(Expr**) vectorAt(&expr->list.items, 1);
+        Expr* initExpr = *(Expr**) vectorAt(&expr->list.items, 2);
+
+        if (symb->type != EXPR_SYMBOL) {
+            puts("Usage: (var <name> <init>)");
+        }
+
+        Value init = execExpr(initExpr);
+
+        setVariable(&globalScope, symb->symbol, init);
+
+        return (Value) {
+            .type = VAL_NONE
+        };
+    }
+    else if (svEqLit(name, "fragment")) {
+        Expr* returnValue = *(Expr**) vectorAt(&expr->list.items, 1);      
+
+        for (u32 x = 0; x < screenWidth; x++) {
+            for (u32 y = 0; y < screenHeight; y++) {
+                setVariable(&globalScope, svFromLit("x"), makeInt(x));
+                setVariable(&globalScope, svFromLit("y"), makeInt(y));
+
+                Value argb = execExpr(returnValue);
+                if (argb.type != VAL_INT) {
+                    printf("Invalid usage of a fragment shader"); 
+                    for (;;) ;
                 }
+                putPixel(argb.intVal, x, y);
             }
-
-            return (Value) {
-                .type = VAL_NONE
-            };
         }
 
-        else if (streq(name, "print")) {
-            Expr* arg = *(Expr**) vectorAt(&expr->list.items, 1);
+        return (Value) {
+            .type = VAL_NONE
+        };
+    }
 
-            Value val = execExpr(arg);
+    else if (svEqLit(name, "print")) {
+        Expr* arg = *(Expr**) vectorAt(&expr->list.items, 1);
 
-            if (val.type == VAL_STRING) {
-                SV_ASLIT(val.strVal, str, {
-                    printf("%s\n", str);
-                });
-            }
+        Value val = execExpr(arg);
 
-            if (val.type == VAL_INT) {
-                printf("%u\n", val.intVal);
-            }
-
-            return (Value) {
-                .type = VAL_NONE
-            };
+        if (val.type == VAL_STRING) {
+            SV_ASLIT(val.strVal, str, {
+                printf("%s\n", str);
+            });
         }
 
-        printf("Unknown function: %s\n", name);
-        for (;;);
-    });
+        if (val.type == VAL_INT) {
+            printf("%u\n", val.intVal);
+        }
+
+        return (Value) {
+            .type = VAL_NONE
+        };
+    }
+    else if (svEqLit(name, "sin")) {
+        Expr* arg = *(Expr**) vectorAt(&expr->list.items, 1);
+
+        Value val = execExpr(arg);
+        if (val.type != VAL_INT) return makeInt(0);
+        return makeInt(sinInt(val.intVal));
+    }
+
+    puts("Unknown function");
+    for (;;);
 
     return (Value) {0};
 }

@@ -13,7 +13,7 @@ The RivOS shader language is a tiny subset from the features of lisp. Features:
 - fragment expr
 - "+ - * / %" lhs rhs
 - print expr
-- TODO: if, while, maybe functions, ^, >> & |.
+- TODO: if, while, maybe functions, >> << > <
 
 ## What does a program look like?
 
