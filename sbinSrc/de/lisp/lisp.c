@@ -165,6 +165,10 @@ void tokenize(const char* src, Vector* tokenOutbuf) {
                 src += i-1;
                 break;
             }
+            case ';': {
+                while (*src != '\n') { src++; }
+                break;
+            }
             default: {
                 if (isdigit(*src)) {
                     u32 i = 0;

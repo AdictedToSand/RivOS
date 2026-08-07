@@ -4,8 +4,6 @@
 #include "sys/sys.h"
 #include "sys/stdio.h"
 
-#include "gen/string.h"
-
 #include "rap/rap.h"
 
 typedef struct Str {
@@ -65,29 +63,13 @@ typedef struct Process {
 
 u64 ticks = 0;
 void pitHandler(void) {
-    if (ticks % 100 == 0)
-        logf("PIT CALLED");
     ticks++;
 }
 
 RapFile rap;
 
-typedef void (*PutPixelT)(u32 argb, u32 x, u32 y);
 typedef Process* (*LoadProcessT)(const char* fp, const char* pname, ProcessPriveledgeLevel privlvl);
 
-void perPixel(u32 (*calc)(u32 x, u32 y), PutPixelT putPixel, u32 screenWidth, u32 screenHeight) {
-    for (u32 x = 0; x < screenWidth; x++) {
-        for (u32 y = 0; y < screenHeight; y++) {
-            putPixel(calc(x, y), x, y);
-        } 
-    }
-}
-
-u32 calcPixel(u32 x, u32 y) {
-    u32 colorx = y > 0 ? x % y : 0;
-    u32 colory = x > 0 ? y % x : 0;
-    return colorx ^ colory;
-}
 
 [[gnu::noreturn]]
 void _start() {
