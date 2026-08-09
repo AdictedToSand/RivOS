@@ -11,8 +11,13 @@ RapFile rap;
 
 u32 screenWidth;
 u32 screenHeight;
+u32 fbPitch;
 
-void (*putPixel)(u32 argb, u32 x, u32 y);
+void (*putPixelRap)(u32 argb, u32 x, u32 y);
+
+void putPixel(u32 argb, u32 x, u32 y) {
+    putPixelRap(argb, x, y);
+}
 
 void _start() {
     sysInit();
@@ -20,24 +25,27 @@ void _start() {
     claim("Framebuffer");
     rap = parseRap();
 
-    putPixel = getRapAddr(&rap, "putPixel");
+    putPixelRap = getRapAddr(&rap, "putPixel");
     u32 (*getScreenWidth)(void) = getRapAddr(&rap, "getScreenWidth");
     u32 (*getScreenHeight)(void) = getRapAddr(&rap, "getScreenHeight");
+    u32 (*getFbPitch)(void) = getRapAddr(&rap, "getFbPitch");
 
+    fbPitch = getFbPitch();
     screenHeight = getScreenHeight(), screenWidth = getScreenWidth();
 
     fd_t shaderSrc = open("/krn/de/shder.lsp");
     if (!shaderSrc) {
         exit(1);
     }
-    #define DEF_FILESIZE 100
+    #define DEF_FILESIZE 1000
     char* buf = mmap(DEF_FILESIZE);
     memset(buf, 0, DEF_FILESIZE);
     read(shaderSrc, buf, DEF_FILESIZE);
     printf("Src='%s'", buf);
     lispRun(buf);
     close(shaderSrc);
-
     munmap(buf);
+
+
     for (;;) ;
 }

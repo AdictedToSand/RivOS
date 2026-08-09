@@ -41,3 +41,8 @@ auto VisualsPidEnforced::getScreenWidth() -> u32 {
 
     return Visuals::getScreenWidth();
 }
+auto VisualsPidEnforced::getPitch() -> u32 {
+    if (enforce()) return 0;
+
+    return Visuals::getPitch();
+}

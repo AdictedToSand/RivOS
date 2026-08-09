@@ -115,6 +115,11 @@ public:
             {}
         ));
         functions.pushBack(Function(
+            (void*) VisualsPidEnforced::getPitch,
+            "getFbPitch",
+            {}
+        ));
+        functions.pushBack(Function(
             (void*) loadProcessFromFile,
             "loadProcess",
             {

@@ -99,20 +99,20 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
     PIC::init();
 
     PIT::init(1000);
-    Serial::log("PIT initalized");
 
     Mmu::init();
-    for (u32 addr = (u32) heapStart & ~0xFFF; addr < (u32) heapEnd; addr += 4096) {
-        Mmu::mapPage((void*) addr, (void*) addr, Mmu::FLAGS_WRITABLE);
-    }
-    SysModuleHandler::init();
-
+    
     {
         u32 start = Visuals::getFbPhysAddr() & ~0xFFF;
         u32 end   = (Visuals::getFbPhysAddr() + Visuals::getFbSizeBytes() + 0xFFF) & ~0xFFF;
         for (u32 addr = start; addr < end; addr += 4096)
             Mmu::mapPage((void*) addr, (void*) addr, Mmu::FLAGS_WRITABLE);
     }
+
+    for (u32 addr = (u32) heapStart & ~0xFFF; addr < (u32) heapEnd; addr += 4096) {
+        Mmu::mapPage((void*) addr, (void*) addr, Mmu::FLAGS_WRITABLE);
+    }
+    SysModuleHandler::init();
 
     HardwareInterrupts::init();
 

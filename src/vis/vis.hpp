@@ -1,6 +1,11 @@
 #pragma once
 #include <int.h>
 
+#include <mem/alloc.hpp>
+#include <mem/utils.hpp>
+
+#include <gen/serial.hpp>
+
 struct Visuals {
 private:
     struct [[gnu::packed]] MultibootTag {
@@ -50,6 +55,9 @@ public:
     static inline auto getScreenWidth() -> u32 {
         return fb->width;
     }
+    static inline auto getPitch() -> u32 {
+        return fb->pitch;
+    }
     static auto fillScreen(u32 argb) -> void {
         for (u32 y = 0; y < getScreenHeight(); y++)
             for (u32 x = 0; x < getScreenWidth(); x++)
@@ -68,4 +76,5 @@ struct VisualsPidEnforced {
     static auto getFbSizeBytes() -> u32;
     static auto getScreenHeight() -> u32;
     static auto getScreenWidth() -> u32;
+    static auto getPitch() -> u32;
 };

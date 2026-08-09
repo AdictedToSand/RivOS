@@ -2,7 +2,7 @@
 
 RivOS is an operating system designed for the x86 CPU architecture. It features a multitasking kernel alongside a custom bootloader
 
-## Bootloader
+## Bootloader [ CURRENTLY UNSUPPORTED ]
 
 RivOS features a custom bootloader (RivBoot), which looks like this 
 

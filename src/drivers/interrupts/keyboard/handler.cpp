@@ -62,10 +62,12 @@ extern "C" auto keyboardHandler() -> void {
     else {
         if (sc == SC_LEFT_SHIFT || sc == SC_RIGHT_SHIFT) {
             keyboardState.shift = true;
+            PIC::sendEoi(1);
             return;
         }
         if (sc == SC_CAPS_LOCK) {
             keyboardState.capslock = !keyboardState.capslock;
+            PIC::sendEoi(1);
             return;
         }
 

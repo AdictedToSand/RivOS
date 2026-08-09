@@ -5,6 +5,7 @@
 #include <terminal/terminal.hpp>
 
 #include <gen/map.hpp>
+#include <gen/serial.hpp>
 
 #include <mem/alloc.hpp>
 #include <mem/utils.hpp>
@@ -33,6 +34,7 @@ struct StdoutDevSubDriver : DevSubDriver {
         for (size_t i = 0; i < len && i < 4096; i++) stdout[i] = conts[i];
         
         Terminal::write(conts, len);
+        Serial::logf("[STDOUT WRITE]: %s", conts);
 
         return FileSystemDriver::SuccessCodes::Sucess;
     }

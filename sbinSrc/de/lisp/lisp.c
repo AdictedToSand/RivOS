@@ -442,7 +442,8 @@ Value execExpr(Expr* expr);
 extern u32 screenWidth;
 extern u32 screenHeight;
 
-extern void (*putPixel)(u32 argb, u32 x, u32 y);
+void flush();
+void putPixel(u32 argb, u32 x, u32 y);
 
 float fabs(float x) {
     return x < 0 ? -x : x;
