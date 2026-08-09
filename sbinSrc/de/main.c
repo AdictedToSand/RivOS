@@ -7,6 +7,8 @@
 
 #include "mem/utils.h"
 
+#include "shaderLang/lang.h"
+
 RapFile rap;
 
 u32 screenWidth;
@@ -33,7 +35,14 @@ void _start() {
     fbPitch = getFbPitch();
     screenHeight = getScreenHeight(), screenWidth = getScreenWidth();
 
-    fd_t shaderSrc = open("/krn/de/shder.lsp");
+    const u8 shaderSrc[] = {
+        MAKE_OPCODE(MOV, MOV_REGTOCONST), 1, 0, 0, 0, 1, 
+        MAKE_OPCODE(LOAD, LOAD_REG), 1,
+        0
+    };
+    decompile(shaderSrc);
+
+    /*fd_t shaderSrc = open("/krn/de/shder.lsp");
     if (!shaderSrc) {
         exit(1);
     }
@@ -45,7 +54,7 @@ void _start() {
     lispRun(buf);
     close(shaderSrc);
     munmap(buf);
-
+*/
 
     for (;;) ;
 }
