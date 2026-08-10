@@ -41,7 +41,10 @@ enum class SyscallNumbers : u8 {
     Filesize = 10,
 };
 
+bool isInSyscall = false;
+
 extern "C" auto syscallHandler(SyscInterruptFrame* ifrm) -> void {
+    isInSyscall = true;
     const SyscallNumbers syscNum = (SyscallNumbers) ifrm->eax;
     switch (syscNum) {
         case SyscallNumbers::Open: {
@@ -100,4 +103,11 @@ extern "C" auto syscallHandler(SyscInterruptFrame* ifrm) -> void {
             break;
         }
     }
+
+    isInSyscall = false;
+}
+
+[[gnu::noinline]]
+bool isInSyscalFn() {
+    return isInSyscall;
 }

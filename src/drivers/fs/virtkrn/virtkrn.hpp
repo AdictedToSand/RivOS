@@ -1,5 +1,4 @@
 #pragma once
-#include "proc/process.hpp"
 #include <mem/alloc.hpp>
 
 #include <gen/map.hpp>
@@ -10,8 +9,10 @@
 #include <drivers/fs/mountpoint.hpp>
 
 // Functions for /krn/virt/func.rap
+#include <proc/process.hpp>
 #include <sys/IDT/idt.hpp>
 #include <vis/vis.hpp>
+#include <drivers/interrupts/sysc/sysc.hpp>
 
 struct VirtKrnSubDriver {
     virtual auto read(char* obuf, u32 len) -> FileSystemDriver::SuccessCodes = 0;
@@ -77,15 +78,6 @@ public:
     }
     auto init() -> void override {
         functions.pushBack(Function(
-            (void*) Idt::setDescriptor,
-            "idtSetDescriptor",
-            {
-                Param("u8", "vector"),
-                Param("ptr", "isr"),
-                Param("u8", "flags"),
-            }
-        ));
-        functions.pushBack(Function(
             (void*) VisualsPidEnforced::putPixel,
             "putPixel",
             {
@@ -134,6 +126,16 @@ public:
             {
                 Param("ptr", "proc"),
             }
+        ));
+        functions.pushBack(Function(
+            (void*) getProcessList,
+            "getProcessList",
+            {}
+        ));
+        functions.pushBack(Function(
+            (void*) isInSyscalFn,
+            "isInSyscall",
+            {}
         ));
     }
 };

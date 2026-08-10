@@ -7,8 +7,6 @@
 
 #include "mem/utils.h"
 
-#include "shaderLang/lang.h"
-
 RapFile rap;
 
 u32 screenWidth;
@@ -21,6 +19,7 @@ void putPixel(u32 argb, u32 x, u32 y) {
     putPixelRap(argb, x, y);
 }
 
+// Name of this is gonna be Vela
 void _start() {
     sysInit();
 
@@ -35,26 +34,19 @@ void _start() {
     fbPitch = getFbPitch();
     screenHeight = getScreenHeight(), screenWidth = getScreenWidth();
 
-    const u8 shaderSrc[] = {
-        MAKE_OPCODE(MOV, MOV_REGTOCONST), 1, 0, 0, 0, 1, 
-        MAKE_OPCODE(LOAD, LOAD_REG), 1,
-        0
-    };
-    decompile(shaderSrc);
-
-    /*fd_t shaderSrc = open("/krn/de/shder.lsp");
-    if (!shaderSrc) {
+    fd_t shaderSrcFd = open("/krn/de/shder.lsp");
+    if (!shaderSrcFd) {
         exit(1);
     }
     #define DEF_FILESIZE 1000
     char* buf = mmap(DEF_FILESIZE);
     memset(buf, 0, DEF_FILESIZE);
-    read(shaderSrc, buf, DEF_FILESIZE);
+    read(shaderSrcFd, buf, DEF_FILESIZE);
     printf("Src='%s'", buf);
     lispRun(buf);
-    close(shaderSrc);
+    close(shaderSrcFd);
     munmap(buf);
-*/
 
+    printf("WE ARE DONE\n");
     for (;;) ;
 }

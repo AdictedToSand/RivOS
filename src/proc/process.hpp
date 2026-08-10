@@ -68,3 +68,5 @@ auto getNewPid() -> pid_t;
 
 auto loadProcessFromFile(const char* fp, const char* procname, ProcessPriveledgeLevel priv) -> Process*;
 auto runProcess(Process* proc) -> void;
+
+auto getProcessList() -> Vector<Process*>*;

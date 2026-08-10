@@ -34,7 +34,6 @@ auto Process::run(ProcessImportance iimportance) -> void {
     finalRun(entryPoint, STACK_BEGIN, pageDirectory);
 }
 auto Process::exit(u8 code) -> void {
-
     //TODO: Cleanup
     if (code != 0) {
         Serial::log("Process quited with exitcode nonzero");
@@ -66,4 +65,9 @@ auto loadProcessFromFile(const char* fp, const char* procname, ProcessPriveledge
 }
 auto runProcess(Process* proc) -> void {
     proc->run(ProcessImportance::REQ); //TODO
+}
+auto getProcessByPid(pid_t pid) -> Process*;
+
+auto getProcessList() -> Vector<Process*>* {
+    return &processes;
 }
