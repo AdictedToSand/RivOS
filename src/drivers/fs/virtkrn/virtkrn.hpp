@@ -19,6 +19,14 @@ struct VirtKrnSubDriver {
     virtual auto init() -> void = 0;
 };
 
+struct KDataSubDriver : VirtKrnSubDriver {
+    auto read(char* obuf, u32 len) -> FileSystemDriver::SuccessCodes override {
+        (void) obuf; (void) len;
+        return FileSystemDriver::SuccessCodes::Sucess;
+    }
+    auto init() -> void override {}
+};
+
 struct RapFileSubDriver : VirtKrnSubDriver {
     struct Param {
         const char* type;
@@ -106,11 +114,11 @@ public:
             "getFbSizeBytes",
             {}
         ));
-        functions.pushBack(Function(
+        /*functions.pushBack(Function(
             (void*) VisualsPidEnforced::getPitch,
             "getFbPitch",
             {}
-        ));
+        ));*/
         functions.pushBack(Function(
             (void*) loadProcessFromFile,
             "loadProcess",
@@ -133,9 +141,11 @@ public:
             {}
         ));
         functions.pushBack(Function(
-            (void*) isInSyscalFn,
-            "isInSyscall",
-            {}
+            (void*) procCtxtSwitch,
+            "procCtxtSwitch",
+            {
+                Param("ptr", "proc")
+            }
         ));
     }
 };

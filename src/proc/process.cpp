@@ -49,6 +49,46 @@ auto Process::exit(u8 code) -> void {
     }
 }
 
+inline void setRegistersTo(RegisterState* s) {
+    asm volatile(
+        "movl  0(%%esi), %%eax\n"
+        "movl  4(%%esi), %%ebx\n"
+        "movl  8(%%esi), %%ecx\n"
+        "movl 12(%%esi), %%edx\n"
+
+        "movl 20(%%esi), %%edi\n"
+        "movl 24(%%esi), %%ebp\n"
+
+        "pushl 36(%%esi)\n"
+        "popfl\n"
+
+        "movw 48(%%esi), %%ax\n"
+        "movw %%ax, %%ds\n"
+
+        "movw 52(%%esi), %%ax\n"
+        "movw %%ax, %%es\n"
+
+        "movw 56(%%esi), %%ax\n"
+        "movw %%ax, %%fs\n"
+
+        "movw 60(%%esi), %%ax\n"
+        "movw %%ax, %%gs\n"
+
+        "movl 16(%%esi), %%esi\n"
+        :
+        : "S"(s)
+        : "eax", "ebx", "ecx", "edx", "edi", "ebp", "memory"
+    );
+}
+auto Process::ctxtSwitch() -> void {
+    asm volatile ("CLI");
+    activeProcessPid = pid;
+    setRegistersTo(state);    
+
+    
+    finalRun((void*) state->eip, (void*) state->esp, pageDirectory);
+}
+
 auto getNewPid() -> pid_t {
     return latestPid++;
 }
@@ -70,4 +110,9 @@ auto getProcessByPid(pid_t pid) -> Process*;
 
 auto getProcessList() -> Vector<Process*>* {
     return &processes;
+}
+
+
+auto procCtxtSwitch(Process* proc) -> void {
+    proc->ctxtSwitch();
 }

@@ -11,7 +11,6 @@ RapFile rap;
 
 u32 screenWidth;
 u32 screenHeight;
-u32 fbPitch;
 
 void (*putPixelRap)(u32 argb, u32 x, u32 y);
 
@@ -29,9 +28,7 @@ void _start() {
     putPixelRap = getRapAddr(&rap, "putPixel");
     u32 (*getScreenWidth)(void) = getRapAddr(&rap, "getScreenWidth");
     u32 (*getScreenHeight)(void) = getRapAddr(&rap, "getScreenHeight");
-    u32 (*getFbPitch)(void) = getRapAddr(&rap, "getFbPitch");
 
-    fbPitch = getFbPitch();
     screenHeight = getScreenHeight(), screenWidth = getScreenWidth();
 
     fd_t shaderSrcFd = open("/krn/de/shder.lsp");
@@ -42,7 +39,6 @@ void _start() {
     char* buf = mmap(DEF_FILESIZE);
     memset(buf, 0, DEF_FILESIZE);
     read(shaderSrcFd, buf, DEF_FILESIZE);
-    printf("Src='%s'", buf);
     lispRun(buf);
     close(shaderSrcFd);
     munmap(buf);

@@ -19,12 +19,26 @@ enum class ProcessPriveledgeLevel : u8 {
 };
 
 struct RegisterState {
-    /*
-    u32 eip;
-    u32 esp;
+    u32 eax;
+    u32 ebx;
+    u32 ecx;
+    u32 edx;
+
+    u32 esi;
+    u32 edi;
     u32 ebp;
-    Right now, not required, however this should be done later
-    */
+    u32 esp;
+
+    u32 eip;
+    u32 eflags;
+
+    u32 cs;
+    u32 ss;
+
+    u32 ds;
+    u32 es;
+    u32 fs;
+    u32 gs;
 };
 
 #define STACK_BEGIN ((void*) 0xBFFF0000)
@@ -58,6 +72,8 @@ struct Process {
     [[gnu::noreturn]]
     auto run(ProcessImportance iimportance) -> void;
     auto exit(u8 code) -> void;
+    [[gnu::noreturn]]
+    auto ctxtSwitch() -> void;
 
     Process() = default;
 };
@@ -68,5 +84,6 @@ auto getNewPid() -> pid_t;
 
 auto loadProcessFromFile(const char* fp, const char* procname, ProcessPriveledgeLevel priv) -> Process*;
 auto runProcess(Process* proc) -> void;
+auto procCtxtSwitch(Process* proc) -> void;
 
 auto getProcessList() -> Vector<Process*>*;

@@ -13,6 +13,7 @@ CPPFLAGS = [
     "-Isrc/lib",
     "-Istd",
     "-fno-use-cxa-atexit",
+    "-fomit-frame-pointer",
 ]
 
 BUILD_DIR = Path("build")
