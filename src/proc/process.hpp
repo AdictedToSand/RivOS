@@ -59,7 +59,7 @@ struct PhysToVirt {
 
 struct Process {
     pid_t pid;
-    const char* pname;
+    char* pname;
     Str srcFp;
     ProcessPriveledgeLevel priveledge;
     Vector<PhysToVirt> pages;
@@ -87,3 +87,4 @@ auto runProcess(Process* proc) -> void;
 auto procCtxtSwitch(Process* proc) -> void;
 
 auto getProcessList() -> Vector<Process*>*;
+auto getActiveProcessPid() -> pid_t;

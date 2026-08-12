@@ -2,6 +2,7 @@
 #include <proc/process.hpp>
 
 #include <gen/serial.hpp>
+#include <sys/PIC/pic.hpp>
 
 pid_t latestPid = 1;
 pid_t activeProcessPid = 0;
@@ -51,17 +52,8 @@ auto Process::exit(u8 code) -> void {
 
 inline void setRegistersTo(RegisterState* s) {
     asm volatile(
-        "movl  0(%%esi), %%eax\n"
-        "movl  4(%%esi), %%ebx\n"
-        "movl  8(%%esi), %%ecx\n"
-        "movl 12(%%esi), %%edx\n"
-
-        "movl 20(%%esi), %%edi\n"
-        "movl 24(%%esi), %%ebp\n"
-
-        "pushl 36(%%esi)\n"
-        "popfl\n"
-
+        // Segment loads first: they use ax as scratch, so do this before eax
+        // is given its real, final restored value below.
         "movw 48(%%esi), %%ax\n"
         "movw %%ax, %%ds\n"
 
@@ -74,19 +66,44 @@ inline void setRegistersTo(RegisterState* s) {
         "movw 60(%%esi), %%ax\n"
         "movw %%ax, %%gs\n"
 
+        "movl  0(%%esi), %%eax\n"
+        "movl  4(%%esi), %%ebx\n"
+        "movl  8(%%esi), %%ecx\n"
+        "movl 12(%%esi), %%edx\n"
+
+        "movl 20(%%esi), %%edi\n"
+        "movl 24(%%esi), %%ebp\n"
+
+        "pushl 36(%%esi)\n"
+        "popfl\n"
+
         "movl 16(%%esi), %%esi\n"
+        : "+S"(s)
         :
-        : "S"(s)
         : "eax", "ebx", "ecx", "edx", "edi", "ebp", "memory"
     );
 }
 auto Process::ctxtSwitch() -> void {
     asm volatile ("CLI");
     activeProcessPid = pid;
-    setRegistersTo(state);    
 
-    
-    finalRun((void*) state->eip, (void*) state->esp, pageDirectory);
+    // Grab these BEFORE setRegistersTo() runs: it deliberately repurposes esi
+    // as scratch, and we don't want that anywhere near the values finalRun()
+    // depends on to know where it's jumping.
+    void* const targetEip = (void*) state->eip;
+    void* const targetEsp = (void*) state->esp;
+
+    if (!targetEip || !targetEsp) {
+        Serial::logf("ctxtSwitch: refusing to jump into pid %u with eip=%x esp=%x", pid, (u32) targetEip, (u32) targetEsp);
+        kpanic("ctxtSwitch got a zeroed RegisterState");
+    }
+
+    setRegistersTo(state);
+
+    PIC::sendEoi(0);
+
+    Mmu::activeDirectory = pageDirectory;
+    finalRun(targetEip, targetEsp, pageDirectory);
 }
 
 auto getNewPid() -> pid_t {
@@ -112,7 +129,11 @@ auto getProcessList() -> Vector<Process*>* {
     return &processes;
 }
 
-
 auto procCtxtSwitch(Process* proc) -> void {
     proc->ctxtSwitch();
+}
+
+[[gnu::noinline]]
+auto getActiveProcessPid() -> pid_t {
+    return activeProcessPid;
 }

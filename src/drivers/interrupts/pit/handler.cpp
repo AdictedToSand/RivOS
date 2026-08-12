@@ -47,9 +47,13 @@ extern "C" auto pitHandler(RegisterStatePIT* state) -> void {
     }
     auto pitEntry = SysModuleHandler::getFuncEntry(SysModuleId::PIT);
     if (pitEntry) {
+        static RegisterStatePIT ownerVisibleState;
+        ownerVisibleState = *state;
+
         u32* const interrupted = Mmu::activeDirectory;
         Mmu::switchAddressSpace(pitEntry->ownerDir);
-        pitEntry->func();
+        // TODO:...
+        ((void (*)(void*)) (pitEntry->func)) (&ownerVisibleState);
         Mmu::switchAddressSpace(interrupted);
     }
     ticks++;

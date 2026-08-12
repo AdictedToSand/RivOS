@@ -52,6 +52,22 @@ typedef struct RegisterState {
     u32 gs;
 } RegisterState;
 
+typedef struct RegisterStatePIT {
+    u32 edi;
+    u32 esi;
+    u32 ebp;
+    u32 esp; // original ESP before PUSHA
+    u32 ebx;
+    u32 edx;
+    u32 ecx;
+    u32 eax;
+
+    u32 eip;
+    u32 cs;
+    u32 eflags;
+} RegisterStatePIT;
+
+
 enum {
     PROCIMPT_REQ,
     PROCIMPT_OPT,
@@ -82,4 +98,4 @@ typedef struct ProcessList {
 
 extern const ProcessList* procList;
 extern u64 ticks;
-void pitHandler(void);
+void pitHandler(RegisterStatePIT*);

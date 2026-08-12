@@ -92,7 +92,9 @@ public:
         proc->state = (RegisterState*) KernelAllocator::alloc(sizeof(RegisterState));
         proc->srcFp = fp;
         proc->pid = getNewPid();
-        proc->pname = pname;
+        proc->pname = (char*) KernelAllocator::alloc(strlen(pname) + 1);
+        memset(proc->pname, 0, strlen(pname) + 1);
+        strcpy(proc->pname, pname);
         proc->priveledge = priveledge;
         proc->pageDirectory = Mmu::createAddressSpace();
 
@@ -132,6 +134,23 @@ public:
                 continue;
             }
         }
+        proc->state->eip = (u32) hdr->programEntry;
+        proc->state->esp = (u32) STACK_BEGIN;
+        proc->state->eax = 0;
+        proc->state->ebx = 0;
+        proc->state->ecx = 0;
+        proc->state->edx = 0;
+        proc->state->esi = 0;
+        proc->state->edi = 0;
+        proc->state->ebp = 0;
+        proc->state->eflags = 0x202; // reserved bit 1 + IF
+        proc->state->cs = 0x08;
+        proc->state->ss = 0x10;
+        proc->state->ds = 0x10;
+        proc->state->es = 0x10;
+        proc->state->fs = 0x10;
+        proc->state->gs = 0x10;
+
         proc->entryPoint = (void*) hdr->programEntry;
 
         free(); // We don't need the ELF anymore at this point.

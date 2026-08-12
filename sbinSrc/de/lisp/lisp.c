@@ -605,7 +605,6 @@ Value execIdent(Expr* expr) {
 
 Value execExpr(Expr* expr) {
     switch (expr->type) {
-
         case EXPR_INT:
             return makeInt(expr->intVal);
 

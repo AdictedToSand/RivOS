@@ -31,7 +31,7 @@ void _start() {
 
     screenHeight = getScreenHeight(), screenWidth = getScreenWidth();
 
-    fd_t shaderSrcFd = open("/krn/de/shder.lsp");
+    fd_t shaderSrcFd = open("/etc/shder.lsp");
     if (!shaderSrcFd) {
         exit(1);
     }
@@ -44,5 +44,11 @@ void _start() {
     munmap(buf);
 
     printf("WE ARE DONE\n");
-    for (;;) ;
+    u32 ticks = 0;
+    for (;;) {
+        ticks++;
+        if (ticks % 0xA000000 == 0) {
+            printf("Vela was called");
+        }
+    }   
 }

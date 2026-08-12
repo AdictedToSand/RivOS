@@ -147,6 +147,11 @@ public:
                 Param("ptr", "proc")
             }
         ));
+        functions.pushBack(Function(
+            (void*) getActiveProcessPid,
+            "getpid",
+            {}
+        ));
     }
 };
 

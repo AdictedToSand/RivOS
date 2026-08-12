@@ -8,7 +8,7 @@
 #include "../gen/alpha.h"
 #include "../gen/string.h"
 
-#define MEM_DEF_ALLOCSIZE 10000
+#define MEM_DEF_ALLOCSIZE 0x10000
 RapFile parseRap(void) {
     RapFile ret;
 

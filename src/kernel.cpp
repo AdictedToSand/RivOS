@@ -61,8 +61,14 @@ static u8 frameBitmapStorage[MAX_FRAMES / 8];
 extern char kernelStart[];
 extern char kernelEnd[];
 
-// Rn: .rap and keyboard handler not being in kernel but sched
+//TODO: less CLI
 extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
+    switch (5) {
+        case 1: {
+
+                }
+    }
+
     Gdt::init();
     Idt::init();
 
@@ -121,6 +127,7 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
     if (!scheduler.isValid()) { kpanic("Scheduler was not a valid ELF"); }
     Process* proc = scheduler.load("RivOS_Sched", ProcessPriveledgeLevel::Kernel);
     if (!proc) { kpanic("Unable to load ELF"); }
+    Terminal::disable();
     proc->run(ProcessImportance::REQ);
 
     kpanic("End of kernel reached");
