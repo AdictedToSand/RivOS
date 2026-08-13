@@ -63,12 +63,6 @@ extern char kernelEnd[];
 
 //TODO: less CLI
 extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
-    switch (5) {
-        case 1: {
-
-                }
-    }
-
     Gdt::init();
     Idt::init();
 
