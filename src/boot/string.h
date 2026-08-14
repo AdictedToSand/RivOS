@@ -35,3 +35,36 @@ static inline char* strcpy(char* dest, const char* src) {
     return ret;
 }
 
+static inline char toUpper(char c) {
+    if (c >= 'a' && c <= 'z') {
+        return c - 'a' + 'A';
+    }
+    return c;
+}
+
+static inline char toLower(char c) {
+    if (c >= 'A' && c <= 'Z') {
+        return c - 'A' + 'a';
+    }
+    return c;
+}
+static inline bool isalpha(char c) {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+
+static inline void strToUpper(char* s) {
+    while (*s) {
+        *s = toUpper(*s);
+        s++;
+    }
+}
+
+static inline bool streqi(const char* a, const char* b) {
+    while (*a && *b) {
+        if (toUpper(*a) != toUpper(*b)) return false;
+        a++;
+        b++;
+    }
+    return *a == *b; // both must hit '\0' at the same time
+}
+

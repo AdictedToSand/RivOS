@@ -26,7 +26,8 @@ void ataInit() {
 }
 
 u8 ataReadSector(u32 sector, u16 maxlen, char* obuf) {
-    outb(DRIVESEL_PORT, DRIVESEL_MASTERDRIVE | ((sector >> 24) & 0x0F));
+    //TODO: This is very bad!
+    outb(DRIVESEL_PORT, DRIVESEL_SLAVEDRIVE | ((sector >> 24) & 0x0F));
 
     // ~400ns delay
     // This is recommended.

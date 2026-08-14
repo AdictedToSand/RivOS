@@ -152,6 +152,8 @@ public:
         proc->state->gs = 0x10;
 
         proc->entryPoint = (void*) hdr->programEntry;
+        processes.pushBack(proc);
+
 
         free(); // We don't need the ELF anymore at this point.
         return proc;

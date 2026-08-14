@@ -131,7 +131,7 @@ private:
         if (!makeFatName(filename, fatName)) return false;
 
         const uint32_t bytesPerCluster = bootSector->bytesPerSector * bootSector->sectorsPerCluster;
-        uint16_t* clusterBuf = (uint16_t*)KernelAllocator::alloc(bytesPerCluster);
+        uint16_t* clusterBuf = (uint16_t*) KernelAllocator::alloc(bytesPerCluster);
         if (clusterBuf == nullptr) return false;
 
         uint32_t currentCluster = startCluster;
@@ -145,11 +145,11 @@ private:
             for (uint32_t i = 0; i < entriesPerCluster; i++) {
                 DirEntry* e = &entries[i];
 
-                if ((uint8_t)e->name[0] == 0x00) {
+                if ((uint8_t) e->name[0] == 0x00) {
                     KernelAllocator::free(clusterBuf);
                     return false;
                 }
-                if ((uint8_t)e->name[0] == 0xE5) continue;
+                if ((uint8_t) e->name[0] == 0xE5) continue;
                 if ((e->attributes & 0x0F) == 0x0F) continue;
 
                 char onDiskName[12];
@@ -262,7 +262,7 @@ public:
     }
 
     auto read(File f, char* obuf, size_t len) -> SuccessCodes override {
-        FileData* fd = (FileData*)f.fsData;
+        FileData* fd = (FileData*) f.fsData;
         if (fd == nullptr || fd->isDirectory) return SuccessCodes::Error;
 
         uint32_t bytesPerCluster = bootSector->bytesPerSector * bootSector->sectorsPerCluster;

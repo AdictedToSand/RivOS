@@ -7,6 +7,8 @@
 #include "utils.h"
 #include "menu/menu.h"
 
+#include "fs/fs.h"
+
 #define RIVBOOT_MAGICSTR "BOOTABLE"
 
 typedef struct [[gnu::packed]] RivBootHeader {
@@ -60,6 +62,7 @@ extern char bootEnd[];
 void startBoot() {
     initTerm();
     storageInit();
+    fsInit();
 
     size_t sectorInd = -1;
     for (size_t i = 0; i < 256; i++) {

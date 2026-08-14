@@ -181,5 +181,5 @@ startScheduler:
     proc->run(ProcessImportance::REQ);
 
     kpanic("End of kernel reached");
-    for (;;) ;
+    for (;;) asm volatile ("HLT");
 }

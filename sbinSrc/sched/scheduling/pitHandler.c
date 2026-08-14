@@ -4,6 +4,8 @@
 
 #include "../sys/stdio.h"
 
+#include "../gen/string.h"
+
 #define PROCESS_INTERVAL 50
 
 extern void (*procCtxtSwitch)(Process* proc);
@@ -54,10 +56,10 @@ void pitHandler(RegisterStatePIT* state) {
         proc->state->cs  = state->cs;
         proc->state->eflags = state->eflags;
     }
-
     if (procList && procList->len > 1 && ticks % PROCESS_INTERVAL == 0) {
         currentProcess ^= 1;
 
+        printf("Switched to process '%s'", procList->arr[currentProcess]->pname);
         procCtxtSwitch(procList->arr[currentProcess]);
     }
 }

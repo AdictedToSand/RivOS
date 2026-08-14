@@ -53,7 +53,7 @@ void vectorPushBack(Vector* vec, void* elem) {
 void* vectorAt(Vector* vec, u32 ind) {
     if (ind >= vec->size) {
         printf("Vector OOB: index=%u size=%u\n", ind, vec->size);
-        for (;;);
+        for (;;) asm volatile ("HLT");
     }
 
     return (char*) vec->arr + (ind * vec->typesize);
@@ -302,7 +302,7 @@ Expr* parseExpr(Vector* tokens, u32* pos) {
         default: {
             puts("Unknown symbol\n");
             printTok(tok);
-            for (;;) ;
+            for (;;) asm volatile ("HLT");
         }
     }
 
@@ -401,7 +401,7 @@ void setVariable(Enviroment* env, StringView name, Value init) {
 
     if (i == -1) {
         printf("Undefined variable: %s\n", name);
-        for (;;) ;
+        for (;;) asm volatile ("HLT");
     }
 
     VariableMapEntry* entry = vectorAt(&env->variableMap, i);
@@ -418,7 +418,7 @@ Value getVariable(Enviroment* env, StringView name) {
     SV_ASLIT(name, conts, {
         printf("Undefined variable: %s\n", conts);
     });
-    for (;;) ;
+    for (;;) asm volatile ("HLT");
 }
 
 Enviroment globalScope;
@@ -595,7 +595,7 @@ Value execList(Expr* expr) {
     }
 
     puts("Unknown function");
-    for (;;);
+    for (;;) asm volatile ("HLT");
 
     return (Value) {0};
 }

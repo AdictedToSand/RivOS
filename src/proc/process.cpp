@@ -29,8 +29,6 @@ auto Process::run(ProcessImportance iimportance) -> void {
     }
     activeProcessPid = pid;
 
-    processes.pushBack(this);
-
     Mmu::activeDirectory = pageDirectory;
     finalRun(entryPoint, STACK_BEGIN, pageDirectory);
 }

@@ -98,7 +98,7 @@ void _start() {
         }
         printf("Priv='%s'", privBuf);
         const Process* const proc = loadProcess(procPathBuf, procNameBuf, procPrivLvl);
-        runProcess(proc);
+        //runProcess(proc);
 
         munmap(procNameBuf);
         munmap(procPathBuf);
