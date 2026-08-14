@@ -4,6 +4,8 @@
 #include <gen/err.hpp>
 #include <gen/vec.hpp>
 
+#include <initializer_list.hpp>
+
 template<typename T1, typename T2>
 struct MapEntry {
 private:
@@ -23,9 +25,7 @@ public:
     inline auto setk(T1 n) -> void {
         t1 = n;
     }
-    MapEntry(T1 k, T2 v) {
-        t1 = k; t2 = v;
-    }
+    MapEntry(T1 k, T2 v) : t1(k), t2(v) {}
 };
 
 template<typename KT, typename VT> 
@@ -36,6 +36,11 @@ private:
 public:
     ~Map() = default;
     Map() = default;
+    Map(std::initializer_list<MapEntry<KT, VT>> init) : Map() {
+        for (auto& item : init) {
+            entries.pushBack(item);
+        } 
+    }
 
     inline auto size() -> size_t {
         return entries.size();

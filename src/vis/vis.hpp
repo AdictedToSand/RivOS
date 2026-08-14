@@ -47,7 +47,12 @@ public:
         pixels = (u32*) (u32) fb->addr;
     }
     static inline auto putPixel(u32 argb, u32 x, u32 y) -> void {
-        pixels[y * (fb->pitch / 4) + x] = argb; 
+        const u32 idx = y * (fb->pitch / 4) + x;
+        if (x >= fb->width || y >= fb->height) {
+            Serial::logf("putPixel OOB: x=%u y=%u (screen %ux%u) idx=%u pixels=%x", 
+                x, y, fb->width, fb->height, idx, (u32) pixels);
+        }
+        pixels[idx] = argb;
     }
     static inline auto getScreenHeight() -> u32 {
         return fb->height;

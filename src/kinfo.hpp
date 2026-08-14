@@ -1,5 +1,6 @@
 #pragma once
 #include <int.h>
 
-const char* const architecture = "x86";
-const u8 bitness = 32;
+static inline const char* architecture = "x86";
+static inline u8 bitness = 32;
+static inline const char* osname = "";

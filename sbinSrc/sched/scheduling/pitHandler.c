@@ -58,6 +58,6 @@ void pitHandler(RegisterStatePIT* state) {
     if (procList && procList->len > 1 && ticks % PROCESS_INTERVAL == 0) {
         currentProcess ^= 1;
 
-        //procCtxtSwitch(procList->arr[currentProcess]);
+        procCtxtSwitch(procList->arr[currentProcess]);
     }
 }

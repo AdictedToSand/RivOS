@@ -14,6 +14,9 @@ static inline char toLower(char c) {
     }
     return c;
 }
+static inline auto isalpha(char c) -> bool {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
 
 static inline void strToUpper(char* s) {
     while (*s) {

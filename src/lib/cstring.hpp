@@ -44,6 +44,17 @@ static inline char* strcpy(char* dest, const char* src) {
 
     return ret;
 }
+static inline auto strcat(char* dest, const char* src) -> char* {
+    char* end = dest;
+
+    while (*end)
+        end++;
+
+    while ((*end++ = *src++))
+        ;
+
+    return dest;
+}
 
 static inline char* stradd(char* dest, const char* src) {
     char* ret = dest;
