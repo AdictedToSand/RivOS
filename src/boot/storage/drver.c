@@ -21,9 +21,7 @@
 #define STATUS_BSY 0x80
 #define STATUS_DRQ 0x08
 
-void ataInit() {
-
-}
+void ataInit() {}
 
 u8 ataReadSector(u32 sector, u16 maxlen, char* obuf) {
     //TODO: This is very bad!

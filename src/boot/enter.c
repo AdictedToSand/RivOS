@@ -64,6 +64,18 @@ void startBoot() {
     storageInit();
     fsInit();
 
+    File f = open("/hi.txt");
+    if (!f.exists) {
+        panic("F didnt exist");
+    }
+    char fbuf[512];
+
+    memset(fbuf, 0, 512);
+    read(f, fbuf, 512);
+    print("FileData=");
+    print(fbuf);
+
+    for (;;) ;
     size_t sectorInd = -1;
     for (size_t i = 0; i < 256; i++) {
         memset(buf, 0, 512);

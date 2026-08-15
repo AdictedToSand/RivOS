@@ -39,6 +39,7 @@ struct Config {
     }
     auto parseVal(StringView val) -> Value {
         const char* cStr = val.toCStr();
+        const char* const cStrBase = cStr;       
         Value ret = {};
         ret.isErr = true;
         if (strIsDigit(cStr)) {
@@ -52,9 +53,12 @@ struct Config {
             u32 len = 0;
             while (cStr[len] != '"')
                 len++;
-            ret.strVal = StringView(cStr, len);
+            char* const strCopy = (char*) KernelAllocator::alloc(len + 1);
+            memset(strCopy, 0, len + 1);
+            for (u32 i = 0; i < len; i++)
+                strCopy[i] = cStr[i];
+            ret.strVal = StringView(strCopy, len);
             ret.state = Value::States::String;
-            //TODO: Memory leak
         }
         else {
             u32 identLen = 0;
@@ -78,7 +82,7 @@ struct Config {
             KernelAllocator::free((void*) identCStr);
         }
 
-        KernelAllocator::free((void*) cStr);
+        KernelAllocator::free((void*) cStrBase);
         return ret;
     }
     auto parseSrc() -> void {

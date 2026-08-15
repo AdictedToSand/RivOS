@@ -76,13 +76,42 @@ extern "C" auto syscallHandler(SyscInterruptFrame* ifrm) -> void {
             break;
         }
         case SyscallNumbers::Mmap: {
-            //TODO: Replace with pageAlloc()
-            ifrm->eax = (u32) KernelAllocator::alloc(ifrm->edi);
+            Serial::logf("MMap");
+            Process* proc = nullptr;
+            for (auto& vproc : processes) {
+                if (vproc->pid == activeProcessPid) { proc = vproc; }
+            }
+            if (!proc) { ifrm->eax = 0; break; }
+
+            const u32 size = (ifrm->edi + 4095) & ~4095u;
+            const u32 virtBase = proc->heapBrk;
+            const u32 pageCount = size / 4096;
+
+            u32 mapped = 0;
+            for (u32 i = 0; i < pageCount; i++) {
+                void* const frame = PhysicalFrameAllocator::allocFrame();
+                if (!frame) break;
+                Mmu::mapPageIn(proc->pageDirectory, frame, (void*) (virtBase + i * 4096),
+                    Mmu::FLAGS_PRESENT | Mmu::FLAGS_WRITABLE);
+                mapped++;
+            }
+
+            if (mapped < pageCount) {
+                ifrm->eax = 0; // out of memory 
+                break;
+            }
+
+            proc->heapBrk += size;
+            ifrm->eax = virtBase;
             break;
-        } 
+        }
+            //TODO: Replace with pageAlloc()
+            //ifrm->eax = (u32) KernelAllocator::alloc(ifrm->edi);
+            //break;
+     
         case SyscallNumbers::Munmap: {
             // TODO: This is not safe
-            KernelAllocator::free((void*) ifrm->edi);
+            //KernelAllocator::free((void*) ifrm->edi);
             break;
         }
         case SyscallNumbers::Exit: {
@@ -91,7 +120,6 @@ extern "C" auto syscallHandler(SyscInterruptFrame* ifrm) -> void {
                     processes[i].val()->exit((u8) ifrm->edi);
                 }
             }
-
             break;
         }
         case SyscallNumbers::Filesize: {

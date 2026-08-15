@@ -31,6 +31,7 @@ typedef struct [[gnu::packed]] Fat32BootSector {
     u32 volumeSerialNumberId;
     i8 volumeLabelString[11];
     i8 bootcode[420];
+    u16 bootSignature;
 } Fat32BootSector;
 
 typedef struct Fat32FileData {

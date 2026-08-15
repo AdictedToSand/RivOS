@@ -54,8 +54,8 @@ grub: build_dbg
 run_rivboot:
 	@clear
 	@qemu-system-i386 \
-		-drive file=build/disk.img,format=raw \
-		-drive file=build/rootfs.img,format=raw,if=ide \
+		-drive file=build/disk.img,format=raw,index=0 \
+		-drive file=build/rootfs.img,format=raw,if=ide,index=1 \
 		-serial stdio \
 		-boot c
 
@@ -83,8 +83,8 @@ debug: grub
 debug_rivboot: rivboot
 	@clear
 	@qemu-system-i386 \
-		-drive file=build/disk.img,format=raw \
-		-drive file=build/rootfs.img,format=raw,if=ide \
+		-drive file=build/disk.img,format=raw,index=0 \
+		-drive file=build/rootfs.img,format=raw,if=ide,index=1 \
 		-serial stdio \
 		-s -S \
 		-boot c

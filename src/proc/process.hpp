@@ -68,6 +68,7 @@ struct Process {
     void* entryPoint;
     ProcessImportance importance;
     u32* pageDirectory;
+    u32 heapBrk = 0x50000000;
 
     [[gnu::noreturn]]
     auto run(ProcessImportance iimportance) -> void;

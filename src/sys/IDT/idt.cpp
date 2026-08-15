@@ -104,8 +104,10 @@ auto handleTrap() -> void {
     reboot();
 }
 
-auto handleFault(int ft) -> void {
+auto handleFault(int ft, InterruptFrame* ifrm) -> void {
     Serial::logf("A fault was triggered in the kernel. Execution will not continue");
+    Serial::logf("eax=%x ebx=%x ecx=%x edx=%x esi=%x edi=%x ebp=%x esp=%x",
+        ifrm->eax, ifrm->ebx, ifrm->ecx, ifrm->edx, ifrm->esi, ifrm->edi, ifrm->ebp, ifrm->esp);
 #ifdef DEBUG
     if (ft == 14) { // #PF
         u32 cr2;
@@ -134,7 +136,7 @@ The fault is of type: %s
         , (u8) Terminal::VgaColor::Red,vectorToExceptionName(ifrm->vector), interruptTypeToStr(itype));
 
     switch (itype) {
-        case InterruptTypes::Fault: handleFault(ifrm->vector); break;
+        case InterruptTypes::Fault: handleFault(ifrm->vector, ifrm); break;
         case InterruptTypes::Abort: handleAbort(); break;
         case InterruptTypes::Regular: handleRegular(); break;
         case InterruptTypes::Trap: handleTrap(); break;

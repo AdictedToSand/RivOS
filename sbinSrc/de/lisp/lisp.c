@@ -203,6 +203,10 @@ const char* tokenNames[] = {
 };
 
 void printTok(Token* t) {
+    if (t->type > TT_IDENT) {
+        printf("Invalid token type: %u\n", t->type);
+        return;
+    }
     const char* tAsS = tokenNames[t->type];
 
     SV_ASLIT(t->conts, conts, {

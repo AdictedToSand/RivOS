@@ -88,6 +88,7 @@ typedef struct Process {
     void* entryPoint;
     ProcessImportance importance;
     u32* pageDirectory;
+    u32 heapBrk;
 } Process;
 
 typedef struct ProcessList {

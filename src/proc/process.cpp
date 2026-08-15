@@ -7,7 +7,8 @@
 pid_t latestPid = 1;
 pid_t activeProcessPid = 0;
 
-extern "C" [[gnu::noreturn]] void finalRun(void* entryPoint, void* stackTop, void* pageDirectory);
+extern "C" void finalRun(void* entryPoint, void* stackTop, void* pageDirectory);
+extern "C" void resumeProcess(RegisterState* state, void* pageDirectory);
 
 [[gnu::noreturn]]
 auto Process::run(ProcessImportance iimportance) -> void {
@@ -81,27 +82,21 @@ inline void setRegistersTo(RegisterState* s) {
         : "eax", "ebx", "ecx", "edx", "edi", "ebp", "memory"
     );
 }
+
 auto Process::ctxtSwitch() -> void {
     asm volatile ("CLI");
     activeProcessPid = pid;
 
-    // Grab these BEFORE setRegistersTo() runs: it deliberately repurposes esi
-    // as scratch, and we don't want that anywhere near the values finalRun()
-    // depends on to know where it's jumping.
-    void* const targetEip = (void*) state->eip;
-    void* const targetEsp = (void*) state->esp;
-
-    if (!targetEip || !targetEsp) {
-        Serial::logf("ctxtSwitch: refusing to jump into pid %u with eip=%x esp=%x", pid, (u32) targetEip, (u32) targetEsp);
+    if (!state->eip || !state->esp) {
+        Serial::logf("ctxtSwitch: refusing to jump into pid %u with eip=%x esp=%x", pid, state->eip, state->esp);
         kpanic("ctxtSwitch got a zeroed RegisterState");
     }
 
-    setRegistersTo(state);
-
     PIC::sendEoi(0);
-
     Mmu::activeDirectory = pageDirectory;
-    finalRun(targetEip, targetEsp, pageDirectory);
+
+    resumeProcess(state, pageDirectory);
+    __builtin_unreachable();
 }
 
 auto getNewPid() -> pid_t {

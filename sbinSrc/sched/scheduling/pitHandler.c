@@ -59,7 +59,7 @@ void pitHandler(RegisterStatePIT* state) {
     if (procList && procList->len > 1 && ticks % PROCESS_INTERVAL == 0) {
         currentProcess ^= 1;
 
-        printf("Switched to process '%s'", procList->arr[currentProcess]->pname);
+        //printf("Switched to process '%s'", procList->arr[currentProcess]->pname);
         procCtxtSwitch(procList->arr[currentProcess]);
     }
 }

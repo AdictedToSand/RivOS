@@ -26,12 +26,13 @@ u32 readFatEntry(u32 cluster) {
 }
 void makeFatName(const char* normalName, char outbuf[12]) {
     for (u8 i = 0; i < 11; i++) outbuf[i] = ' ';
+    outbuf[11] = '\0';
 
     i32 i = 0;
     u32 nameLen = 0;
     u32 extLen = 0;
     while (normalName[i] && normalName[i] != '/' && normalName[i] != '\\' && normalName[i] != '.') {
-        if (nameLen > 8) return;
+        if (nameLen >= 8) return;
         outbuf[nameLen++] = normalName[i++];
     }
 
@@ -40,7 +41,7 @@ void makeFatName(const char* normalName, char outbuf[12]) {
     if (normalName[i] == '.') {
         i++;
         while (normalName[i] && normalName[i] != '/' && normalName[i] != '\\') {
-            if (extLen > 3) return;
+            if (extLen >= 3) return;
             outbuf[8 + extLen++] = normalName[i++];
         }
     }
@@ -50,7 +51,7 @@ void makeFatName(const char* normalName, char outbuf[12]) {
 void readCluster(u32 cluster, u16* buf) {
     u32 firstSector = clusterToSector(cluster);
     for (u32 s = 0; s < bootSector->sectorsPerCluster; s++) {
-        readSector(firstSector + s, 512, (char*) (buf + (s * 512)));
+        readSector(firstSector + s, 512, (char*) (buf + (s * 256)));
     }
 }
 bool findDirEntryInDir(u32 startCluster, const char* filename, DirEntry* outEntry) {
@@ -137,15 +138,20 @@ bool resolvePath(const char* fp, DirEntry* outEntry) {
 void fsInit(void) {
     u16* bootSectorBuf = alloc(sizeof(Fat32BootSector));
     
-    readSector(0, 256, (char*) bootSectorBuf);
+    readSector(0, 512, (char*) bootSectorBuf);
     bootSector = (Fat32BootSector*) bootSectorBuf;
 
-    if (bootSector->signature != 0x28 && bootSector->signature != 29) {
-        panic("Invalid boot sector FAT32 signature. Execution will not continue");
-        for (;;) asm volatile ("CLI; HLT") ;
+    if (bootSector->signature != 0x28 && bootSector->signature != 0x29) {
+        print("Invalid boot sector FAT32 signature. Execution will not continue. Signature: ");
+        for (;;) asm volatile ("CLI; HLT");
     }
 
+    print("We are here\n");
     dataRegionStart = bootSector->reservedSectors + (bootSector->fatsOnMedia * bootSector->sectorsPerFat32);
+
+    print("Bytes/sector: %u, Sectors/Cluster: %u, root sector: %u, FAT size: %u\n", 
+        bootSector->bytesPerSector, bootSector->sectorsPerCluster,
+        bootSector->rootDirClusterNum, bootSector->sectorsPerFat32);
 }
 File open(const char* fp) {
     File ret = {};
@@ -178,4 +184,5 @@ void read(File f, char* obuf, size_t len) {
     u16* clusterBuf = (u16*) alloc(bytesPerCluster);
 
     size_t bytesRemaining = len < f.size ? len : f.size;
+    (void) obuf; (void) bytesRemaining; (void) len; (void) clusterBuf;
 }
