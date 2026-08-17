@@ -26,6 +26,7 @@ struct RegisterStatePIT {
 // Proper stack setup is not required here
 extern "C" auto pitHandler(RegisterStatePIT* state) -> void {
     asm volatile ("CLI");
+    
     Process* proc = nullptr;
     for (auto& vproc : processes) {
         if (vproc->pid == activeProcessPid) {
@@ -36,7 +37,7 @@ extern "C" auto pitHandler(RegisterStatePIT* state) -> void {
         proc->state->edi = state->edi;
         proc->state->esi = state->esi;
         proc->state->ebp = state->ebp;
-        proc->state->esp = state->esp;
+        proc->state->esp = state->esp + 12; // The CPU pushes errcode and such, account for them
         proc->state->ebx = state->ebx;
         proc->state->edx = state->edx;
         proc->state->ecx = state->ecx;

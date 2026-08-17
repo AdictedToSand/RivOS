@@ -76,7 +76,6 @@ extern "C" auto syscallHandler(SyscInterruptFrame* ifrm) -> void {
             break;
         }
         case SyscallNumbers::Mmap: {
-            Serial::logf("MMap");
             Process* proc = nullptr;
             for (auto& vproc : processes) {
                 if (vproc->pid == activeProcessPid) { proc = vproc; }
@@ -105,13 +104,13 @@ extern "C" auto syscallHandler(SyscInterruptFrame* ifrm) -> void {
             ifrm->eax = virtBase;
             break;
         }
-            //TODO: Replace with pageAlloc()
             //ifrm->eax = (u32) KernelAllocator::alloc(ifrm->edi);
             //break;
      
         case SyscallNumbers::Munmap: {
             // TODO: This is not safe
             //KernelAllocator::free((void*) ifrm->edi);
+
             break;
         }
         case SyscallNumbers::Exit: {

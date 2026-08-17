@@ -37,7 +37,7 @@ struct KernelAllocator {
             if (currentBlock->next == nullptr) {
                 HeapBlock* const next = (HeapBlock*) ((char*) currentBlock + sizeof(HeapBlock) + currentBlock->size);
 
-                if ((char*) next > heapEnd) {
+                if ((char*) next + sizeof(HeapBlock) + bytes > heapEnd) {
                     return nullptr;
                 }
 
@@ -46,7 +46,7 @@ struct KernelAllocator {
                 next->size = bytes;
 
                 currentBlock->next = next;
-            
+
                 return next + 1;
             }
 
