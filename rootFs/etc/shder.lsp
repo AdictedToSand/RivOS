@@ -4,9 +4,15 @@
 ; Nevermind, it just goes wrong after a while.
 (println "Hello, world!")
 
-(var col (rgb 0 255 255))
-(println col)
-(print "Typename: ")
-(println (typename col))
 
-; (fragment col)
+(defun perPixel (x y)
+    (print "Hi")
+    (print "Hello")
+)
+
+; (var col (rgb 0 255 (rgb 0 0 255)))
+; (println col)
+; (print "Typename: ")
+; (println (typename col))
+
+; (fragment)

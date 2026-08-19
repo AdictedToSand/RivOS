@@ -86,7 +86,7 @@ inline void setRegistersTo(RegisterState* s) {
 auto Process::ctxtSwitch() -> void {
     asm volatile ("CLI");
     activeProcessPid = pid;
-    Serial::logf("Context switch to: %s", pname);
+    // Serial::logf("Context switch to: %s", pname);
 
     if (!state->eip || !state->esp) {
         Serial::logf("ctxtSwitch: refusing to jump into pid %u with eip=%x esp=%x", pid, state->eip, state->esp);

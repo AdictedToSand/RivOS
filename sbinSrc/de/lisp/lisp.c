@@ -16,6 +16,18 @@ bool isSkippable(char c) {
     return c == ' ' || c == '\n' || c == '\t';
 }
 
+#define ERROR(code, msg) do {\
+    _Static_assert(_Generic(code, \
+        int: 1, \
+        default: 0), "First argument of ERROR macro should be int code;"); \
+    _Static_assert(_Generic(msg, \
+        const char*: 1, \
+        char*: 1, \
+        default: 0), "Second argument of ERROR macro should be (const) char* msg"); \
+    printf("Vela: An error has ocurred in the lisp interpreter. code=%u,msg=%s", code, msg); \
+    for (;;) ; \
+} while (0);
+
 typedef struct Vector {
     u32 size;
     u32 capac;
@@ -491,6 +503,11 @@ Value execList(Expr* expr) {
 
         Value va = execExpr(a);
         Value vb = execExpr(b);
+
+        if (va.type != VAL_INT || vb.type != VAL_INT) {
+            ERROR(0x02, "Invalid type (math op)");
+        }
+
         if (svEqLit(name, "+"))
             return makeInt(va.intVal + vb.intVal);
         else if (svEqLit(name, "-")) 
@@ -518,12 +535,12 @@ Value execList(Expr* expr) {
             return makeInt(~va.intVal);
         }
     }
-    else if (svEqLit(name, "var")) {
+    else if (svEqLit(name, "glob")) {
         Expr* symb = *(Expr**) vectorAt(&expr->list.items, 1);
         Expr* initExpr = *(Expr**) vectorAt(&expr->list.items, 2);
 
         if (symb->type != EXPR_SYMBOL) {
-            puts("Usage: (var <name> <init>)");
+            ERROR(0x03, "Invalid type for expr (expected symbol)");
         }
 
         Value init = execExpr(initExpr);
@@ -539,7 +556,7 @@ Value execList(Expr* expr) {
         Expr* initExpr = *(Expr**) vectorAt(&expr->list.items, 2);
 
         if (symb->type != EXPR_SYMBOL) {
-            puts("Usage: (var <name> <init>)");
+            ERROR(0x03, "Usage: (var <name> <init>)");
         }
 
         Value init = execExpr(initExpr);
@@ -560,8 +577,7 @@ Value execList(Expr* expr) {
 
                 Value argb = execExpr(returnValue);
                 if (argb.type != VAL_INT) {
-                    printf("Invalid usage of a fragment shader"); 
-                    for (;;) ;
+                    ERROR(0x02, "Executed fragment shader without using a int argument");
                 }
                 putPixel(argb.intVal, x, y);
             }
@@ -576,6 +592,10 @@ Value execList(Expr* expr) {
         Expr* arg2 = *(Expr**) vectorAt(&expr->list.items, 2);
         Expr* arg3 = *(Expr**) vectorAt(&expr->list.items, 3);
 
+        Value v1 = execExpr(arg1);
+        Value v2 = execExpr(arg2);
+        Value v3 = execExpr(arg3);
+
         struct [[gnu::packed]] {
             u8 b;
             u8 g;
@@ -583,9 +603,9 @@ Value execList(Expr* expr) {
             u8 a;
         } argbFmt;
         argbFmt.a = 0x00;
-        argbFmt.r = arg1->intVal;
-        argbFmt.g = arg2->intVal;
-        argbFmt.b = arg3->intVal;
+        argbFmt.r = v1.intVal;
+        argbFmt.g = v2.intVal;
+        argbFmt.b = v3.intVal;
         _Static_assert(sizeof(argbFmt) == sizeof(u32), "Size mismatch between argbFmt and u32");
 
         //TODO: Proper validation
@@ -609,6 +629,38 @@ Value execList(Expr* expr) {
 
         return (Value) {
             .type = VAL_NONE
+        };
+    }
+    else if (svEqLit(name, "defun")) {
+        Expr* const functionNameExpr = *(Expr**) vectorAt(&expr->list.items, 1);
+        Expr* const argsListExpr = *(Expr**) vectorAt(&expr->list.items, 2);
+
+        if (argsListExpr->type != EXPR_LIST) {
+            ERROR(0x02, "Expected list (param list)");
+        }
+        else if (functionNameExpr->type != EXPR_SYMBOL) {
+            ERROR(0x02, "Expected symbol (function name)");
+        }
+
+        SV_ASLIT(functionNameExpr->symbol, fnName, {
+            printf("Function name: \"%s\"\n", fnName);
+        });
+        typeof(argsListExpr->list) argsList = argsListExpr->list;
+
+        for (u32 i = 0; i < argsList.items.size; i++) {
+            Expr* arg = *(Expr**) vectorAt(&argsList.items, i);
+
+            if (arg->type != EXPR_SYMBOL) {
+                ERROR(0x02, "Expected type symbol in defun");
+            }
+
+            SV_ASLIT(arg->symbol, symb, {
+                printf("Param of name: \"%s\"\n", symb);        
+            });
+        }
+
+        return (Value) {
+            .type = VAL_NONE,
         };
     }
     else if (svEqLit(name, "println")) {
@@ -695,6 +747,7 @@ void lispRun(const char* code) {
     u32 pos = 0;
     while (pos < tokens.size) {
         Expr* expr = parseExpr(&tokens, &pos);
+
         Value result = execExpr(expr);
     }
 
