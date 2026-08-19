@@ -18,7 +18,6 @@ void putPixel(u32 argb, u32 x, u32 y) {
     putPixelRap(argb, x, y);
 }
 
-// Name of this is gonna be Vela
 void _start() {
     sysInit();
 

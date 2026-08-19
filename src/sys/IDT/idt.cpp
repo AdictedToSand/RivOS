@@ -130,10 +130,9 @@ void exceptionHandler(InterruptFrame* ifrm) {
     const InterruptTypes itype = interruptToType(ifrm->vector);
 
     Serial::logf(R"(An unhandled interrupt happened. The machine will abort.
-The fault was: #%s
-The fault is of type: %s
-)"
-        , (u8) Terminal::VgaColor::Red,vectorToExceptionName(ifrm->vector), interruptTypeToStr(itype));
+The exception was: #%s
+The exception is of type: %s
+)", vectorToExceptionName(ifrm->vector), interruptTypeToStr(itype));
 
     switch (itype) {
         case InterruptTypes::Fault: handleFault(ifrm->vector, ifrm); break;

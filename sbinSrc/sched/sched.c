@@ -112,7 +112,7 @@ void _start() {
     for (;;) {
         ticks++;
         if (ticks % 0xA000000 == 0) {
-            printf("Sched was called");
+            puts("Sched was called");
         }
     }
 }

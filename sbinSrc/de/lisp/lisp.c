@@ -374,6 +374,7 @@ typedef struct Enviroment {
 void enviromentInit(Enviroment* env) {
     vectorInit(&env->variableMap, sizeof(VariableMapEntry));
 }
+
 void createVariable(Enviroment* env, StringView name, Value init) {
     // Check if variable already exists
     for (u32 i = 0; i < env->variableMap.size; i++) {
@@ -570,8 +571,47 @@ Value execList(Expr* expr) {
             .type = VAL_NONE
         };
     }
+    else if (svEqLit(name, "rgb")) {
+        Expr* arg1 = *(Expr**) vectorAt(&expr->list.items, 1);
+        Expr* arg2 = *(Expr**) vectorAt(&expr->list.items, 2);
+        Expr* arg3 = *(Expr**) vectorAt(&expr->list.items, 3);
 
+        struct [[gnu::packed]] {
+            u8 b;
+            u8 g;
+            u8 r;
+            u8 a;
+        } argbFmt;
+        argbFmt.a = 0x00;
+        argbFmt.r = arg1->intVal;
+        argbFmt.g = arg2->intVal;
+        argbFmt.b = arg3->intVal;
+        _Static_assert(sizeof(argbFmt) == sizeof(u32), "Size mismatch between argbFmt and u32");
+
+        //TODO: Proper validation
+        const u32 argbRet = *((u32*) &argbFmt);
+
+        return makeInt(argbRet);
+    }
     else if (svEqLit(name, "print")) {
+        Expr* arg = *(Expr**) vectorAt(&expr->list.items, 1);
+
+        Value val = execExpr(arg);
+
+        if (val.type == VAL_STRING) {
+            SV_ASLIT(val.strVal, str, {
+                printf("%s", str);
+            });
+        }
+        else if (val.type == VAL_INT) {
+            printf("%u", val.intVal);
+        }
+
+        return (Value) {
+            .type = VAL_NONE
+        };
+    }
+    else if (svEqLit(name, "println")) {
         Expr* arg = *(Expr**) vectorAt(&expr->list.items, 1);
 
         Value val = execExpr(arg);
@@ -581,14 +621,30 @@ Value execList(Expr* expr) {
                 printf("%s\n", str);
             });
         }
-
-        if (val.type == VAL_INT) {
+        else if (val.type == VAL_INT) {
             printf("%u\n", val.intVal);
         }
 
         return (Value) {
-            .type = VAL_NONE
+            .type = VAL_NONE,
         };
+    }
+    else if (svEqLit(name, "typename")) {
+        Expr* arg = *(Expr**) vectorAt(&expr->list.items, 1);
+
+        if (arg->type != EXPR_SYMBOL) {
+            printf("Vela: typename: expected symbol/identifier\n");
+            exit(1);
+        }
+        Value val = getVariable(&globalScope, arg->symbol);
+        
+        switch (val.type) {
+            case VAL_INT: return makeString(svFromLit("Integer"));
+            case VAL_STRING: return makeString(svFromLit("String"));
+            case VAL_NONE: return makeString(svFromLit("None"));
+        }
+
+        return makeString(svFromLit("Unnkown"));
     }
     else if (svEqLit(name, "sin")) {
         Expr* arg = *(Expr**) vectorAt(&expr->list.items, 1);
@@ -598,7 +654,9 @@ Value execList(Expr* expr) {
         return makeInt(sinInt(val.intVal));
     }
 
-    puts("Unknown function");
+    SV_ASLIT(name, nameCStr,{
+        printf("Vela: Unknown function: %s", nameCStr);
+    });
     for (;;) asm volatile ("HLT");
 
     return (Value) {0};

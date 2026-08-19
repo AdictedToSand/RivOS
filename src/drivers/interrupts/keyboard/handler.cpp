@@ -95,11 +95,11 @@ extern "C" auto keyboardHandler() -> void {
         // Display character on screen (this is temporary)
         const fd_t stdout = FileSystem::open("/dev/stdout");
         FileSystem::write(stdout, &addedC, 1);
+
+        // Close leftover fd's
         FileSystem::close(stdout);
         FileSystem::close(stdinFd);
-
     }
-
 
     PIC::sendEoi(1);
 }

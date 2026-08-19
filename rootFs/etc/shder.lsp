@@ -1,4 +1,12 @@
-; (fragment
-;   (^ (% x y) (% y x)))
+;(fragment
+;  (^ (% x y) (% y x)))
 ; The shader above will eventually have a "unknown function???" 
- (fragment 255)
+; Nevermind, it just goes wrong after a while.
+(println "Hello, world!")
+
+(var col (rgb 0 255 255))
+(println col)
+(print "Typename: ")
+(println (typename col))
+
+; (fragment col)

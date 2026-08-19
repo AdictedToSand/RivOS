@@ -4,7 +4,7 @@ CC = $(CROSS)-gcc
 LD = $(CROSS)-ld
 AS = nasm
 
-CFLAGS = -m32 -ffreestanding -nostdlib -static -fno-pie -fno-stack-protector -I../src/lib
+CFLAGS = -m32 -ffreestanding -nostdlib -static -fno-pie -fno-stack-protector -I../src/lib -fno-strict-aliasing
 LDFLAGS = -static -nostdlib
 
 OUT = ../rootFs/krn/bin

@@ -27,7 +27,7 @@ struct RegisterStatePIT {
 extern "C" auto pitHandler(RegisterStatePIT* state) -> void {
     asm volatile ("CLI");
     
-    Process* proc = nullptr;
+    /*Process* proc = nullptr;
     for (auto& vproc : processes) {
         if (vproc->pid == activeProcessPid) {
             proc = vproc;
@@ -45,7 +45,7 @@ extern "C" auto pitHandler(RegisterStatePIT* state) -> void {
         proc->state->eip = state->eip;
         proc->state->cs = state->cs;
         proc->state->eflags = state->eflags;
-    }
+    }*/
     auto pitEntry = SysModuleHandler::getFuncEntry(SysModuleId::PIT);
     if (pitEntry) {
         static RegisterStatePIT ownerVisibleState;
@@ -58,5 +58,6 @@ extern "C" auto pitHandler(RegisterStatePIT* state) -> void {
         Mmu::switchAddressSpace(interrupted);
     }
     ticks++;
+    // asm volatile ("STI"); I have no idea why the fuck it works without this
     PIC::sendEoi(0);
 }
