@@ -34,7 +34,9 @@ struct StdoutDevSubDriver : DevSubDriver {
         for (size_t i = 0; i < len && i < 4096; i++) stdout[i] = conts[i];
         
         Terminal::write(conts, len);
-        Serial::logf("[STDOUT WRITE]: %s", conts);
+        char* tmpBuf = (char*) KernelAllocator::alloc(len + 1);
+        strcpyLen(tmpBuf, conts, len);
+        Serial::logf("[STDOUT WRITE]: %s", tmpBuf);
 
         return FileSystemDriver::SuccessCodes::Sucess;
     }

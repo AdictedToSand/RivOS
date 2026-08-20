@@ -44,6 +44,12 @@ static inline char* strcpy(char* dest, const char* src) {
 
     return ret;
 }
+static inline void strcpyLen(char* dest, const char* src, u32 len) {
+    for (u32 i = 0; i < len; i++) {
+        dest[i] = src[i];
+    }
+    dest[len] = 0;
+}
 static inline auto strcat(char* dest, const char* src) -> char* {
     char* end = dest;
 

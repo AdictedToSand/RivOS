@@ -379,12 +379,35 @@ typedef struct VariableMapEntry {
     Value val;
 } VariableMapEntry;
 
+typedef struct FunctionEntry {
+    StringView fnName;
+    Expr** body;
+    char** params;
+} FunctionEntry;  
+
 typedef struct Enviroment {
+    Vector functions;
     Vector variableMap;
 } Enviroment;
 
 void enviromentInit(Enviroment* env) {
+    vectorInit(&env->functions, sizeof(FunctionEntry));
     vectorInit(&env->variableMap, sizeof(VariableMapEntry));
+}
+void addFunction(Enviroment* env, StringView fnName, char** paraml, Expr** body) {
+    FunctionEntry* fnEntry = mmap(sizeof(FunctionEntry));
+    fnEntry->body = body;
+    fnEntry->params = paraml;
+    fnEntry->fnName = fnName;
+    vectorPushBack(&env->functions, fnEntry);
+}
+FunctionEntry* findFunction(Enviroment* env, StringView fnName) {
+    for (u32 i = 0; i < env->functions.size; i++) {
+        if (svEq(((FunctionEntry*) vectorAt(&env->functions, i))->fnName, fnName)) {
+            return vectorAt(&env->functions, i);
+        }
+    }
+    return NULL;
 }
 
 void createVariable(Enviroment* env, StringView name, Value init) {
@@ -459,7 +482,6 @@ Value execExpr(Expr* expr);
 extern u32 screenWidth;
 extern u32 screenHeight;
 
-void flush();
 void putPixel(u32 argb, u32 x, u32 y);
 
 float fabs(float x) {
@@ -576,9 +598,9 @@ Value execList(Expr* expr) {
                 setVariable(&globalScope, svFromLit("y"), makeInt(y));
 
                 Value argb = execExpr(returnValue);
-                if (argb.type != VAL_INT) {
+                /*if (argb.type != VAL_INT) {
                     ERROR(0x02, "Executed fragment shader without using a int argument");
-                }
+                }*/
                 putPixel(argb.intVal, x, y);
             }
         }
@@ -647,6 +669,8 @@ Value execList(Expr* expr) {
         });
         typeof(argsListExpr->list) argsList = argsListExpr->list;
 
+        char** paramNamesStorage = mmap(sizeof(char*) * argsList.items.size);
+
         for (u32 i = 0; i < argsList.items.size; i++) {
             Expr* arg = *(Expr**) vectorAt(&argsList.items, i);
 
@@ -654,9 +678,9 @@ Value execList(Expr* expr) {
                 ERROR(0x02, "Expected type symbol in defun");
             }
 
-            SV_ASLIT(arg->symbol, symb, {
-                printf("Param of name: \"%s\"\n", symb);        
-            });
+            char* const paramNameStorage = mmap(arg->symbol.len + 1);
+            strcpyLen(paramNameStorage, arg->symbol.conts, arg->symbol.len);
+            paramNamesStorage[i] = paramNameStorage;
         }
 
         return (Value) {

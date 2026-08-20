@@ -35,6 +35,9 @@ void _start() {
     setFunc("PIT", (void*) pitHandler);
     rap = parseRap();
 
+    char* conts = "Hello, world! uwu";
+    write(stdout, conts, strlen(conts));
+
     LoadProcessT loadProcess = getRapAddr(&rap, "loadProcess");
     void (*runProcess)(const Process* proc) = getRapAddr(&rap, "runProcess");
     const ProcessList* (*getProcessList)(void) = getRapAddr(&rap, "getProcessList");

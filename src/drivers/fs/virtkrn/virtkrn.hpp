@@ -82,6 +82,11 @@ public:
                 obuf[currentInd++] = '\n';
             }
         }
+#ifdef DEBUG
+        static bool flag = false;
+        if (!flag) Serial::logf("Complete rap read=%s", obuf);
+        flag = true;
+#endif
         return FileSystemDriver::SuccessCodes::Sucess;
     }
     auto init() -> void override {
@@ -114,11 +119,11 @@ public:
             "getFbSizeBytes",
             {}
         ));
-        /*functions.pushBack(Function(
+        functions.pushBack(Function(
             (void*) VisualsPidEnforced::getPitch,
             "getFbPitch",
             {}
-        ));*/
+        ));
         functions.pushBack(Function(
             (void*) loadProcessFromFile,
             "loadProcess",

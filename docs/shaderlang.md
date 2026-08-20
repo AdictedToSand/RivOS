@@ -12,13 +12,15 @@ The RivOS shader language is a tiny subset from the features of lisp. Features:
 - set varname lit
 - fragment expr
 - "+ - * / %" lhs rhs
-- print expr
+- print(ln) expr
+- defun
 - TODO: if, while, maybe functions, >> << > <
 
 ## What does a program look like?
 
 A program demonstrating all the featurs in the RivOS shader language is:
 
+NOTE: This example will soon be outdated in favor of a perPixel function
 ~~~Lisp
 (fragment (+ (% x y) (% y x))) 
 

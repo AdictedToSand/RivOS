@@ -96,7 +96,6 @@ RapFile parseRap(void) {
 
         entryIndex++;
     }
-
     close(rapFd);
     munmap(buf);
 
