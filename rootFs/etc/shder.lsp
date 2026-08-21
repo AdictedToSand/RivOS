@@ -1,16 +1,18 @@
- (fragment
-  (^ (% x y) (% y x)))
+; (fragment
+;  (^ (% x y) (% y x)))
 ; The shader above will eventually have a "unknown function???" 
 ; Nevermind, it just goes wrong after a while.
-(println "Hello, world!")
-
-
+; (println "Before perPixel")
 (defun perPixel (x y)
-    (print "Hi")
-    (print "Hello")
+    ; (print "Hi")
+    ; (print "Hello")
     (ret (^ (% x y) (% y x)))
+;    (ret 6)
 )
-;(println (perPixel 5 2))
+; (println "After perPixel")
+(println (perPixel 5 3))
+
+(fragment (perPixel x y))
 
 ;(perPixelHandlr set perPixel)
 ; OR (perPixelHandlr perPixel)
@@ -24,3 +26,5 @@
 ; Do need to implement loop tho
 
 ; (fragment)
+
+; Maybe (defun fragment) and just automatically call that and loop it?

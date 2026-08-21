@@ -8,7 +8,7 @@ The RivOS shader language is a custom shader language required by the desktop en
 
 The RivOS shader language is a tiny subset from the features of lisp. Features:
 
-- var varname lit
+- glob varname lit
 - set varname lit
 - fragment expr
 - "+ - * / %" lhs rhs

@@ -383,6 +383,8 @@ typedef struct FunctionEntry {
     StringView fnName;
     Expr** body;
     char** params;
+    u32 paramc;
+    u32 bodyc;
 } FunctionEntry;  
 
 typedef struct Enviroment {
@@ -394,11 +396,13 @@ void enviromentInit(Enviroment* env) {
     vectorInit(&env->functions, sizeof(FunctionEntry));
     vectorInit(&env->variableMap, sizeof(VariableMapEntry));
 }
-void addFunction(Enviroment* env, StringView fnName, char** paraml, Expr** body) {
+void addFunction(Enviroment* env, StringView fnName, char** paraml, Expr** body, u32 paramc, u32 bodyc) {
     FunctionEntry* fnEntry = mmap(sizeof(FunctionEntry));
     fnEntry->body = body;
     fnEntry->params = paraml;
     fnEntry->fnName = fnName;
+    fnEntry->bodyc = bodyc;
+    fnEntry->paramc = paramc;
     vectorPushBack(&env->functions, fnEntry);
 }
 FunctionEntry* findFunction(Enviroment* env, StringView fnName) {
@@ -507,6 +511,8 @@ int sinInt(int x) {
 
     return y;
 }
+
+Value lastReturnvalue;
 
 Value execList(Expr* expr) {
     Expr* first = *(Expr**) vectorAt(&expr->list.items, 0);
@@ -682,6 +688,8 @@ Value execList(Expr* expr) {
             strcpyLen(paramNameStorage, arg->symbol.conts, arg->symbol.len);
             paramNamesStorage[i] = paramNameStorage;
         }
+        addFunction(&globalScope, functionNameExpr->symbol, paramNamesStorage, vectorAt(&expr->list.items, 3),
+            argsList.items.size, expr->list.items.size - 3);
 
         return (Value) {
             .type = VAL_NONE,
@@ -729,7 +737,37 @@ Value execList(Expr* expr) {
         if (val.type != VAL_INT) return makeInt(0);
         return makeInt(sinInt(val.intVal));
     }
+    else if (svEqLit(name, "ret")) {
+        lastReturnvalue = execExpr(*(Expr**) vectorAt(&expr->list.items, 1));
 
+        return (Value) {
+            .type = VAL_NONE,
+        };
+    }
+    else {
+        FunctionEntry* fnEntry = findFunction(&globalScope, name);
+        if (!fnEntry) goto errorUnknownFunction;
+        //TODO very much: parameters are global!!!
+
+        for (u32 i = 0; i < fnEntry->paramc; i++) {
+            //createVariable(Enviroment *env, StringView name, Value init)
+            createVariable(&globalScope, svFromLit(fnEntry->params[i]),
+    //                                                 expr->list.items[0] == fnName
+            makeInt(0)); // 0 is the default, the next line will set it.
+            setVariable(&globalScope, svFromLit(fnEntry->params[i]),
+                execExpr(*(Expr**) vectorAt(&expr->list.items, i + 1)));
+            // sreateVariable will not mod an existing variable, so this does that either way.
+        }
+
+        for (u32 i = 0; i < fnEntry->bodyc; i++) {
+            execExpr(fnEntry->body[i]);
+        }
+
+        return lastReturnvalue;
+    }
+
+errorUnknownFunction:
+    if (0) {} // Make C not yap
     SV_ASLIT(name, nameCStr,{
         printf("Vela: Unknown function: %s", nameCStr);
     });
