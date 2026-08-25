@@ -2,7 +2,7 @@
 
 ## What is it?
 
-The RivOS shader language is a custom shader language required by the desktop enviroment
+The RivOS shader language is a custom shader language used by the desktop enviroment and thus native apps
 
 ## How does it look like?
 
@@ -18,40 +18,40 @@ The RivOS shader language is a tiny subset from the features of lisp. Features:
 
 ## What does a program look like?
 
-A program demonstrating all the featurs in the RivOS shader language is:
-
-NOTE: This example will soon be outdated in favor of a perPixel function
+A program demonstrating some of the features in the RivOS shader language is:
 ~~~Lisp
-(fragment (+ (% x y) (% y x))) 
-
-(print (+ x y))
+(println "Hello, world!")
+(defun fragment (x y) 
+    (ret (^ (% x y) (% y x))))
 ~~~
 
-Let's go over everything in this program:
+Let's go over it!
 
-### Fragment
+### println "Hello, world!"
 
-This is a fragment shader, which you might recognize (if you once did shaders) runs for every pixel on the screen.
+Just a simple hello world.
 
-The left side of this will be the return value.
+### defun fragment (x y)
 
-### + and %
+This declares a function named fragment, taking input x and y. At the end of any RivOS shader language file should a fragment function be defined which takes in two parameters x and y (Note that names can vary, as long as paramcount == 2).
 
-These are the common plus and modulo operations you can find in other languages like C. Division and modulo will return a 0 if the rhs is 0.
+### ret (^ (% x y) (% y x))
 
-### x and y
+This returns the value calculated by (^ (% x y) (% y x)). Note that the modulo and divison operators are programmed such that with x=a(/or%)b if b=0, x=0. The equivalent C would be:
 
-If you have a keen eye, you might notice x and y are undefined. However, in the global scope of a RivOS shader will always be x and y. Before any fragment shader, these are 0. Afterwards they will be whatever pixel your fragment shader was last at.
-
-### Print 
-
-This will output the left hand side value to the screen.
+~~~C
+int fragment(int x, int y) {
+    return (y != 0 ? (x % y) : 0) ^ (x != 0 ? (y % x) : 0);
+}
+~~~
+Note that ret is required, and unlike in common lisp, the last value will not be seen as the return value.
 
 ## Future
 
 ### features
 
 This is currently a very bare metal version, later there will be additional support for features like textures, meshes, compute shaders etc..
+(As well as work on a real GPU, E.G. a VirtIO device or an AMD card (or simply translate RivOS shader lang -> OpenGL/Vulcan))
 
 ### Performance
 

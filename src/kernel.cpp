@@ -99,7 +99,11 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
 
     PIC::init();
 
+    HardwareInterrupts::init();
+
     PIT::init(1000);
+
+    asm volatile ("STI");
 
     Mmu::init();
     
@@ -117,8 +121,6 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
         Mmu::mapPage((void*) addr, (void*) addr, Mmu::FLAGS_WRITABLE);
     }
     SysModuleHandler::init();
-
-    HardwareInterrupts::init();
 
     Config initConf = {};
     initConf.fromFile("/krn/init.cfg");

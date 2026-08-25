@@ -1,7 +1,18 @@
 all: 
-	mkdir -p isodir/boot
-	mkdir build
-	make rivboot
+	@mkdir -p isodir/boot
+	@mkdir -p build
+	@clear
+	@echo '---NASM---'
+	nasm --version
+	@# make is already installed (obviously)
+	@echo '---GCC/G++--'
+	@i686-elf-g++ --version
+	@i686-elf-gcc --version
+	@echo '---PYTHON---'
+	@python3 --version
+	@echo '---QEMU---'
+	@qemu-system-i386 --version
+	@make rivboot
 
 
 prepare_disk:

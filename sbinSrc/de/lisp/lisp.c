@@ -405,6 +405,12 @@ void addFunction(Enviroment* env, StringView fnName, char** paraml, Expr** body,
     fnEntry->paramc = paramc;
     vectorPushBack(&env->functions, fnEntry);
 }
+bool functionExists(Enviroment* env, StringView name) {
+    for (u32 i = 0; i < env->functions.size; i++) {
+        if (svEq((*(FunctionEntry*) vectorAt(&env->functions, i)).fnName, name)) return true;
+    }
+    return false;
+}
 FunctionEntry* findFunction(Enviroment* env, StringView fnName) {
     for (u32 i = 0; i < env->functions.size; i++) {
         if (svEq(((FunctionEntry*) vectorAt(&env->functions, i))->fnName, fnName)) {
@@ -444,7 +450,7 @@ void setVariable(Enviroment* env, StringView name, Value init) {
     }
 
     if (i == -1) {
-        printf("Undefined variable: %s\n", name);
+        printf("Undefined variable: '%s'\n", name);
         for (;;) asm volatile ("HLT");
     }
 
@@ -590,26 +596,6 @@ Value execList(Expr* expr) {
         Value init = execExpr(initExpr);
 
         setVariable(&globalScope, symb->symbol, init);
-
-        return (Value) {
-            .type = VAL_NONE
-        };
-    }
-    else if (svEqLit(name, "fragment")) {
-        Expr* returnValue = *(Expr**) vectorAt(&expr->list.items, 1);      
-
-        for (u32 x = 0; x < screenWidth; x++) {
-            for (u32 y = 0; y < screenHeight; y++) {
-                setVariable(&globalScope, svFromLit("x"), makeInt(x));
-                setVariable(&globalScope, svFromLit("y"), makeInt(y));
-
-                Value argb = execExpr(returnValue);
-                /*if (argb.type != VAL_INT) {
-                    ERROR(0x02, "Executed fragment shader without using a int argument");
-                }*/
-                putPixel(argb.intVal, x, y);
-            }
-        }
 
         return (Value) {
             .type = VAL_NONE
@@ -803,8 +789,6 @@ void lispRun(const char* code) {
     tokenize(code, &tokens); 
 
     enviromentInit(&globalScope);
-    createVariable(&globalScope, svFromLit("x"), makeInt(0));
-    createVariable(&globalScope, svFromLit("y"), makeInt(0));
 
     u32 pos = 0;
     while (pos < tokens.size) {
@@ -813,5 +797,33 @@ void lispRun(const char* code) {
         Value result = execExpr(expr);
     }
 
+    FunctionEntry* func = findFunction(&globalScope, svFromLit("fragment"));
+    if (!func) {
+        ERROR(0x04, "Expected fragment function: none was found.");
+    }
+    if (func->paramc != 2) {
+        ERROR(0x05, "Invalid signature of fragment shader: expected paramc==2");
+    }
+
+    for (u32 x = 0; x < screenWidth; x++) {
+        for (u32 y = 0; y < screenHeight; y++) {
+            for (u32 i = 0; i < 2; i++) {
+                //createVariable(Enviroment *env, StringView name, Value init)
+                createVariable(&globalScope, svFromLit(func->params[i]),
+                    makeInt(0)); // 0 is the default, the next line will set it.
+                setVariable(&globalScope, svFromLit(func->params[i]),
+                    makeInt(i == 0 ? x : y));
+                // reateVariable will not mod an existing variable, so this does that either way.
+            }
+
+            for (u32 i = 0; i < func->bodyc; i++) {
+                execExpr(func->body[i]);
+            }
+            // No safety checks for extra performance
+            //putPixel(u32 argb, u32 x, u32 y)
+            putPixel(lastReturnvalue.intVal, x, y);
+
+        } 
+    }
     vectorFree(&tokens);
 }

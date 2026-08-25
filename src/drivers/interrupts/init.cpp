@@ -17,5 +17,5 @@ auto HardwareInterrupts::init() -> void {
     PIC::irqClearMask(0);
     PIC::irqClearMask(1);
 
-    asm volatile ("STI");
+    // asm volatile ("STI");
 }

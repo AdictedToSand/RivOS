@@ -58,6 +58,7 @@ public:
         if (x >= fbWidth || y >= fbHeight) {
             Serial::logf("putPixel OOB: x=%u y=%u (screen %ux%u) idx=%u pixels=%x", 
                 x, y, fbWidth, fbHeight, idx, (u32) pixels);
+            return;
         }
         pixels[idx] = argb;
     }

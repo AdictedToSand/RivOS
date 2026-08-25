@@ -38,6 +38,8 @@ SECTIONS
 
     .ctors ALIGN(4) : {
         ctorsStart = .;
+        KEEP(*(SORT(.init_array)))
+        KEEP(*(SORT(.init_array.*)))
         KEEP(*(SORT(.ctors)))
         KEEP(*(SORT(.ctors.*)))
         ctorsEnd = .;

@@ -23,16 +23,31 @@ struc InterruptFrame
     .ss:        resd 1
 endstruc
 
+section .bss 
+
+align 16
+global exceptionStackBottom
+global exceptionStackTop
+exceptionStackBottom: resb 16384
+exceptionStackTop:
+
+section .text
 
 %macro isr_err_stub 1
 isr_stub_%+%1:
     PUSH %1
 
-    PUSHA 
+    PUSHA
+    MOV eax, esp
+    MOV esp, exceptionStackTop
+    PUSH eax
 
-    PUSH esp
+    PUSH eax
     CALL exceptionHandler
     ADD esp, 4
+
+    POP eax
+    MOV esp, eax
 
     POPA
 
@@ -50,9 +65,16 @@ isr_stub_%+%1:
 
     PUSHA
 
-    PUSH esp
+    MOV eax, esp
+    MOV esp, exceptionStackTop
+    PUSH eax
+
+    PUSH eax
     CALL exceptionHandler
     ADD esp, 4
+
+    POP eax
+    MOV esp, eax
 
     POPA
 
@@ -93,8 +115,6 @@ isr_no_err_stub 28
 isr_no_err_stub 29
 isr_err_stub    30
 isr_no_err_stub 31
-
-isr_no_err_stub 0x80
 
 global isr_stub_table
 isr_stub_table:

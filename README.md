@@ -81,6 +81,12 @@ Again, you should use the package manager of your distro.
         sudo pacman -S coreutils
     ~~~
 
+You can simply run:
+~~~Bash
+make 
+~~~
+to test if most of the required programs are installed.
+
 ## Running the operating system
 
 In here I will describe all the targets of the Makefile:
@@ -93,7 +99,7 @@ This target will be ran if you just type
 make
 ~~~
 
-. This target will simply execute the build_dbg target.
+This target will test all binaries (if they exist?) will *try* to compile the minimum required stuff
 
 ### prepare_disk
 
