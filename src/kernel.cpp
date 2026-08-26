@@ -39,6 +39,8 @@
 
 #include <PCI/pci.hpp>
 
+#include <initramfs/init.hpp>
+
 typedef void (*ctor_t)();
 
 extern "C" ctor_t ctorsStart[];
@@ -102,6 +104,9 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
     HardwareInterrupts::init();
 
     PIT::init(1000);
+
+    InitRamFs::init(mbiAddr);
+    for (;;) ;
 
     asm volatile ("STI");
 

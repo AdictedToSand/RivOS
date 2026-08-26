@@ -1,3 +1,9 @@
+INITRAMFS_DIR := initramfs
+INITRAMFS_IMG := isodir/boot/initramfs.img
+
+prepare_initramfs:
+	 echo "Hello, world!" > $(INITRAMFS_IMG)
+
 all: 
 	@mkdir -p isodir/boot
 	@mkdir -p build
@@ -29,6 +35,7 @@ prepare_disk:
 	@dd if=/dev/zero of=build/rootfs.img bs=1M count=64
 	@mkfs.fat -F 32 build/rootfs.img
 	@mcopy -i build/rootfs.img -s rootFs/* ::
+	make prepare_initramfs
 
 build_init:
 	@$(eval STAGE2_SIZE := $(shell stat -c%s build/stage2))
@@ -59,6 +66,7 @@ grub: build_dbg
 	@mkdir -p isodir/boot/grub
 	@cp build/RivOS isodir/boot/RivOS
 	@cp grub.cfg isodir/boot/grub/
+	@make prepare_initramfs
 	@grub-mkrescue -o build/RivOS.iso isodir
 
 
@@ -99,7 +107,6 @@ debug_rivboot: rivboot
 		-serial stdio \
 		-s -S \
 		-boot c
-
 
 mr: build_dbg grub prepare_disk run
 
