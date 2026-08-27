@@ -4,21 +4,38 @@ The rivfs is a filesystem designed to be simple. It is mainly used for the initr
 
 NOTE: This document will present stuff in a pseudo language. It is best to assume any struct not label __packed__ (__ packed __ but markdown) or just no struct label at all.
 NOTE: All signed/unsigned integers are in little endian.
+NOTE: Any enum type will simply just continue forwards, E.G. 
+
+~~~C++
+enum Enum : u32 {
+    f1,
+    f2
+}
+~~~
+is equal to
+~~~C++
+enum Enum : u32 {
+    f1 = 0,
+    f2 = 1,
+}
+~~~
 
 ## How does it work?
 
 A rivfs starts with a header. It basically contains:
 
 ~~~Rust
-magic: char[4] // Magic to verify it's a rivfs. Should be "riFs"
+magic: char[5] // Magic to verify it's a rivfs. Should be "rivfs"
 fphSize: u32 // File position header size. The file position header will be discussed later.
+// Mainly usefull when newer versions since the size may be unknown and ya can just skip past it.
 // NOTE: Whenever a position is used, it's a *RELATIVE* position. To the start of the filesystem (E.G. magic[0])
 fphPos: u32
 vers: u8[2] // Version of rivfs, for now should both should be 0. The version format is vers[0] is major vers[1] is minor
 enum Flags : u32 {
+    FLGS_NONE
     FLGS_RONLY, // Should be on. Rivfs is not meant for modification.
-    // Reserved for later.
-};
+    // Reserved for later. (Should be a power of 2)
+} flgs;
 ~~~
 
 ## File position header
@@ -32,7 +49,7 @@ dirstart: u32 // Start of the first dir.
 fstart: u32 // Start of the first file.
 enum Flags : u32 {
     // Reserved.
-}
+} flgs
 ~~~
 
 ## File
@@ -103,7 +120,7 @@ A directory is laid out similar to a FPH, with some minor differences. The struc
 ~~~Rust
 struct __packed__ {
     len: u32
-    conts: char*
+    conts: char // (first item of array.) A char is 8bit
 } dnSv
 dirhdrAm: u16
 fAm: u16
@@ -111,7 +128,7 @@ dirstart: u32
 fstart: u32
 enum Flags {
     // Currently unused
-}
+} flgs
 ~~~
 NOTE: EOF is the same as in a file.
 
