@@ -120,13 +120,13 @@ A directory is laid out similar to a FPH, with some minor differences. The struc
 ~~~Rust
 struct __packed__ {
     len: u32
-    conts: char // (first item of array.) A char is 8bit
+    conts: char[] // (first item of array.) A char is 8bit
 } dnSv
 dirhdrAm: u16
 fAm: u16
 dirstart: u32
 fstart: u32
-enum Flags {
+enum Flags : u32 {
     // Currently unused
 } flgs
 ~~~
