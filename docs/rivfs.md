@@ -99,7 +99,7 @@ fn findFInDir(fp: String) {
 ~~~C
 fpSv = {
     .len = 0,
-    .conts = 0,
+    // Conts thus does not exist!
 }
 ~~~
 Is a EOF and signifies the end of the directory.
@@ -134,7 +134,7 @@ NOTE: EOF is the same as in a file.
 
 ## Generating a rivfs
 
-RivOS will include a rust binary inside initramfs/genfs/target/(debug|release)/genfs which will allow for
+RivOS will include a C++ binary inside initramfs/genfs/target/(debug|release)/genfs which will allow for
 exec <<unused>srcdir> <<unused>destDir>
 NOTE: Currently incomplete.
 

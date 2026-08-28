@@ -1,7 +1,9 @@
 #include <array>
 #include <cstdint>
+#include <cstring>
 #include <format>
 #include <print>
+#include <span>
 #include <stdexcept>
 #include <string_view>
 #include <vector>
@@ -79,6 +81,22 @@ struct [[gnu::packed]] FilePositionHeader {
         dirHdrAm(dirHdrAm), fAm(fAm), dirstart(dirstart), fstart(fstart), flgs((Flags) flgs) {}
 };
 
+void pushU16LE(std::vector<uint8_t>& out, uint16_t value) {
+    out.push_back((uint8_t) (value & 0xFF));
+    out.push_back((uint8_t) ((value >> 8) & 0xFF));
+}
+
+void pushU32LE(std::vector<uint8_t>& out, uint32_t value) {
+    out.push_back((uint8_t) (value & 0xFF));
+    out.push_back((uint8_t) ((value >> 8) & 0xFF));
+    out.push_back((uint8_t) ((value >> 16) & 0xFF));
+    out.push_back((uint8_t) ((value >> 24) & 0xFF));
+}
+void pushPtr(std::vector<uint8_t>& out, uintptr_t value) {
+    for (size_t i = 0; i < sizeof(uintptr_t); i++)
+        out.push_back((uint8_t) ((value >> (i * 8)) & 0xFF));
+}
+
 struct [[gnu::packed]] DirEntry {
     // IMPORTANT: Construct dnSv before this!
     uint16_t dirHdrAm;
@@ -88,17 +106,137 @@ struct [[gnu::packed]] DirEntry {
     enum class Flags : uint32_t {
         None
     } flgs;
+
+    DirEntry(uint16_t dirHdrAm, uint16_t fAm, uint32_t dirstart, uint32_t fstart) :
+        dirHdrAm(dirHdrAm), fAm(fAm), dirstart(dirstart), fstart(fstart) {}
+
+    auto withName(std::string_view dn) -> std::vector<uint8_t> {
+        std::vector<uint8_t> ret;
+        pushU32LE(ret, dn.length());
+        ret.insert(ret.end(), dn.begin(), dn.end());
+
+        pushU16LE(ret, dirHdrAm);
+        pushU16LE(ret, fAm);
+        pushU32LE(ret, dirstart);
+        pushU32LE(ret, fstart);
+
+        return ret;
+    }
+    auto eof() -> std::vector<uint8_t> {
+        std::vector<uint8_t> ret = {};
+        pushU32LE(ret, 0);
+        // Conts does not exist!
+
+        pushU16LE(ret, dirHdrAm);
+        pushU16LE(ret, fAm);
+        pushU32LE(ret, dirstart);
+        pushU32LE(ret, fstart);
+
+        return ret;
+    }
 };
 struct [[gnu::packed]] FileEntry { 
     // IMPORTANT: Construct fnSv before this!
-    uint32_t filesize;
-    char conts[]; // Must == filesize!
+    // IMPORTANT: Construct contents with sizeof(contents) == filesize
+    
+    FileEntry() {}
+
+    auto genf(const std::span<const uint8_t> conts, std::string_view fn) -> std::vector<uint8_t> {
+        std::vector<uint8_t> ret = {};
+
+        pushU32LE(ret, fn.length());
+        ret.insert(ret.end(), fn.begin(), fn.end());
+        
+        pushU32LE(ret, conts.size());
+        ret.insert(ret.end(), conts.begin(), conts.end());
+
+        return ret;
+    }
+    auto eof() -> std::vector<uint8_t> {
+        std::vector<uint8_t> ret = {};
+        pushU32LE(ret, 0);
+        // No filename needed!
+        pushU32LE(ret, 0); // Filesize
+        // Conts not needed.
+
+        return ret;
+    }
+};
+struct FileData {
+    std::vector<uint8_t> filedata;
+    std::string fname;
+
+    FileData(std::vector<uint8_t> filedata, std::string fname) :
+        filedata(filedata), fname(fname) {}
 };
 
 struct [[gnu::packed]] SV {
     uint32_t len;
     char conts[];
 };
+
+std::vector<uint8_t> readFile(const std::filesystem::path& path) {
+    std::ifstream file(path, std::ios::binary);
+
+    if (!file)
+        throw std::runtime_error("Failed to open file");
+
+    const auto size = std::filesystem::file_size(path);
+
+    std::vector<uint8_t> data(size);
+    file.read(reinterpret_cast<char*>(data.data()), size);
+
+    return data;
+}
+struct BuiltDir {
+    uint32_t dirstart;
+    uint32_t fstart;
+    uint16_t dirHdrAm;
+    uint16_t fAm;
+};
+uint32_t writeFileList(std::vector<uint8_t>& buf, const std::filesystem::path& dirPath, uint16_t& fAmOut) {
+    uint32_t fstart = (uint32_t) buf.size();
+    fAmOut = 0;
+    for (auto& entry : std::filesystem::directory_iterator(dirPath)) {
+        if (entry.is_directory()) continue;
+        auto data = readFile(entry.path());
+        std::string fname = entry.path().filename().string();
+        FileEntry fe{};
+        auto bytes = fe.genf(data, fname);
+        buf.insert(buf.end(), bytes.begin(), bytes.end());
+        fAmOut++;
+    }
+    FileEntry feof{};
+    auto eofBytes = feof.eof();
+    buf.insert(buf.end(), eofBytes.begin(), eofBytes.end());
+    return fstart;
+}
+BuiltDir buildDir(std::vector<uint8_t>& buf, const std::filesystem::path& dirPath) {
+    uint16_t fAm = 0;
+    uint32_t fstart = writeFileList(buf, dirPath, fAm);
+
+    struct Pending { std::string name; BuiltDir sub; };
+    std::vector<Pending> subdirs;
+    for (auto& entry : std::filesystem::directory_iterator(dirPath)) {
+        if (!entry.is_directory()) continue;
+        // Recurse FIRST — this is what guarantees dirstart/fstart below are real,
+        // already-written offsets by the time we reference them.
+        BuiltDir sub = buildDir(buf, entry.path());
+        subdirs.push_back({entry.path().filename().string(), sub});
+    }
+
+    uint32_t dirstart = (uint32_t) buf.size();
+    for (auto& p : subdirs) {
+        DirEntry de(p.sub.dirHdrAm, p.sub.fAm, p.sub.dirstart, p.sub.fstart);
+        auto bytes = de.withName(p.name);
+        buf.insert(buf.end(), bytes.begin(), bytes.end());
+    }
+    DirEntry deof(0, 0, 0, 0);
+    auto dEofBytes = deof.eof();
+    buf.insert(buf.end(), dEofBytes.begin(), dEofBytes.end());
+
+    return BuiltDir{dirstart, fstart, (uint16_t) subdirs.size(), fAm};
+}
 
 int main(int argc, char* argv[]) {
     InputFlags flgs;
@@ -114,10 +252,10 @@ int main(int argc, char* argv[]) {
     if (inputDir.is_relative()) {
         inputDir = std::filesystem::path(currentShPath) / inputDir;
     }
-    std::println("Input file absolute path: {}", inputDir.c_str());
+    std::println("Input dir absolute path: {}", inputDir.c_str());
     std::filesystem::path outputFilePath = currentShPath;
     outputFilePath = outputFilePath / flgs.getFlg(1);
-    std::ofstream outputFile(outputFilePath);
+    std::ofstream outputFile(outputFilePath, std::ios::binary | std::ios::trunc);
     std::println("Output file(path)={}", outputFilePath.string());
     if (!outputFile) {
         std::println("Opening output file failed\nNOTE: This is not caused by the file not existing");
@@ -136,6 +274,8 @@ int main(int argc, char* argv[]) {
 
     uint32_t rootTotalDirNameLen = 0;
 
+    std::vector<FileData> totalRootFileData = {};
+
     for (const auto& entry : std::filesystem::directory_iterator(inputDir)) {
         if (entry.is_directory()) {
             const std::string dname = entry.path().filename().string();
@@ -144,6 +284,8 @@ int main(int argc, char* argv[]) {
             rootDirCount++;
         }
         else {
+            std::println("File added: {}(={} bytes)", entry.path().filename().string(), entry.file_size());
+            totalRootFileData.push_back(FileData(readFile(entry.path()), entry.path().filename()));
             rootFileCount++;
         }
     }
@@ -153,21 +295,38 @@ int main(int argc, char* argv[]) {
     static_assert(sizeof(RivFsHeader) == 19, "Sizeof(RivFsHeader) != 19");
     static_assert(sizeof(FilePositionHeader) == 16, "Sizeof(FilePositionHeader) != 16");
     
-    // RivFsHeader(uint32_t ifphSize, uint32_t ifphPos, std::array<uint8_t, 2> ivers, Flags iflgs)
-    // FilePositionHeader(uint16_t dirHdrAm, uint16_t fAm, uint32_t dirstart, uint32_t fstart, uint32_t flgs)
-    
-    const auto fphPos = sizeof(RivFsHeader);
-    const std::array<uint8_t, 2> vers = {0, 0}; 
-    std::println("rivfs version: {}.{}", vers[0], vers[1]);
-    RivFsHeader hdr(sizeof(FilePositionHeader), fphPos, vers, RivFsHeader::Flags::Ronly);
+    std::vector<uint8_t> buf;
+    buf.resize(sizeof(RivFsHeader) + sizeof(FilePositionHeader));
 
-    const uint32_t dirStart = hdr.fphPos + sizeof(FilePositionHeader);
-    const uint32_t fileStart = rootTotalDirNameLen + dirStart + (sizeof(SV::len) + sizeof(DirEntry) * rootDirCount);
-    std::println("/dir_start={}", dirStart);
-    std::println("/file_start={}", fileStart);
+    uint16_t rootFAm = 0;
+    uint32_t rootFstart = writeFileList(buf, inputDir, rootFAm);
 
-    FilePositionHeader fph(rootDirCount, rootFileCount, dirStart, fileStart, (uint32_t) FilePositionHeader::Flags::None);
-    // Now we can construct the rivfs.
-    outputFile.write((const char*) &hdr, sizeof(RivFsHeader));
-    outputFile.write((const char*) &fph, sizeof(FilePositionHeader));
+    struct Pending { std::string name; BuiltDir sub; };
+    std::vector<Pending> rootSubdirs = {};
+    for (auto& entry : std::filesystem::directory_iterator(inputDir)) {
+        if (!entry.is_directory()) continue;
+        BuiltDir sub = buildDir(buf, entry.path());
+        rootSubdirs.push_back({entry.path().filename().string(), sub});
+    }
+    uint32_t rootDirstart = (uint32_t) buf.size();
+    for (auto& p : rootSubdirs) {
+        DirEntry de(p.sub.dirHdrAm, p.sub.fAm, p.sub.dirstart, p.sub.fstart);
+        auto bytes = de.withName(p.name);
+        buf.insert(buf.end(), bytes.begin(), bytes.end());
+    }
+    DirEntry rootDeof(0, 0, 0, 0);
+    auto rootDEofBytes = rootDeof.eof();
+    buf.insert(buf.end(), rootDEofBytes.begin(), rootDEofBytes.end());
+
+    const std::array<uint8_t, 2> vers = {0, 0};
+    RivFsHeader hdr(sizeof(FilePositionHeader), sizeof(RivFsHeader), vers, RivFsHeader::Flags::Ronly);
+    FilePositionHeader fph((uint16_t) rootSubdirs.size(), rootFAm, rootDirstart, rootFstart,
+        (uint32_t) FilePositionHeader::Flags::None);
+
+    std::memcpy(buf.data(), &hdr, sizeof(RivFsHeader));
+
+    std::memcpy(buf.data(), &hdr, sizeof(RivFsHeader));
+    std::memcpy(buf.data() + sizeof(RivFsHeader), &fph, sizeof(FilePositionHeader));
+
+    outputFile.write((const char*) buf.data(), buf.size());
 }

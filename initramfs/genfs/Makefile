@@ -4,6 +4,9 @@ CXX_FLAGS := -std=c++23 -fno-strict-aliasing
 INPUT_FILES := src/main.cpp
 OUTPUT_FILE := build/genfs
 
+OUTPUT_FS_FILE := out.txt
+INP_FS_FILE := in/
+
 all:
 	$(CXX) --version
 	-mkdir build
@@ -19,18 +22,18 @@ clean:
 	rm genfs
 
 run:
-	@echo '--- RUNNING EXECUTABLE ---: ./genfs in/ out.txt'
-	@./genfs in/ out.txt
+	@echo '--- RUNNING EXECUTABLE ---: ./genfs $(INP_FS_FILE) $(OUTPUT_FS_FILE)'
+	@./genfs $(INP_FS_FILE) $(OUTPUT_FS_FILE) 
 
 mr: all build mv_exec run 
 	@echo '--- RivFs dump ---'
 	@make pd
 
 pd: 
-	python3 rivfsdata.py
+	python3 rivfsdata.py $(OUTPUT_FS_FILE)
 
 hd:
-	hexdump -C out.txt
+	hexdump -C $(OUTPUT_FS_FILE) 
 
 .PHONY: all build
 	
