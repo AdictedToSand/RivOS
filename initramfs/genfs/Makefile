@@ -22,7 +22,15 @@ run:
 	@echo '--- RUNNING EXECUTABLE ---: ./genfs in/ out.txt'
 	@./genfs in/ out.txt
 
-mr: all build mv_exec run
+mr: all build mv_exec run 
+	@echo '--- RivFs dump ---'
+	@make pd
+
+pd: 
+	python3 rivfsdata.py
+
+hd:
+	hexdump -C out.txt
 
 .PHONY: all build
 	
