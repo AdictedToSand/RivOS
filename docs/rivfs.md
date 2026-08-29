@@ -136,7 +136,6 @@ NOTE: EOF is the same as in a file.
 
 RivOS will include a C++ binary inside initramfs/genfs/target/(debug|release)/genfs which will allow for
 exec <<unused>srcdir> <<unused>destDir>
-NOTE: Currently incomplete.
 
 ## Caveats
 

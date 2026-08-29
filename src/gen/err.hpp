@@ -44,7 +44,7 @@ class Expected {
 
     T* correctVal;
 
-public:
+public: 
     inline auto val() -> T& {
         if (!isCorrect) //TODO: Better error handling (example: exceptions)
             kpanic("Called val() on an err value");
@@ -86,3 +86,9 @@ public:
     }
 };
 
+template<typename T>
+struct ExpectedErr {
+    operator Expected<T>() {
+        return Expected<T>(Expected<T>::ErrorTypes::Error);
+    }
+};

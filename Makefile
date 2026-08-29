@@ -1,8 +1,14 @@
 INITRAMFS_DIR := initramfs
+INITRAMFS_GENFS_RDIR := $(INITRAMFS_DIR)/genfs
+INITRAMFS_GEN_DIR := $(INITRAMFS_GENFS_RDIR)/genfs
+INITRAMFS_IN_DIR := $(INITRAMFS_DIR)/rootFs/
 INITRAMFS_IMG := isodir/boot/initramfs.img
 
 prepare_initramfs:
-	 echo "Hello, world!" > $(INITRAMFS_IMG)
+	 @echo "Hello, world!" > $(INITRAMFS_IMG)
+	 @make -C $(INITRAMFS_GENFS_RDIR) gen_exec_in_genfs
+	 @echo ''
+	 ./$(INITRAMFS_GEN_DIR) $(INITRAMFS_IN_DIR) $(INITRAMFS_IMG)
 
 all: 
 	@mkdir -p isodir/boot
@@ -20,6 +26,8 @@ all:
 	@qemu-system-i386 --version
 	@make rivboot
 
+initramfs_tree:
+	python3 initramfs/genfs/rivfsdata.py isodir/boot/initramfs.img
 
 prepare_disk:
 	@dd if=/dev/zero of=build/disk.img bs=1M count=64
@@ -35,7 +43,6 @@ prepare_disk:
 	@dd if=/dev/zero of=build/rootfs.img bs=1M count=64
 	@mkfs.fat -F 32 build/rootfs.img
 	@mcopy -i build/rootfs.img -s rootFs/* ::
-	make prepare_initramfs
 
 build_init:
 	@$(eval STAGE2_SIZE := $(shell stat -c%s build/stage2))
@@ -54,6 +61,7 @@ rivboot: build_dbg
 	@i686-elf-objcopy -O binary build/RivOS build/kernel.bin
 	@make build_init
 	@make prepare_disk
+	@make prepare_initramfs
 
 build_release:
 	@python3 build.py release

@@ -19,7 +19,7 @@ mv_exec:
 
 clean:
 	rm -rf build
-	rm genfs
+	-rm genfs
 
 run:
 	@echo '--- RUNNING EXECUTABLE ---: ./genfs $(INP_FS_FILE) $(OUTPUT_FS_FILE)'
@@ -28,6 +28,8 @@ run:
 mr: all build mv_exec run 
 	@echo '--- RivFs dump ---'
 	@make pd
+
+gen_exec_in_genfs: clean all build mv_exec
 
 pd: 
 	python3 rivfsdata.py $(OUTPUT_FS_FILE)

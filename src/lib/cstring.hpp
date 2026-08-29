@@ -90,3 +90,21 @@ static inline bool strBeginsWith(const char* str, const char* prefix) {
 
     return true;
 }
+
+static inline u32 strlenSpecChar(const char* str, char target) {
+    u32 len = 0;
+
+    while (str[len] && str[len] != target)
+        len++;
+
+    return len;
+}
+
+static inline u32 countOccurence(const char* s, char c) {
+    u32 count = 0;
+    for (u32 i = 0; s[i]; i++) {
+        if (s[i] == c) count++;
+    }
+
+    return count;
+}

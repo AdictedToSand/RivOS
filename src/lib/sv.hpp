@@ -36,4 +36,16 @@ struct StringView {
         }
         return true;
     }
+    auto eq(const StringView& lhs) -> bool {
+        if (len != lhs.len) return false;
+
+        for (u32 i = 0; i < len; i++)
+            if (raw[i] != lhs.raw[i]) return false;
+        
+
+        return true;
+    }
+    auto operator==(const StringView& lhs) -> bool {
+        return eq(lhs); 
+    }
 };

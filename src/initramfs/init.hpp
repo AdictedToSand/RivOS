@@ -1,5 +1,6 @@
 #pragma once
 #include <mem/alloc.hpp>
+#include <mem/utils.hpp>
 
 #include <gen/err.hpp>
 
@@ -7,6 +8,8 @@
 #include <int.h>
 
 #include <terminal/terminal.hpp>
+
+#include <drivers/fs/rivfs/rivfs.hpp>
 
 struct InitRamFs {
 private:
@@ -23,6 +26,8 @@ private:
         u32 size;
     };
     static inline ModuleTag* initramfsTag;
+
+    static inline RivFs* fs;
 public:
     static auto init(u32 mbiAddr) -> void {
         initramfsTag = nullptr;
@@ -41,7 +46,7 @@ public:
             kpanic("Unable to find initramfs module!");
         }
 
-        Serial::logf("'CmdLine=%s'", initramfsTag->cmdline);
+        Serial::logf("CmdLine='%s'", initramfsTag->cmdline);
 
         if (!streq(initramfsTag->cmdline, "IS_INITRAMFS")) {
             kpanic("A module was found, however the command line does NOT eq IS_INITRAMFS. Please check for extra modules or whether /boot/initramfs.img exists (and/or is loaded somewhere.) NOTE: This is TODO");            
@@ -55,6 +60,28 @@ public:
             Serial::write(data[i]);            
         }
         Serial::write('\n');
+
+        fs = (RivFs*) KernelAllocator::alloc(sizeof(RivFs));
+        if (!fs) {
+            kpanic("MemAlloc failed on initramfs");
+        }
+
+        *fs = RivFs((void*) initramfsTag->modStart, initramfsTag->modEnd - initramfsTag->modStart);
+
+        if (!fs->checkCorrectness()) {
+            kpanic("Corrrupt initramfs. Serial log might have more information as to why.");
+        }
+        Expected<RivFs::File> fe = fs->open("/in/subdir/subdir2/in.txt");
+        if (fe.isErr()) {
+            kpanic("Unable to open file /in.txt in initramfs");
+        }
+        RivFs::File f = fe.val();
+        char* const buf = (char*) KernelAllocator::alloc(fs->filesize(f));
+        memset(buf, 0, fs->filesize(f));
+        fs->read(f, buf);
+        Serial::logf("file contents: '%s'", buf);
+
+        KernelAllocator::free(buf);
     }
 };
 
