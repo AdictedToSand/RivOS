@@ -63,7 +63,7 @@ public:
         isCorrect = false;
     }
 
-    Expected(T& ptrVal) {
+    Expected(T ptrVal) {
         isCorrect = true;
         correctVal = &ptrVal;
     }
@@ -79,6 +79,10 @@ public:
 
     inline operator T&() {
         return val();    
+    }
+    auto makeCorr(const T& newVal) -> void {
+        isCorrect = true;
+        val() = newVal;
     }
     inline auto operator=(const T& newVal) -> Expected& {
         val() = newVal;

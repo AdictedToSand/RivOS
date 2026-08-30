@@ -1,4 +1,5 @@
 #pragma once
+#include <sum.hpp>
 #include <int.h>
 #include <sv.hpp>
 #include <cstring.hpp>
@@ -54,6 +55,22 @@ public:
         u32 startPos; // Name sv starts here
         u32 contsSvPos; // filesize starts here (and conts after it)
     };
+    struct Dir {
+        friend struct RivFs;
+
+        private:
+        u32 startPos;
+        u32 constPos;
+    };
+    struct DirIterator {
+        friend struct RivFs;
+
+        private:
+        u32 dirPos;
+        u32 filePos;
+        u16 dirsRemaining;
+        u16 filesRemaining;
+    };
 
     RivFs(void* memloc, u32 size) :
         rawFsMemloc(memloc), rawFsSize(size) {}
@@ -90,6 +107,7 @@ public:
 
         return true;
     }
+    // Should prolly be private
     auto findInDir(void* dirEntry, StringView fn, bool isDir) -> Expected<File> {
         const char* const _fnCStrTmp = fn.toCStr();
 
@@ -167,7 +185,7 @@ public:
         fp++;
 
 
-        for (; *fp;) {
+        while (*fp) {
             u32 lenUntilSlash = strlenSpecChar(fp, '/');
 
             if (!lenUntilSlash) {
@@ -250,4 +268,167 @@ public:
     auto read(File f, char* obuf) -> void {
         strcpyLen(obuf, (const char*) (f.contsSvPos + sizeof(u32)), filesize(f));
     }
+    auto getDirIt(const char* fp) -> Expected<DirIterator> {
+        if (*fp != '/') {
+            return ExpectedErr<DirIterator>();
+        }
+        fp++;
+        DirIterator ret;
+
+        // Root directory
+        if (!*fp) {
+            ret.dirPos = fph->dirstart;
+            ret.filePos = fph->fstart;
+            ret.dirsRemaining = fph->dirHdrAm;
+            ret.filesRemaining = fph->fAm;
+            return ret;
+        }
+        char* currentDir = (char*) rawFsMemloc + fph->dirstart;
+        u16 dirCount = fph->dirHdrAm;
+
+        while (*fp) {
+            u32 len = strlenSpecChar(fp, '/');
+
+            if (!len) {
+                return ExpectedErr<DirIterator>();
+            }
+
+            StringView wanted(fp, len);
+            bool found = false;
+            for (u16 i = 0; i < dirCount; i++) {
+                char* entry = currentDir;
+                u32 nameLen = *(u32*) entry;
+                entry += sizeof(u32);
+                StringView name(entry, nameLen);
+                entry += nameLen;
+                if (name == wanted) {
+                    DirEntryLatter* latter = (DirEntryLatter*) entry;
+                    currentDir = (char*) rawFsMemloc + latter->dirStart;
+
+                    ret.dirPos = latter->dirStart;
+                    ret.filePos = latter->fStart;
+                    ret.dirsRemaining = latter->dirHdrAm;
+                    ret.filesRemaining = latter->fileAm;
+
+                    found = true;
+                    break;
+                }
+                currentDir = entry + sizeof(DirEntryLatter);
+            }
+
+            if (!found) {
+                return ExpectedErr<DirIterator>();
+            }
+            fp += len;
+            if (*fp == '/') {
+                fp++;
+            }
+        }
+
+        return ret;
+    }
+    struct FileData {
+        StringView filename;
+        File file;
+    };
+    struct DirData {
+        StringView dirname;
+        Dir dir;
+    };
+    auto dirItGetNextFile(DirIterator& dirit) -> Expected<FileData> {
+        if (dirit.filesRemaining) {
+            FileData ret = {};
+
+            dirit.filesRemaining--;
+            u32* svLen = (u32*) ((u32) rawFsMemloc + dirit.filePos);
+            if (!*svLen) {
+                // EOF
+                Serial::logf("EOF");
+                dirit.filesRemaining = 0;
+
+               goto outOfInitialIf;
+            }
+            Serial::logf("SvLen=%u", *svLen);
+            ret.file.startPos = dirit.filePos;
+            dirit.filePos += sizeof(u32);
+            ret.filename = StringView((char*) rawFsMemloc + dirit.filePos, *svLen);
+            dirit.filePos += *svLen;
+            u32* contsLen = (u32*) ((u32) rawFsMemloc + dirit.filePos);
+            ret.file.contsSvPos = (u32) contsLen;
+            dirit.filePos += sizeof(u32);
+            dirit.filePos += *contsLen;
+
+            return ret;
+        }  
+outOfInitialIf:
+        return ExpectedErr<FileData>();
+    } 
+    auto dirItGetNextDir(DirIterator& dirit) -> Expected<DirData> {
+        if (dirit.dirsRemaining) {
+            DirData ret = {};
+
+            dirit.dirsRemaining--;
+            u32* svLen = (u32*) ((u32) rawFsMemloc + dirit.dirPos);
+            if (!*svLen) {
+                Serial::log("EOD");
+                dirit.dirsRemaining = 0;
+
+                return ExpectedErr<DirData>();
+            }
+            ret.dir.startPos = dirit.dirPos;
+            dirit.dirPos += sizeof(u32);
+            ret.dirname =  StringView((char*) rawFsMemloc + dirit.dirPos, *svLen);
+            dirit.dirPos += *svLen;
+            ret.dir.constPos = dirit.dirPos;
+            dirit.dirPos += sizeof(DirEntryLatter);
+
+            return ret;
+        }
+
+        return ExpectedErr<DirData>();
+    }
+    auto openFileInDirData(DirData& dd, StringView fn) -> Expected<File> {
+        DirEntryLatter* latter = (DirEntryLatter*) ((char*) rawFsMemloc + dd.dir.constPos);
+        char* currentOffs = (char*) rawFsMemloc + latter->fStart;
+
+        for (u32 i = 0; i < latter->fileAm; i++) {
+            u32 currentSvLen = *(u32*) currentOffs;
+            if (!currentSvLen) {
+                // EOF marker: fileAm doesn't match actual entries on disk
+                return ExpectedErr<File>();
+            }
+            currentOffs += sizeof(u32);
+            StringView sv(currentOffs, currentSvLen);
+
+            u32* contsLen = (u32*) (currentOffs + currentSvLen);
+            if (sv == fn) {
+                File ret;
+                ret.startPos = (u32) (currentOffs - sizeof(u32));
+                ret.contsSvPos = (u32) contsLen;
+                return ret;
+            }
+            currentOffs += currentSvLen + sizeof(u32) + *contsLen;
+        }
+        return ExpectedErr<File>();
+    }
 };
+
+/*if (dirit.dirsRemaining) {
+            DirData ret;
+
+            dirit.dirsRemaining--;
+            u32* svLen = (u32*) ((u32) rawFsMemloc + dirit.dirPos);
+            if (!*svLen) {
+                Serial::log("EOD");
+
+                goto outOfSecondIf;
+            }
+            Serial::logf("SvLen=%u", *svLen);
+            dirit.dirPos += sizeof(u32);
+            ret.dirname = StringView((char*) rawFsMemloc + dirit.dirPos, *svLen);
+            dirit.dirPos += *svLen;
+            dirit.dirPos += sizeof(DirEntryLatter);
+
+            return Expected<Sum<FileData, DirData>>(ret);
+        }
+*/
