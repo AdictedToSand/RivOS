@@ -115,7 +115,7 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
     {
         u32 start = Visuals::getFbPhysAddr() & ~0xFFF;
         u32 end   = (Visuals::getFbPhysAddr() + Visuals::getFbSizeBytes() + 0xFFF) & ~0xFFF;
-        Serial::logf("Framebuffer: addr=%x pitch=%u width=%u height=%u size=%x mapped=[%x,%x)", 
+        Serial::logf("Framebuffer: addr=%x pitch=%u width=%u height=%u size=%x mapped=[%x,%x]", 
             Visuals::getFbPhysAddr(), Visuals::getPitch(), Visuals::getScreenWidth(), Visuals::getScreenHeight(),
             Visuals::getFbSizeBytes(), start, end);
         for (u32 addr = start; addr < end; addr += 4096)

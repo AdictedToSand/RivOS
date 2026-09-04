@@ -4,6 +4,9 @@ INITRAMFS_GEN_DIR := $(INITRAMFS_GENFS_RDIR)/genfs
 INITRAMFS_IN_DIR := $(INITRAMFS_DIR)/rootFs/
 INITRAMFS_IMG := isodir/boot/initramfs.img
 
+build_drv:
+	make -C initramfs/src build
+
 prepare_initramfs:
 	 @echo "Hello, world!" > $(INITRAMFS_IMG)
 	 @make -C $(INITRAMFS_GENFS_RDIR) gen_exec_in_genfs
@@ -11,6 +14,7 @@ prepare_initramfs:
 	 ./$(INITRAMFS_GEN_DIR) $(INITRAMFS_IN_DIR) $(INITRAMFS_IMG)
 
 all: 
+	@mkdir -p initramfs/rootFs/fs initramfs/rootFs/storage
 	@mkdir -p isodir/boot
 	@mkdir -p build
 	@clear
