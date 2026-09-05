@@ -2,6 +2,10 @@
 
 RivOS drivers are provided by RivOS in the initramfs, to have modules while defining a simple API.
 
+## IMPORTANT
+
+This currently is not stable and bound to make breaking changes.
+
 ## How to create one?
 
 A RivOS driver most importantly, should be placed somewhere in 
@@ -27,7 +31,7 @@ A .drv file is a directory. It should contain:
 
 * There is no automatic initialization program. It is recommended to simply check a 'isInitialized' flag.
 
-~~~cfg
+~~~ini
 [gen]
 # This should be either fs or storage (for now!)  
 drvType="type"

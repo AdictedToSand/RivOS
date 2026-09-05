@@ -51,6 +51,9 @@ public:
 
         return *correctVal;
     }
+    inline auto valUnchecked() -> T& {
+        return *correctVal;
+    }
 
     auto isErr() -> bool {
         return !isCorrect;

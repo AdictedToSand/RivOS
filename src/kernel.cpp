@@ -107,7 +107,6 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
 
 
     Mmu::init();
-    InitRamFs::init(mbiAddr);
     
     {
         u32 start = Visuals::getFbPhysAddr() & ~0xFFF;
@@ -122,6 +121,8 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
     for (u32 addr = (u32) heapStart & ~0xFFF; addr < (u32) heapEnd; addr += 4096) {
         Mmu::mapPage((void*) addr, (void*) addr, Mmu::FLAGS_WRITABLE);
     }
+    InitRamFs::init(mbiAddr);
+
     SysModuleHandler::init();
     for (;;) ;
 

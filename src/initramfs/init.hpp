@@ -55,21 +55,47 @@ public:
         u8* data = (u8*) initramfsTag->modStart;
         u32 size = initramfsTag->modEnd - initramfsTag->modStart;
 
-        Serial::logf("[CONTS OF INITRAMFS ON NEXT LINE]: ");
-        for (u32 i = 0; i < size; i++) {
-            Serial::write(data[i]);            
-        }
-        Serial::write('\n');
-
         fs = (RivFs*) KernelAllocator::alloc(sizeof(RivFs));
         if (!fs) {
             kpanic("MemAlloc failed on initramfs");
         }
 
-        *fs = RivFs((void*) initramfsTag->modStart, initramfsTag->modEnd - initramfsTag->modStart);
+        *fs = RivFs(data, size);
 
         if (!fs->checkCorrectness()) {
             kpanic("Corrrupt initramfs. Serial log might have more information as to why.");
+        }
+
+        auto drvfsDiritExpected = fs->getDirIt("/drv/fs");
+        if (drvfsDiritExpected.isErr()) {
+            kpanic("Corrupt initramfs: /drv/fs did not exist");
+        }
+        auto drvfsDirit = drvfsDiritExpected.valUnchecked();
+
+        while (true) {
+            auto expected = fs->dirItGetNextDir(drvfsDirit);
+
+            if (expected.isErr()) {
+                break;
+            }
+            auto dirdata = expected.valUnchecked();
+
+            Serial::logf("Dir='%s'", dirdata.dirname);
+
+            const u32 len = strlen("/drv/fs/") + dirdata.dirname.len + strlen("/conf.cfg") + 1;
+            char* filenameBuf = (char*) KernelAllocator::alloc(len);
+            if (!filenameBuf) {
+                kpanic("Alloc failed");
+            }
+            memset(filenameBuf, 0, len);
+            strcat(filenameBuf, "/drv/fs/");
+            char* tmp = (char*) dirdata.dirname.toCStr();
+            strcat(filenameBuf, tmp);
+            KernelAllocator::free(tmp);
+            strcat(filenameBuf, "/conf.cfg");
+            Terminal::printf(filenameBuf);
+
+            KernelAllocator::free(filenameBuf);
         }
     }
 };

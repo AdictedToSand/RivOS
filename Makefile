@@ -8,10 +8,10 @@ build_drv:
 	make -C initramfs/src build
 
 prepare_initramfs:
-	 @echo "Hello, world!" > $(INITRAMFS_IMG)
 	 @make -C $(INITRAMFS_GENFS_RDIR) gen_exec_in_genfs
-	 @echo ''
 	 ./$(INITRAMFS_GEN_DIR) $(INITRAMFS_IN_DIR) $(INITRAMFS_IMG)
+	
+	make build_drv
 
 all: 
 	@mkdir -p initramfs/rootFs/fs initramfs/rootFs/storage initramfs/build
@@ -19,7 +19,7 @@ all:
 	@mkdir -p build
 	@clear
 	@echo '---NASM---'
-	nasm --version
+	@nasm --version
 	@# make is already installed (obviously)
 	@echo '---GCC/G++--'
 	@i686-elf-g++ --version
