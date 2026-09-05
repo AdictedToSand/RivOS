@@ -19,9 +19,13 @@ A .drv file is a directory. It should contain:
     - /conf.cfg
     - /executable somewhere (fp is defined in .cfg). This should be a static executable.
     - /Other files if needed. NOTE: Can not write files while in initramfs which is a known and by design limitation.
-    - /fn.rap This will define a list of functions this driver exposes in a .rap format.  
+    - /fn.rap This will define a list of functions this driver exposes in a .rap format. E.G.
+        open(str fp )=3221225472
+        NOTE: This is also how you get the function address. DO NOT STUB.
 
 * /conf.cfg and /executable are the only required files. Other files are completely optional. In this doc, we will not talk about the raw /conf.cfg, but the conf.cfg used in the [../initramfs/src](initramfs/src) directory. It will be relatively similar to the raw /conf.cfg but specify other things (like sourcefiles). The raw /conf.cfg spec may be added later, however is not recommended to be used
+
+* There is no automatic initialization program. It is recommended to simply check a 'isInitialized' flag.
 
 ~~~cfg
 [gen]

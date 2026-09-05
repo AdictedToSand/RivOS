@@ -14,7 +14,7 @@ prepare_initramfs:
 	 ./$(INITRAMFS_GEN_DIR) $(INITRAMFS_IN_DIR) $(INITRAMFS_IMG)
 
 all: 
-	@mkdir -p initramfs/rootFs/fs initramfs/rootFs/storage
+	@mkdir -p initramfs/rootFs/fs initramfs/rootFs/storage initramfs/build
 	@mkdir -p isodir/boot
 	@mkdir -p build
 	@clear
@@ -130,6 +130,8 @@ clean:
 	rm -rf isodir
 	mkdir build
 	mkdir -p isodir/boot
+	rm -rf initramfs/build
+	rm -rf initramfs/rootFs
 
 gdb:
 	@gdb build/RivOS -ex "target remote :1234" -ex "tui enable" -ex "display/i $pc"

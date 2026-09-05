@@ -105,12 +105,9 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
 
     PIT::init(1000);
 
-    InitRamFs::init(mbiAddr);
-    for (;;) ;
-
-    asm volatile ("STI");
 
     Mmu::init();
+    InitRamFs::init(mbiAddr);
     
     {
         u32 start = Visuals::getFbPhysAddr() & ~0xFFF;
@@ -126,6 +123,7 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
         Mmu::mapPage((void*) addr, (void*) addr, Mmu::FLAGS_WRITABLE);
     }
     SysModuleHandler::init();
+    for (;;) ;
 
     Config initConf = {};
     initConf.fromFile("/krn/init.cfg");
