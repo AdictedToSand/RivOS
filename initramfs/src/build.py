@@ -154,3 +154,9 @@ for directory in  src_fp.rglob("*"):
                 break
 
             # Now we can generate /conf.cfg.
+            config_file = directory.resolve() / "conf.cfg"
+            print(f"config_file: {str(config_file)}")
+
+
+
+

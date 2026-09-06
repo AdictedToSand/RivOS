@@ -80,9 +80,14 @@ public:
             }
             auto dirdata = expected.valUnchecked();
 
-            Serial::logf("Dir='%s'", dirdata.dirname);
+            Serial::logf("DirName='%s'", dirdata.dirname);
 
-            const u32 len = strlen("/drv/fs/") + dirdata.dirname.len + strlen("/conf.cfg") + 1;
+            StringView tmpDrvSuffix = StringView(".drv");
+            if (!dirdata.dirname.endsWith(tmpDrvSuffix)) {
+                continue;
+            }
+
+            const u32 len = strlen("/drv/fs/") + dirdata.dirname.len + strlen("/conf.cfg") + 2;
             char* filenameBuf = (char*) KernelAllocator::alloc(len);
             if (!filenameBuf) {
                 kpanic("Alloc failed");
@@ -93,14 +98,26 @@ public:
             strcat(filenameBuf, tmp);
             KernelAllocator::free(tmp);
             strcat(filenameBuf, "/conf.cfg");
-            Terminal::printf(filenameBuf);
+            Serial::logf("fp='%s'", filenameBuf);
 
+            Expected<RivFs::File> configFileExpected = fs->open(filenameBuf);
+
+            if (configFileExpected.isErr()) {
+                kpanic("Driver module did not contain /conf.cfg");
+            }
+            RivFs::File configFile = configFileExpected.valUnchecked();
+
+            const u32 configFilesize = fs->filesize(configFile) + 1;
+            char* buf = (char*) KernelAllocator::alloc(configFilesize);
+            memset(buf, 0, configFilesize);
+            fs->read(configFile, buf);
+
+            Serial::logf("ConfigFileConts='%s'", buf);
+
+            KernelAllocator::free(buf);
             KernelAllocator::free(filenameBuf);
         }
     }
 };
-
-
-
 
 

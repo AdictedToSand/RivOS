@@ -99,6 +99,14 @@ static inline u32 strlenSpecChar(const char* str, char target) {
 
     return len;
 }
+static inline u32 findChar(const char* str, char target) {
+    for (u32 i = 0; str[i]; i++) {
+        if (str[i] == target)
+            return i;
+    }
+
+    return 0;
+}
 
 static inline u32 countOccurence(const char* s, char c) {
     u32 count = 0;

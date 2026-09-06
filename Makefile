@@ -8,10 +8,9 @@ build_drv:
 	make -C initramfs/src build
 
 prepare_initramfs:
+	make build_drv
 	 @make -C $(INITRAMFS_GENFS_RDIR) gen_exec_in_genfs
 	 ./$(INITRAMFS_GEN_DIR) $(INITRAMFS_IN_DIR) $(INITRAMFS_IMG)
-	
-	make build_drv
 
 all: 
 	@mkdir -p initramfs/rootFs/fs initramfs/rootFs/storage initramfs/build

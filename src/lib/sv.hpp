@@ -48,4 +48,17 @@ struct StringView {
     auto operator==(const StringView& lhs) -> bool {
         return eq(lhs); 
     }
+    auto endsWith(StringView& suffix) -> bool {
+        if (suffix.len > len)
+            return false;
+
+        u32 start = len - suffix.len;
+
+        for (u32 i = 0; i < suffix.len; i++) {
+            if (raw[start + i] != suffix.raw[i])
+                return false;
+        }
+
+        return true;
+    }
 };

@@ -119,6 +119,7 @@ struct [[gnu::packed]] DirEntry {
         pushU16LE(ret, fAm);
         pushU32LE(ret, dirstart);
         pushU32LE(ret, fstart);
+        pushU32LE(ret, (uint32_t) flgs);
 
         return ret;
     }
@@ -126,12 +127,6 @@ struct [[gnu::packed]] DirEntry {
         std::vector<uint8_t> ret = {};
         pushU32LE(ret, 0);
         // Conts does not exist!
-
-        pushU16LE(ret, dirHdrAm);
-        pushU16LE(ret, fAm);
-        pushU32LE(ret, dirstart);
-        pushU32LE(ret, fstart);
-
         return ret;
     }
 };

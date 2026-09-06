@@ -25,7 +25,6 @@ FLGS_RONLY = 1 << 0
 # directory header: dirhdrAm(u16) + fAm(u16) + dirstart(u32) + fstart(u32) + flgs(u32)
 FPH_FIXED_SIZE = 2 + 2 + 4 + 4 + 4  # = 16
 
-
 class RivFsError(Exception):
     pass
 

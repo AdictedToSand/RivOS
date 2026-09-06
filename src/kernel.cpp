@@ -105,7 +105,6 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
 
     PIT::init(1000);
 
-
     Mmu::init();
     
     {

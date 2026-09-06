@@ -1,7 +1,6 @@
 from pathlib import Path
 import subprocess
 import sys
-
 CPPFLAGS = [
     "-ffreestanding",
     "-Wno-pedantic",
@@ -18,7 +17,6 @@ CPPFLAGS = [
 
 BUILD_DIR = Path("build")
 OBJ_DIR = BUILD_DIR / "obj"
-
 
 def run(cmd):
     print(" ".join(cmd))
@@ -46,7 +44,6 @@ def compile_cpp(file: Path, debug: bool) -> Path:
     ])
 
     return out
-
 
 def compile_c(file: Path, debug: bool) -> Path:
     out = OBJ_DIR / Path(str(file.relative_to("src")) + ".o")
@@ -187,7 +184,6 @@ def build(debug: bool = True):
     #
 
     objects = []
-
     init = src / "init.asm"
 
     if init.exists():
