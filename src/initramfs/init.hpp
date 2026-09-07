@@ -3,6 +3,7 @@
 #include <mem/utils.hpp>
 
 #include <gen/err.hpp>
+#include <gen/conf/conf.hpp>
 
 #include <sv.hpp>
 #include <int.h>
@@ -10,6 +11,11 @@
 #include <terminal/terminal.hpp>
 
 #include <drivers/fs/rivfs/rivfs.hpp>
+
+#include <initializer_list.hpp>
+#include <array.hpp>
+
+#include <proc/ELF/loader.hpp>
 
 struct InitRamFs {
 private:
@@ -98,7 +104,6 @@ public:
             strcat(filenameBuf, tmp);
             KernelAllocator::free(tmp);
             strcat(filenameBuf, "/conf.cfg");
-            Serial::logf("fp='%s'", filenameBuf);
 
             Expected<RivFs::File> configFileExpected = fs->open(filenameBuf);
 
@@ -112,8 +117,65 @@ public:
             memset(buf, 0, configFilesize);
             fs->read(configFile, buf);
 
-            Serial::logf("ConfigFileConts='%s'", buf);
+            Config conf;
+            conf.src = buf;
+            conf.parseSrc();
 
+            // lmao
+            constexpr const char* const REQUIRED_FIELDS[] = {
+                "gen.name",
+                "gen.vers",
+                "gen.execfp",
+                "custom.fstype",
+            };
+
+            for (u32 i = 0; i < sizeof(REQUIRED_FIELDS) / sizeof(char*); i++) {
+                if (!conf.mapping.exists(REQUIRED_FIELDS[i])) {
+                    Serial::logf("MISSING_FIELD: '%s'", *REQUIRED_FIELDS[i]);
+                    kpanic("Missing field in driver");
+                }
+            }
+
+            char* const drvName   = conf.mapping["gen.name"].strVal.toCStr();
+            char* const drvVers   = conf.mapping["gen.vers"].strVal.toCStr();
+            char* const drvExecFp = conf.mapping["gen.execfp"].strVal.toCStr();
+            char* const drvFsType = conf.mapping["custom.fstype"].strVal.toCStr();
+
+            Serial::logf("Driver(%s): on %s at %s (type: %s)", drvName, drvVers, drvExecFp, drvFsType);
+
+            Str drvFullFp = "/drv/fs/";
+            char* _tmp = dirdata.dirname.toCStr();
+            drvFullFp.add(_tmp);
+            drvFullFp.add("/");
+            drvFullFp.add(drvExecFp);
+            KernelAllocator::free(_tmp);
+            Serial::logf("Fp=%s", drvFullFp.toCStr());
+
+            Expected<RivFs::File> expectedExec = fs->open(drvFullFp);
+            if (expectedExec.isErr()) {
+                kpanic("Executable file in driver was incorrect (did not exist!)");
+            }
+            const u32 elfFilesize = fs->filesize(expectedExec.valUnchecked());
+            char* elfbuf = (char*) KernelAllocator::alloc(elfFilesize);
+            fs->read(expectedExec.val(), elfbuf);
+
+            ElfExecutable elfhdr;
+            elfhdr.fromSrc(drvFullFp, elfbuf);
+
+            if (!elfhdr.isValid()) {
+                kpanic("Executable file in driver was incorrect (is not a valid ELF!)");
+            }
+            Str procname = "__DriverSystem_Fs_"; procname.add(drvName);
+            if (!elfhdr.load(procname, ProcessPriveledgeLevel::Kernel)) kpanic("Unable to load ELF");
+
+            
+
+            conf.freeLeftover();
+
+            KernelAllocator::free(drvName);
+            KernelAllocator::free(drvVers);
+            KernelAllocator::free(drvExecFp);
+            KernelAllocator::free(drvFsType);
             KernelAllocator::free(buf);
             KernelAllocator::free(filenameBuf);
         }

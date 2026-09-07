@@ -81,6 +81,7 @@ for directory in  src_fp.rglob("*"):
                 print(f"Invalid driver type '{drv_type}'")
                 break
             drv_name = config["gen"]["name"].strip('"') 
+            drv_vers = config["gen"]["vers"].strip('"')
             print(f"drv_name {drv_name}")
             drv_type_dir = DRV_DIR / drv_type
             dest_fp = drv_type_dir / drv_name
@@ -154,9 +155,26 @@ for directory in  src_fp.rglob("*"):
                 break
 
             # Now we can generate /conf.cfg.
-            config_file = directory.resolve() / "conf.cfg"
+            config_file = dest_path / "conf.cfg"
             print(f"config_file: {str(config_file)}")
+            config_file.touch()
 
-
+            if drv_type == "fs":
+                fs_type = config["cfg.fs"]["type"].strip('"')
+                expected_sysc_int =  int(config["expects.sysc"]["int"].strip('"'), 0)
+                config_file.write_text(
+                    f"[gen]\n"
+                    f"name=\"{drv_name}\"\n"
+                    f"vers=\"{drv_vers}\"\n"
+                    f"execfp=\"{str(linker_output_file.relative_to(dest_path))}\"\n"
+                    f"[custom]\n"
+                    f"fstype=\"{fs_type}\"\n"
+                    f"[expects.sysc]\n"
+                    f"int={expected_sysc_int}\n"
+                )
+            elif drv_type == "storage":
+               pass
+            elif drv_type.__eq__("baseio"):
+               pass
 
 

@@ -18,7 +18,7 @@ struct StringView {
         len = ilen;
     }
 
-    auto toCStr() -> const char* {
+    auto toCStr() -> char* {
         char* buf = (char*) KernelAllocator::alloc(len + 1);
         memset(buf, 0, len + 1);
         for (u32 i = 0; i < len; i++) {

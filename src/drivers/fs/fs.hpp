@@ -132,6 +132,7 @@ public:
     }
 
     static auto open(const char* fp) -> fd_t {
+        Serial::logf("FileSystem::open fp=%s", fp);
         const fd_t currentFd = latestFd++;
 
         GlobalFile added;

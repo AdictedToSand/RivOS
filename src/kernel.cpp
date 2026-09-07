@@ -101,8 +101,6 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
 
     PIC::init();
 
-    HardwareInterrupts::init();
-
     PIT::init(1000);
 
     Mmu::init();
@@ -120,9 +118,13 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
     for (u32 addr = (u32) heapStart & ~0xFFF; addr < (u32) heapEnd; addr += 4096) {
         Mmu::mapPage((void*) addr, (void*) addr, Mmu::FLAGS_WRITABLE);
     }
+    asm volatile ("CLI");
     InitRamFs::init(mbiAddr);
 
     SysModuleHandler::init();
+
+    HardwareInterrupts::init();
+
     for (;;) ;
 
     Config initConf = {};

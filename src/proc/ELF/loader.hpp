@@ -70,20 +70,20 @@ private:
     };
 public:
     auto isValid() -> bool {
-        if (memcmp(hdr->magic, ELF_MAGIC, 4)) return false;
-        if (hdr->bitness != BITNESS_32) return false;
-        if (hdr->endianness != ENDIAN_LIL) return false;
-        if (hdr->version != VERSION_CURRENT) return false;
+        if (memcmp(hdr->magic, ELF_MAGIC, 4)) { Serial::log("Invalid magic"); return false; }
+        if (hdr->bitness != BITNESS_32) { Serial::log("64bit ELF file"); return false; };
+        if (hdr->endianness != ENDIAN_LIL) { Serial::log("Little endian!"); return false; }
+        if (hdr->version != VERSION_CURRENT) { Serial::log("No good header version!"); return false; }
 
-        if (hdr->osAbi != OSABI_SYSTEMV) return false;
-        if (hdr->abiVersion != OSABI_VERSCURRENT) return false;
+        if (hdr->osAbi != OSABI_SYSTEMV) { Serial::log("Invalid ABI"); return false; }
+        if (hdr->abiVersion != OSABI_VERSCURRENT) { Serial::log("Invalid ABI Version"); return false; }
 
-        if (hdr->type != TYPE_EXECUTABLE) return false;
+        if (hdr->type != TYPE_EXECUTABLE) { Serial::log("Not a executable file"); return false; }
         
-        if (hdr->instructionSet != INSTRSET_X86) return false;
-        if (hdr->version != VERSION_CURRENT) return false;
+        if (hdr->instructionSet != INSTRSET_X86) { Serial::log("Not on x86"); return false; } 
+        if (hdr->version != VERSION_CURRENT) { Serial::log("Oudated/Unsupported header version"); return false; }
 
-        if (hdr->programEntry == 0) return false;
+        // Should prolly reintroduce but initramfs is weird so not needed: if (hdr->programEntry == 0) return false;
 
         return true;
     }
@@ -122,13 +122,15 @@ public:
                     Mmu::mapPageIn(proc->pageDirectory, frame, (void*) (vaddrBase + j * 4096),
                         Mmu::FLAGS_PRESENT | Mmu::FLAGS_WRITABLE);
                 }
+                u32 savedFlags;
+                asm volatile ("pushf; pop %0" : "=r"(savedFlags));
                 asm volatile("CLI");
                 u32* const callerDirectory = Mmu::activeDirectory;
                 Mmu::switchAddressSpace(proc->pageDirectory);
                 memcpy(dest, base + ph->contentsOffset, ph->segmentFilesize);
                 memset(dest + ph->segmentFilesize, 0, ph->memSize - ph->segmentFilesize);
                 Mmu::switchAddressSpace(callerDirectory);
-                asm volatile ("STI");
+                asm volatile ("push %0; popf" :: "r"(savedFlags));
             }
             else {
                 continue;
@@ -170,7 +172,14 @@ public:
             return 1;
         }
         hdr = (ElfHeader32*) tmpbuf;
-        postHeaderElf = (u8*) (hdr + 1); // + 1 == + 1 * sizeof(ElfHeader32)
+        postHeaderElf = (u8*) (hdr + 1); // + 1 == + 1 * sizeof(ElfHeader32) 
+                                         // What the fuck
+        return 0;
+    }
+    auto fromSrc(const char* isrcFp, const char* src) -> u8 {
+        hdr = (ElfHeader32*) src; 
+        postHeaderElf = (u8*) (hdr + 1);
+        fp = isrcFp;
 
         return 0;
     }

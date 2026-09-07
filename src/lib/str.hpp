@@ -6,6 +6,7 @@
 
 #include <cstring.hpp>
 
+//TODO: format() and integration of said function in codebase
 struct Str {
 private:
     char* cStr;

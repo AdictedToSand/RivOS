@@ -71,7 +71,7 @@ extern "C" auto keyboardHandler() -> void {
             return;
         }
 
-        fd_t stdinFd = FileSystem::open("/dev/stdin");
+        const fd_t stdinFd = FileSystem::open("/dev/stdin");
         if (!stdinFd) kpanic("Stdin did not exist");
         char addedC = scancodeMap[sc];
         if (isLower(addedC)) {
