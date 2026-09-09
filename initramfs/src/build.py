@@ -176,5 +176,3 @@ for directory in  src_fp.rglob("*"):
                pass
             elif drv_type.__eq__("baseio"):
                pass
-
-

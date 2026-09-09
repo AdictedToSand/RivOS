@@ -17,6 +17,22 @@
 
 #include <proc/ELF/loader.hpp>
 
+#include <initramfs/sysclayer.hpp>
+
+extern "C" void liveSyscStub(void);
+
+inline int liveSyscall3(int n,int a,int b,int c) {
+    int ret;
+    asm volatile("INT $0x30"
+        : "=a"(ret)
+        : "a"(n),"D"(a),"S"(b),"d"(c)
+        : "memory"
+    );
+    return ret;
+}
+
+auto tinyStub(u32 p1, u32 p2, u32 p3) -> void;
+
 struct InitRamFs {
 private:
     struct [[gnu::packed]] ModuleTag {
@@ -36,6 +52,8 @@ private:
     static inline RivFs* fs;
 public:
     static auto init(u32 mbiAddr) -> void {
+        Idt::setDescriptor(LIVE_DRIVER_SYSC_NUMBER, (void*) liveSyscStub, 0x8E);
+
         initramfsTag = nullptr;
         MultibootTag* mbTag = (MultibootTag*) (mbiAddr + 8);
         
@@ -168,8 +186,6 @@ public:
             Str procname = "__DriverSystem_Fs_"; procname.add(drvName);
             if (!elfhdr.load(procname, ProcessPriveledgeLevel::Kernel)) kpanic("Unable to load ELF");
 
-            
-
             conf.freeLeftover();
 
             KernelAllocator::free(drvName);
@@ -179,6 +195,10 @@ public:
             KernelAllocator::free(buf);
             KernelAllocator::free(filenameBuf);
         }
+
+        liveSyscall3(0, 4, (u32) (void*) tinyStub, 0);
+
+        liveSyscall3(4, 0xDEADBEEF, 0xAF, 0xEAF);
     }
 };
 

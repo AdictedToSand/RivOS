@@ -34,7 +34,7 @@ This will note all instructions a VGOD can perform.
 | 0x02 | [loc: imd] | CALL | Calls loc | |
 | 0x03 | [] | RET | Returns from a CALL | |
 | 0x04 | [loc: imd] | JMP | Unconditionaly jumps to a loc | |
-| 0x05 | [type: DoubleValType, x, y] | CMP | Sets OCR to comparison of x, y | |
+| 0x05 | [type: DoubleValType, x, y] | CMP | Sets OCR to comparison of x, y | OCR |
 | 0x06 | [loc: imd] | BEQ | Branches to a loc if OCR.eq is 1 | |
 | 0x07 | [loc: imd] | BNE | Branches to a loc if OCR.eq is 0 | |
 | 0x08 | [loc: imd] | BSM | Branches to a loc if OCR.sm is 1 | |
@@ -69,12 +69,9 @@ As you might have seen, there were a lot of types. Each one will be explained he
     | 0x00 | 4 bits containing a regular Type. First operand uses this type. |
     | 0x04 | 4 bits containing a regular Type. Second operand uses this type.     |
 * Type. 1 byte, this can be either
-    * Register
-    * Memory
-    * Immediate
-* Mem. 4 bytes, value at a memory location.
-* Register. 1 byte, this is a register. A list can be found below here.
-* Int. 4 bytes, This is just a immediate value.
+    - (0x00) Mem. 4 bytes, value at a memory location.
+    - (0x01) Register. 1 byte, this is a register. A list can be found below here.
+    - (0x02) Int. 4 bytes, This is just a immediate value.
 
 
 ### Registers 
@@ -122,6 +119,7 @@ Integers are shown in rust-style naming.
 * 0x100C: u8[2]: VERSION: Version of the VGOD. 0x100C[0] is major, 0x100C[1] is minor.
 * 0x100E: u8[2]: KINFO_VERS: Version of the kernel. Loc[0] is major, loc[1] is minor.
 * 0x1010: u8: NATIVE: If this is a native VGOD implementation should be '1'
+* 0x1011: u16[2] W_RES_INFO 0x1011[0] is horizontal, 0x1011[1] is vertical.
 * \*-0x2000: Reserved and should not be used.
 
 ### Interrupt table

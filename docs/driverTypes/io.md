@@ -71,7 +71,7 @@ struct __packed__ MonitorData {
     u16 hz;
 }
 // Gets the monitor data by an ID (NOTE: The ID is just n where n < getMonitorCount())
-getMonitorInfo()
+getMonitorInfo(u16 id )
 ~~~
 #### Output.Any.USB
 

@@ -16,7 +16,7 @@ static const char* KERN_PANICBANNER = R"(                       _         __
     Terminal::setColor(255);/* Evil hack */ \
     Terminal::printf("%s\n\n\n", KERN_PANICBANNER); \
     \
-    Terminal::printf("A kernel panic occurred at: (%s) -> (%s) -> (line %i) -> %s", __FILE__, __FUNCTION__, __LINE__, msg); \
+    Terminal::printf("A kernel panic occurred at: (%s) -> (%s) -> (line %i) -> %s", __FILE__, __PRETTY_FUNCTION__, __LINE__, msg); \
     \
     for (;;); \
 } while (0)
