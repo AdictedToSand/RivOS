@@ -1,8 +1,12 @@
 #pragma once
+#include <mem/alloc.hpp>
+
 #include <stddef.h>
 #include <stdbool.h>
 
 #include <gen/alpha.hpp>
+
+#include <mem/utils.hpp>
 
 static inline size_t strlen(const char* s) {
     size_t i = 0;
@@ -115,4 +119,10 @@ static inline u32 countOccurence(const char* s, char c) {
     }
 
     return count;
+}
+static inline auto heapCopyStr(const char* s) -> char* {
+    u32 len   = strlen(s) + 1;
+    char* n = (char*) KernelAllocator::alloc(len);
+    memcpy(n, s, len);
+    return n;
 }

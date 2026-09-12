@@ -19,9 +19,13 @@
 
 #include <initramfs/sysclayer.hpp>
 
+#include <rap/rap.hpp>
+
+#include <vfs/vfs.hpp>
+
 extern "C" void liveSyscStub(void);
 
-inline int liveSyscall3(int n,int a,int b,int c) {
+inline int liveSyscall3(int n, int a, int b, int c) {
     int ret;
     asm volatile("INT $0x30"
         : "=a"(ret)
@@ -138,6 +142,9 @@ public:
             Config conf;
             conf.src = buf;
             conf.parseSrc();
+            if (conf.isErr) {
+                kpanic("Config in driver was invalid!");
+            }
 
             // lmao
             constexpr const char* const REQUIRED_FIELDS[] = {
@@ -188,6 +195,46 @@ public:
 
             conf.freeLeftover();
 
+            Str rapFullFp = "/drv/fs/";
+            rapFullFp += dirdata.dirname;
+            rapFullFp += "/fn.rap";
+            Serial::logf("(RapFp=%s", rapFullFp.toCStr());
+
+            // fn.rap parsing
+            Expected<RivFs::File> expectedRap = fs->open(rapFullFp);
+
+            if (expectedRap.isErr()) {
+                Serial::logf("Fp=%s", rapFullFp.toCStr());
+                kpanic("File in driver was not found: fn.rap");
+            }
+            RivFs::File rap = expectedRap.valUnchecked();
+
+            const u32 rapFilesize = fs->filesize(rap);
+            char* rapBuf = (char*) KernelAllocator::alloc(rapFilesize + 1); 
+            memset(rapBuf, 0, rapFilesize + 1);
+            fs->read(rap, rapBuf);
+
+            Terminal::printf("Rap=%s\n", rapBuf);
+
+            RapFile rapf(rapBuf);
+            rapf.parseFile();
+            rapf.dump();
+
+            Expected<RivFs::File> expectedFsConf = fs->open("/etc/fs.cfg");
+            if (expectedFsConf.isErr()) {
+                kpanic("No /etc/fs.cfg found, unable to mount fs");
+            }
+            RivFs::File fsConf = expectedFsConf.valUnchecked();
+            const u32 fsConfLen = fs->filesize(fsConf) + 1;
+            char* const fsConfBuf = (char*) KernelAllocator::alloc(fsConfLen);
+            memset(fsConfBuf, 0, fsConfLen);
+            fs->read(fsConf, fsConfBuf);
+            VFS::initFromSrc(fsConfBuf);
+            Str drvDirFp = "/drv/fs/";
+            drvDirFp += dirdata.dirname;
+            VFS::registerForFs("fat32", drvFullFp, fs);
+
+            KernelAllocator::free(rapBuf);
             KernelAllocator::free(drvName);
             KernelAllocator::free(drvVers);
             KernelAllocator::free(drvExecFp);

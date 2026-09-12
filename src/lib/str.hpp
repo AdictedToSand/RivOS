@@ -4,6 +4,7 @@
 #include <mem/utils.hpp>
 #include <mem/alloc.hpp>
 
+#include <sv.hpp>
 #include <cstring.hpp>
 
 //TODO: format() and integration of said function in codebase
@@ -77,6 +78,11 @@ public:
     }
     auto operator+=(Str s) -> void {
         *this += s.toCStr();
+    }
+    auto operator+=(StringView sv) -> void {
+        for (u32 i = 0; i < sv.getLen(); i++) {
+            *this += sv.raw[i];
+        }
     }
     inline auto pushBack(const char c) -> void {
         *this += c; // Use the operator+= alr defined

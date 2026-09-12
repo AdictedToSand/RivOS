@@ -31,6 +31,17 @@ struct Config {
     const char* o_err = nullptr;
     Map<StrOperatorEquals, Value> mapping;
     StringView currentSection;
+    Vector<StringView> allSections;
+    auto getAllSubsections(StringView mainSection) -> Vector<StringView> {
+        Vector<StringView> ret = {};
+        for (auto section : allSections) {
+            if (section.startsWith(mainSection)) {
+                ret.pushBack(section); 
+            }
+        }
+
+        return ret;
+    }
     auto isIdent(const char c) -> bool {
         return isalpha(c) || isdigit(c) || c == '_';
     }
@@ -92,6 +103,7 @@ struct Config {
                 u32 len = 0;
                 while (src[len] != ']') len++;
                 currentSection = StringView(src + 1, len - 1); // src + 1 to skip [ and len - 1 to skip ]
+                allSections.pushBack(currentSection);
                 const char* const sectionCStr = currentSection.toCStr();
                 KernelAllocator::free((void*) sectionCStr);
                 src += len + 1; // ']'

@@ -94,4 +94,23 @@ public:
     auto end() const -> const T* { return arr + len; }
 
     Vector(const Vector&) = delete;
+
+    auto raw() const -> T* {
+        return arr;
+    }
+
+    auto copyPermanent() -> T* {
+        T* alloc = (T*) KernelAllocator::alloc(len * sizeof(T)); 
+
+        if (!alloc) kpanic("copyPermanent allocation failed in Vector.");
+
+        memcpy(alloc, arr, len * sizeof(T));
+        return alloc;
+    }
+    Vector(Vector&& other) 
+        : arr(other.arr), len(other.len), capacity(other.capacity) {
+        other.arr = nullptr;
+        other.len = 0;
+        other.capacity = 0;
+    }
 };

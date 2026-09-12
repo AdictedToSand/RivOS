@@ -21,6 +21,7 @@ struct [[gnu::packed]] SyscInterruptFrame {
 enum LiveSyscNumbers {
     // These are predefined and exposed by the kernel itself
     REG_SYSCALL = 0,
+    REG_FS,
     ALLOC,
     FREE,
 

@@ -58,7 +58,6 @@ This will note all instructions a VGOD can perform.
 | 0x20 | [] | GMC | Gets the mesh color at pixel coordinate current. | Loads it in | Possible INT 0x05 if no mesh exists.
 | 0x21 | [char: int] | OUT | Outputs char. This will not be shown unless the parent caller decides it should be. Can be used for logs etc. | |### Types
 
-
 ### Types
 
 As you might have seen, there were a lot of types. Each one will be explained here. 
@@ -130,3 +129,5 @@ Integers are shown in rust-style naming.
 * INT 0x04: Failure in CMS
 * INT 0x05: Failure in GMC (No mesh exists right now)
 * INT 0x06: Undefined opcode.
+
+

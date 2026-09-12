@@ -61,4 +61,16 @@ struct StringView {
 
         return true;
     }
+    auto offsl(u32 am) -> void {
+        len -= am; 
+    }
+    auto offsr(u32 am) -> void {
+        len += am;
+    }
+    auto skipr(u32 am) -> void {
+        raw += am;
+    }
 };
+
+
+

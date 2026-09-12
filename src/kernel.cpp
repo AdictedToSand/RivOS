@@ -95,8 +95,6 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
 
     Storage::init();
 
-    FileSystem::init();
-
     PCI::init();
 
     PIC::init();

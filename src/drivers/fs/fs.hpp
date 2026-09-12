@@ -17,7 +17,7 @@
 
 #include <mem/alloc.hpp>
 
-typedef int fd_t;
+typedef i32 fd_t;
 
 struct MountPointCandidate {
     const char* mp = "";
