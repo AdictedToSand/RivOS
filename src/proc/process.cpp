@@ -88,6 +88,10 @@ auto Process::ctxtSwitch() -> void {
     activeProcessPid = pid;
     // Serial::logf("Context switch to: %s", pname);
 
+    if (priveledge == ProcessPriveledgeLevel::Driver) {
+        kpanic("Context switching to a process marked 'Driver' is forbidden.");
+    }
+
     if (!state->eip || !state->esp) {
         Serial::logf("ctxtSwitch: refusing to jump into pid %u with eip=%x esp=%x", pid, state->eip, state->esp);
         kpanic("ctxtSwitch got a zeroed RegisterState");

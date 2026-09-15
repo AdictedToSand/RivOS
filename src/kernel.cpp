@@ -41,6 +41,8 @@
 
 #include <initramfs/init.hpp>
 
+#include <obj/handle/handle.hpp>
+
 typedef void (*ctor_t)();
 
 extern "C" ctor_t ctorsStart[];
@@ -117,12 +119,14 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
         Mmu::mapPage((void*) addr, (void*) addr, Mmu::FLAGS_WRITABLE);
     }
     asm volatile ("CLI");
+
     InitRamFs::init(mbiAddr);
 
     SysModuleHandler::init();
 
     HardwareInterrupts::init();
 
+    
     for (;;) ;
 
     Config initConf = {};

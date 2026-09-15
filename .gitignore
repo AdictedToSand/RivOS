@@ -6,3 +6,4 @@ sbinSrc/build_release
 qemu.log
 initramfs/build
 initramfs/rootFs
+TODO.txt

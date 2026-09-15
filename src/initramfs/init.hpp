@@ -191,7 +191,8 @@ public:
                 kpanic("Executable file in driver was incorrect (is not a valid ELF!)");
             }
             Str procname = "__DriverSystem_Fs_"; procname.add(drvName);
-            if (!elfhdr.load(procname, ProcessPriveledgeLevel::Kernel)) kpanic("Unable to load ELF");
+            Process* proc;
+            if (proc = elfhdr.load(procname, ProcessPriveledgeLevel::Kernel); !proc) kpanic("Unable to load ELF");
 
             conf.freeLeftover();
 
@@ -232,7 +233,7 @@ public:
             VFS::initFromSrc(fsConfBuf);
             Str drvDirFp = "/drv/fs/";
             drvDirFp += dirdata.dirname;
-            VFS::registerForFs("fat32", drvFullFp, fs);
+            VFS::registerForFs("fat32", drvDirFp.toCStr(), fs, proc);
 
             KernelAllocator::free(rapBuf);
             KernelAllocator::free(drvName);

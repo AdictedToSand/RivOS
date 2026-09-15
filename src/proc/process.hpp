@@ -14,6 +14,7 @@ extern pid_t latestPid;
 
 enum class ProcessPriveledgeLevel : u8 {
     User,
+    // NOTE: A driver runs in kernel mode, however should NOT be context switched to. A Kernel or User process should be considered.
     Driver,
     Kernel,
 };

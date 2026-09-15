@@ -24,11 +24,19 @@ private:
         u8 id; 
         char* fsName;
         DriveEntry(u8 iid, char* ifsName) : id(iid), fsName(ifsName) {}
+        DriveEntry() : id(-1), fsName(nullptr) {}
     };
     struct FsEntry {
+        struct FunctionTable {
+            void* (*open)(const char* fp); 
+            
+        } fnTable;
+
         Process* proc; 
         FsEntry(Process* iproc) : proc(iproc) {};
+        FsEntry() : proc(nullptr) {};
     };
+    using FsFunctionTable = FsEntry::FunctionTable;
 
     static inline Vector<DriveEntry> driveEntries;
     static inline Map<StringView, FsEntry> fsentries;
@@ -73,9 +81,10 @@ public:
     }
     static auto registerForFs(const char* fstype, const char* drvfp, RivFs* const fs, Process* drvProc) -> void {
         Str fullRapFp = drvfp; fullRapFp += "/fn.rap";
-        Expected<RivFs::File> expectedFnRap = fs->open(drvfp);
+        Serial::logf("drvFp=%s", fullRapFp.toCStr());
+        Expected<RivFs::File> expectedFnRap = fs->open(fullRapFp);
 
-        if (expectedFnRap.isErr()) kpanic("Rap File not found for registering in ");
+        if (expectedFnRap.isErr()) kpanic("Rap File not found for registering in driver module");
 
         const RivFs::File fnRap = expectedFnRap.valUnchecked();
         const u32 fnRapBufSize  = fs->filesize(fnRap) + 1;
@@ -88,13 +97,13 @@ public:
         RapFile rapf(fnRapBuf);
         rapf.parseFile();
 
-        void* const openFunction = rapf.getRapEntry("open", ArrayView<RapParam>({RapParam("str", "fp")}));
+        /*void* const openFunction = rapf.getRapEntry("open", ArrayView<RapParam>({RapParam("str", "fp")}));
         if (!openFunction) {
             kpanic("RapFile for fs driver did not contain open() function.");
         }
         FsEntry fsEntry(drvProc);
 
-        fsentries.insert(StringView(heapCopyStr(fstype)), fsEntry); 
+        fsentries.insert(StringView(heapCopyStr(fstype)), fsEntry); */
 
         KernelAllocator::free(fnRapBuf);
     }
