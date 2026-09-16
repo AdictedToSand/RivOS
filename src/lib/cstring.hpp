@@ -121,7 +121,7 @@ static inline u32 countOccurence(const char* s, char c) {
     return count;
 }
 static inline auto heapCopyStr(const char* s) -> char* {
-    u32 len   = strlen(s) + 1;
+    u32 len = strlen(s) + 1;
     char* n = (char*) KernelAllocator::alloc(len);
     memcpy(n, s, len);
     return n;

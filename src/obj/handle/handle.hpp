@@ -56,9 +56,6 @@ private:
         T* usrData;
     };
     SharedData* shrdData = nullptr; 
-#ifdef DEBUG
-    const char* hndlName;
-#endif
     auto free() -> void {
         KernelAllocator::free(shrdData->usrData);
         KernelAllocator::free(shrdData);
@@ -66,9 +63,6 @@ private:
     auto assrtRcount() -> bool {
         if (shrdData->rcount == 0) { 
             free();
-#ifdef DEBUG
-            Serial::logf("Handle was freed (%s)", hndlName);
-#endif
             shrdData->usrData = nullptr;
             return false;
         }
@@ -88,14 +82,6 @@ public:
         shrdData->usrData = (T*) KernelAllocator::alloc(allocsize / sizeof(Allocator));
         static_assert(TypeIsSame<T, Allocator>::value, "Can only use Handle(u32 allocsize) constructor when type == HandleAllocator, please use Handle() instd.");
     }
-    auto setName(const char* name) -> void {
-#ifdef DEBUG
-        hndlName = name;
-#else
-        (void) name;
-#endif
-    }
-
     auto getDataWriter() -> Writer {
         // wtf why is this in C as _Static_assert
         static_assert(TypeIsSame<T, Allocator>::value, "getDataWriter doesn't allow for types other than HandleAllocator");
