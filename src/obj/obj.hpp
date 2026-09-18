@@ -25,6 +25,10 @@ public:
     {
         (void) objname; (void) type; (void) fromDrv;
         creationTime.fromCurrTime();
+#ifdef DEBUG
+        Serial::logf("[%u.%u.%u] %s#%u created (cls=%s, fromDrv=%s)", (u32) creationTime.hours, (u32) creationTime.mins, (u32) creationTime.secs,
+            objname, id, type, (isFromDrv ? "true" : "false"));
+#endif
     }
     auto getPtr() -> T* {
 #ifdef DEBUG
@@ -41,10 +45,3 @@ public:
 };
 constexpr bool OBJ_IS_FROM_DRV = true;
 constexpr bool OBJ_ISNT_FROM_DRV = false;
-
-static auto test() -> void {
-    Object<int> obj("GenFsObj", "Fs", OBJ_IS_FROM_DRV);
-    int* iptr = obj.getPtr();
-    *iptr = 5;
-    Terminal::printf("ObjAccess=%i", *obj.getPtr());
-}

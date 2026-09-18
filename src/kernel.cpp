@@ -45,6 +45,8 @@
 
 #include <obj/obj.hpp>
 
+#include <dbg/test.hpp>
+
 typedef void (*ctor_t)();
 
 extern "C" ctor_t ctorsStart[];
@@ -128,7 +130,7 @@ extern "C" auto kernelMain(u32 magic, u32 mbiAddr) -> void {
 
     HardwareInterrupts::init();
 
-    test();
+    testTests();
     
     for (;;) ;
 
